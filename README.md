@@ -17,3 +17,12 @@ All copy, flows and colors come from the Miro board:
 - **Screens 11–15:** layout and themes.
 - **Theme:** the Material palette seeded at `#E38100`.
 - **Board comments:** Verdana, wider line spacing, any emoji at any time, custom descriptors, and an invert/dark mode.
+
+## Voice
+
+- Lexi's fixed lines play as pre-recorded clips, made with Piper TTS and the public-domain LJ Speech voice. See [`tools/voice/`](tools/voice/).
+- Everything else uses the device voice you pick in ⚙️ Settings, with speed and pitch.
+
+## Design spec
+
+[`docs/DESIGN.md`](docs/DESIGN.md) records the wireframe measurements, the five themes (Orange, Purple, Mint, Night, Ember), the size scale and the polish rules that both apps follow.
