@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { View } from 'react-native';
 import { BANDS, type Pick, type Topic } from '../content';
 import { addCustom, useLexi } from '../store';
-import { mix, useTheme } from '../theme';
+import { R, mix, useTheme } from '../theme';
 import { T, Tile } from '../ui';
 import { CustomAdder } from './Inputs';
 
@@ -19,7 +19,7 @@ export function toggled(sel: Selected, m: Pick): Selected {
 function TileGrid({ items, selected, onToggle, disabled }: { items: Pick[]; selected: Selected; onToggle: (m: Pick) => void; disabled?: boolean }) {
   const t = useTheme();
   const [w, setW] = useState(0);
-  const gap = 8, min = Math.round(t.fs * 4.6);
+  const gap = 10, min = Math.max(92, Math.round(t.fs * 4.6));
   const cols = w ? Math.max(1, Math.floor((w + gap) / (min + gap))) : 0;
   const tileW = cols ? Math.floor((w - gap * (cols - 1)) / cols) : min;
   return (
@@ -40,8 +40,8 @@ export function MoodPicker({ selected, onChange, disabled }: { selected: Selecte
         const { b: col, ink } = t.band(b.key);
         const items: Pick[] = [...b.items.map(([e, label]) => ({ e, label, band: b.key })), ...(st.custom.mood || []).filter(m => m.band === b.key)];
         return (
-          <View key={b.key} style={{ padding: 10, borderRadius: 18, backgroundColor: mix(col, t.c.surface, 0.24) }}>
-            <View style={{ alignSelf: 'flex-start', marginBottom: 8, paddingHorizontal: t.fs * 0.8, paddingVertical: 1, borderRadius: 999, backgroundColor: col }}>
+          <View key={b.key} style={{ padding: 12, borderRadius: R.m, backgroundColor: mix(col, t.c.surface, t.dark ? 0.18 : 0.22) }}>
+            <View style={{ alignSelf: 'flex-start', marginBottom: 10, paddingHorizontal: t.fs * 0.8, paddingVertical: 2, borderRadius: 999, backgroundColor: col }}>
               <T em={0.85} display bold color={ink}>{b.name}</T>
             </View>
             <TileGrid items={items} selected={selected} onToggle={m => onChange(toggled(selected, m))} disabled={disabled} />

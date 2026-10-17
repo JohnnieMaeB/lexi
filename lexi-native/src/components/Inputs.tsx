@@ -13,7 +13,7 @@ let fieldUid = 0;
 export const useFieldId = (p: string) => useRef(p + '-' + (++fieldUid)).current;
 
 type BoxProps = TextInputProps & { field: Field; style?: StyleProp<TextStyle>; lines?: number };
-/** `textarea` / `input` from lexi.html: cream fill, soft outline, the person's font and spacing. */
+/** A text box: soft fill, soft outline, radius 14, the person's font and spacing. */
 export const Box = React.forwardRef<TextInputInstance, BoxProps>(function Box({ field, style, lines = 1, multiline, ...rest }, ref) {
   const t = useTheme();
   const base = t.text(1);
@@ -27,7 +27,7 @@ export const Box = React.forwardRef<TextInputInstance, BoxProps>(function Box({ 
       multiline={multiline}
       textAlignVertical={multiline ? 'top' : 'center'}
       style={[base, s.box, {
-        borderColor: t.c.line, backgroundColor: t.c.bg,
+        borderColor: t.c.line, backgroundColor: t.c.field,
         minHeight: multiline ? (base.lineHeight as number) * lines + 18 : 48,
         paddingHorizontal: t.fs * 0.75,
       }, style]}
@@ -37,7 +37,7 @@ export const Box = React.forwardRef<TextInputInstance, BoxProps>(function Box({ 
 });
 
 /** 🎙 Mic: tap to talk, tap again to stop. Pulses while listening. */
-export function MicButton({ target, variant = 'round', size = 40 }: { target: VoiceTarget; variant?: 'round' | 'chip'; size?: number }) {
+export function MicButton({ target, variant = 'round', size = 44 }: { target: VoiceTarget; variant?: 'round' | 'chip'; size?: number }) {
   const t = useTheme();
   const on = useListeningId() === target.id;
   const pulse = useRef(new Animated.Value(1)).current;
@@ -64,23 +64,23 @@ export function MicButton({ target, variant = 'round', size = 40 }: { target: Vo
     <Animated.View style={{ opacity: pulse }}>
       <Pressable onPress={press} accessibilityRole="button" accessibilityLabel={a11y} accessibilityState={{ selected: on }}
         hitSlop={4}
-        style={[s.round, { minWidth: size, height: size, backgroundColor: on ? t.c.accent2 : 'transparent', paddingHorizontal: t.icons ? 0 : 10 }]}>
+        style={[s.round, { minWidth: size, height: size, backgroundColor: on ? t.c.yes : 'transparent', paddingHorizontal: t.icons ? 0 : 10 }]}>
         {t.icons
-          ? <Text style={t.emoji(Math.round(size * 0.55))}>{on ? '⏹️' : '🎙'}</Text>
-          : <T em={0.8} color={on ? t.c.onAccent2 : t.c.ink}>{on ? 'Stop' : 'Speak'}</T>}
+          ? <Text style={t.emoji(Math.round(size * 0.64))}>{on ? '⏹️' : '🎙'}</Text>
+          : <T em={0.8} color={on ? t.c.onYes : t.c.ink}>{on ? 'Stop' : 'Speak'}</T>}
       </Pressable>
     </Animated.View>
   );
 }
 
 /** Round 🙂 button that opens the emoji picker for a field. */
-export function EmojiButton({ field, k, size = 40, single }: { field: Field; k: string; size?: number; single?: boolean }) {
+export function EmojiButton({ field, k, size = 44, single }: { field: Field; k: string; size?: number; single?: boolean }) {
   const t = useTheme();
   return (
     <Pressable onPress={() => toggleEmoji({ key: k, insert: single ? field.set : field.insert, single })}
       accessibilityRole="button" accessibilityLabel="Add emoji" hitSlop={4}
       style={[s.round, { minWidth: size, height: size, paddingHorizontal: t.icons ? 0 : 10 }]}>
-      {t.icons ? <Text style={t.emoji(Math.round(size * 0.55))}>🙂</Text> : <T em={0.8}>Emoji</T>}
+      {t.icons ? <Text style={t.emoji(Math.round(size * 0.64))}>🙂</Text> : <T em={0.8}>Emoji</T>}
     </Pressable>
   );
 }

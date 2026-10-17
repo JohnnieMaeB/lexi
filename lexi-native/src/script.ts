@@ -1,7 +1,7 @@
 // Lexi's conversation script: onboarding (Chat Bot Plan), the guided check-in, free chat and reflections.
 // Copy and order match lexi.html.
 import { BAND_BY, TOPIC_BY, YES_NO, type Pick } from './content';
-import { addBot, addCard, addMe, ask, say, sayMany, sayQueue, showTyping } from './chat';
+import { addBot, addCard, addMe, addMeEmoji, ask, say, sayMany, sayQueue, showTyping } from './chat';
 import { aiErrorText, claude, type Msg } from './ai';
 import {
   addEntry, aiReady, ready, setOnboarded, setSending, setSheet, showView, state, toast, updateEntry,
@@ -68,17 +68,21 @@ export async function startGuided(fromIntro = false) {
     if (!fromIntro) await say("Let's check in. 🧭");
     await say('How do you feel? Pick as many as you like.');
     const moods = await addCard<Pick[]>('mood');
-    addMe(moods.length ? moods.map(m => m.e + ' ' + m.label).join(' · ') : '⏭️ Skip');
+    if (moods.length) addMeEmoji(moods.map(m => m.e), moods.map(m => m.label).join(' · ')); else addMeEmoji(['⏭️'], 'Skip');
     await say(reactionFor(moods));
     await say('What do you want to talk about today?');
     const keys = await addCard<string[]>('topics');
-    addMe(keys.length ? keys.map(k => TOPIC_BY[k].icon + ' ' + TOPIC_BY[k].name).join(' · ') : 'Just my mood today');
+    if (keys.length) addMeEmoji(keys.map(k => TOPIC_BY[k].icon), keys.map(k => TOPIC_BY[k].name).join(' · '));
+    else addMe('Just my mood today');
     const topics: TopicAnswer[] = [];
     for (const k of keys) {
       const T = TOPIC_BY[k];
       await say(T.icon + ' ' + T.q);
       const a = await addCard<TopicAnswer | null>('topicAnswer', { topic: T });
-      addMe(a ? answerText(a) : '⏭️ Skip');
+      // Picks alone show as big emoji; anything typed (notes, to-dos) keeps a bubble.
+      if (!a) addMeEmoji(['⏭️'], 'Skip');
+      else if (a.picks.length && !a.note && !a.todos.length) addMeEmoji(a.picks.map(p => p.e), a.picks.map(p => p.label).join(' · '));
+      else addMe(answerText(a));
       if (a) topics.push(a);
     }
     if (!moods.length && !topics.length) { await say("Nothing to save this time. That's okay. 🏡"); offerActions(); return; }
@@ -138,7 +142,7 @@ function lexiRules(): string {
     '- 🎙 The mic next to 🙂 turns speech into words, in the chat box and when writing.',
     '- ✏️ Write on my own: free writing with an emoji button, 🎙 voice typing, ✨ Tidy spelling and 🔊 Read it back.',
     '- 📖 Journal tab: entries by day, a 14-day mood strip, tick off to dos, 🔊 read entries aloud, 🗑 delete entries.',
-    '- ⚙️ Settings tab: turn icons off, font (Verdana, Lexend, Atkinson Hyperlegible), text size, line spacing, colors (orange, purple, mint), light or dark, skin tone, avatar, read Lexi out loud, replay the intro.',
+    "- ⚙️ Settings tab: theme (Orange, Purple, Mint, Night, Ember, or match the device), turn icons off, font (Verdana, Lexend, Atkinson Hyperlegible), text size, line spacing, Lexi's voice (her own recorded voice or a device voice, with speed and pitch), skin tone, avatar, read Lexi out loud, replay the intro.",
     "The user's recent journal entries are below. Mention them only when the user asks about their journal or feelings. Newer entries may arrive later in the chat as system notes.",
     journalContext(),
     'The conversation follows.',
@@ -148,9 +152,10 @@ function fallbackReply(t: string): string[] | null {
   const s = t.toLowerCase();
   if (/suicid|kill myself|hurt myself|self.?harm|end it all|want to die/.test(s)) return ["I'm really glad you told me. 💛", 'Please reach out to someone you trust or your local emergency number now.', 'In the US you can call or text 988.'];
   if (/delete|remove|erase/.test(s)) return ['To delete an entry, open 📖 Journal.', 'Then tap 🗑️ on that entry.'];
-  if (/icon|emoji/.test(s)) return ['You can turn icons on or off in ⚙️ Settings. 🧠'];
   if (/\bmic\b|microphone|dictat|voice typ|speech to text/.test(s)) return ['Tap 🎙 next to 🙂 and say your words. I type them for you.'];
-  if (/font|size|spacing|dark|colou?r|read|voice/.test(s)) return ['Fonts, text size, spacing, colors and read aloud are in ⚙️ Settings.'];
+  if (/voice|robot|speak|read/.test(s)) return ['You can pick my voice in ⚙️ Settings. 🔊', 'There is a speed slider too.'];
+  if (/icon|emoji/.test(s)) return ['You can turn icons on or off in ⚙️ Settings. 🧠'];
+  if (/font|size|spacing|dark|colou?r|theme|look/.test(s)) return ['Colors, fonts, text size and spacing are in ⚙️ Settings. 🎨'];
   if (/check|guide|start|help|how/.test(s)) return ["Tap 🧭 Guided check-in and I'll go step by step with you.", 'Or tap ✏️ to write on your own.'];
   return null;
 }
@@ -231,8 +236,10 @@ export async function intro() {
   }
 }
 async function welcomeBack() {
-  const today = state.entries.filter((e: Entry) => e.day === dayKey()).length;
-  await say(today ? "Welcome back! 🏡 You've saved " + today + (today === 1 ? ' entry' : ' entries') + ' today. ✔️' : 'Welcome back! 🏡');
+  // No count, so both lines can be in Lexi's own recorded voice.
+  const today = state.entries.some((e: Entry) => e.day === dayKey());
+  await say('Welcome back! 🏡');
+  if (today) await say("You've already saved something today. ✔️");
   await say('What would you like to do?');
   offerActions();
 }
