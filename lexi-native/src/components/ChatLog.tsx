@@ -1,20 +1,25 @@
-// The Home chat: Lexi's mint bubbles on the left, yours on the right, cards in between.
-import React, { useEffect, useRef } from 'react';
-import { Animated, Pressable, ScrollView, StyleSheet, Text, View, type ScrollViewInstance } from 'react-native';
-import { reduceMotion, useChatItems, type ChatItem } from '../chat';
+// The Home chat, laid out like Screens 11-13: a fixed-width column of mint bubbles on the left with 🤖 on the
+// last bubble of each group, Yes / No pills inside the question bubble, and emoji answers shown huge on the right.
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, Image, Pressable, ScrollView, StyleSheet, Text, View, type ScrollViewInstance } from 'react-native';
+import { addMeEmoji, reduceMotion, useChatItems, type ChatItem } from '../chat';
+import type { Option } from '../content';
 import { speak } from '../speech';
 import { useLexi } from '../store';
-import { stripEmoji } from '../text';
-import { useTheme } from '../theme';
-import { T } from '../ui';
+import { emojiList, stripEmoji } from '../text';
+import { R, useTheme } from '../theme';
+import { Choice, PopIn, Row, T } from '../ui';
 import { CardView } from './Cards';
 
-function Ava({ e, hidden }: { e: string; hidden?: boolean }) {
+const BUTTERFLY = require('../../assets/butterfly.png');
+type CardItem = Extract<ChatItem, { type: 'card' }>;
+
+function Ava({ e, show, size }: { e: string; show: boolean; size: number }) {
   const t = useTheme();
   if (!t.icons) return null;
   return (
-    <View style={[s.ava, { opacity: hidden ? 0 : 1 }]} accessible={false} importantForAccessibility="no-hide-descendants">
-      <Text style={t.emoji(26)}>{t.toned(e)}</Text>
+    <View style={{ width: size, alignItems: 'center', justifyContent: 'flex-end' }} accessible={false} importantForAccessibility="no-hide-descendants">
+      {show ? <Text style={t.emoji(size - 4)}>{t.toned(e)}</Text> : null}
     </View>
   );
 }
@@ -24,70 +29,117 @@ function SpeakButton({ text, color }: { text: string; color: string }) {
   if (!stripEmoji(text)) return null;
   return (
     <Pressable onPress={() => speak(text)} accessibilityRole="button" accessibilityLabel="Read aloud" hitSlop={10}
-      style={({ pressed }) => ({ marginLeft: 6, paddingHorizontal: 3, opacity: pressed ? 1 : 0.8, alignSelf: 'flex-end' })}>
-      {t.icons ? <Text style={t.emoji(Math.round(t.fs * 0.85))}>🔊</Text> : <T em={0.8} color={color}>Read</T>}
+      style={({ pressed }) => ({ alignSelf: 'flex-end', marginTop: 2, paddingHorizontal: 4, opacity: pressed ? 1 : 0.75 })}>
+      {t.icons ? <Text style={t.emoji(22)}>🔊</Text> : <T em={0.8} color={color}>Read</T>}
     </Pressable>
   );
 }
 
-/** A bubble that rises 6px into place, unless reduce motion is on. */
-function Rise({ children }: { children: React.ReactNode }) {
-  const y = useRef(new Animated.Value(reduceMotion ? 0 : 6)).current;
-  useEffect(() => { if (!reduceMotion) Animated.timing(y, { toValue: 0, duration: 250, useNativeDriver: true }).start(); }, [y]);
-  return <Animated.View style={{ transform: [{ translateY: y }] }}>{children}</Animated.View>;
+/** Bot bubble shell: fixed width, radius 22, a 6 px corner pointing at 🤖 on the last bubble. */
+function BotBubble({ last, info, children }: { last: boolean; info?: boolean; children: React.ReactNode }) {
+  const t = useTheme();
+  return (
+    <View style={[s.bubble, t.shadow, {
+      width: t.bubbleW, paddingHorizontal: Math.round(t.fs * 0.85), paddingVertical: Math.round(t.fs * 0.6),
+      backgroundColor: info ? t.c.surface : t.c.bot, borderBottomLeftRadius: last && t.icons ? 6 : R.m,
+      borderWidth: info ? 2 : t.c.botLine ? 1 : 0, borderStyle: info ? 'dashed' : 'solid', borderColor: info ? t.c.bot : t.c.botLine || 'transparent',
+    }]}>
+      {children}
+    </View>
+  );
 }
 
-function BotRow({ text, info, cont }: { text: string; info?: boolean; cont: boolean }) {
+/** 👏🏽👏🏽👏🏽👏🏽 across the width, 64-96 px, with a short bounce. */
+function Celebration({ text }: { text: string }) {
+  const t = useTheme();
+  const n = Math.max(1, emojiList(text).length);
+  const size = Math.round(Math.max(64, Math.min(96, ((t.contentW - t.avatarBot - 8) / n) * 0.82)));
+  const y = useRef(new Animated.Value(reduceMotion ? 0 : 18)).current;
+  useEffect(() => { if (!reduceMotion) Animated.spring(y, { toValue: 0, friction: 4, tension: 120, useNativeDriver: true }).start(); }, [y]);
+  return (
+    <Animated.View style={{ flex: 1, transform: [{ translateY: y }] }}>
+      <Text style={[t.emoji(size), { textAlign: 'left' }]} accessibilityLabel="Lexi cheers">{t.toned(text)}</Text>
+    </Animated.View>
+  );
+}
+
+function BotRow({ text, info, last }: { text: string; info?: boolean; last: boolean }) {
   const t = useTheme();
   const emojiOnly = !stripEmoji(text);
   if (emojiOnly && !t.icons) return null;
-  const maxW = t.narrow ? '86%' : '82%';
   return (
-    <Rise>
-      <View style={s.row}>
-        <Ava e="🤖" hidden={cont} />
-        {emojiOnly ? (
-          <Text style={[t.emoji(t.fs * 2), { letterSpacing: t.fs * 0.16 }]} accessibilityLabel="Lexi cheers">{t.toned(text)}</Text>
-        ) : (
-          <View style={[s.bubble, s.botBubble, {
-            maxWidth: maxW, paddingHorizontal: t.fs * 0.9, paddingVertical: t.fs * 0.55,
-            backgroundColor: info ? t.c.surface : t.c.bot,
-            borderWidth: info ? 2 : 0, borderStyle: 'dashed', borderColor: t.c.bot,
-          }]}>
-            <T color={info ? t.c.ink : t.c.botInk} style={{ flexShrink: 1 }}>{text}</T>
-            <SpeakButton text={text} color={info ? t.c.ink : t.c.botInk} />
-          </View>
-        )}
-      </View>
-    </Rise>
+    <PopIn style={s.row}>
+      <Ava e="🤖" show={last} size={t.avatarBot} />
+      {emojiOnly ? <Celebration text={text} /> : (
+        <BotBubble last={last} info={info}>
+          <T color={info ? t.c.ink : t.c.botInk}>{text}</T>
+          <SpeakButton text={text} color={info ? t.c.ink : t.c.botInk} />
+        </BotBubble>
+      )}
+    </PopIn>
   );
 }
 
-function MeRow({ text, cont }: { text: string; cont: boolean }) {
+/** Lexi's question with big Yes / No pills inside the bubble, bottom-left (Screens 11-13). */
+function QuestionRow({ item, last }: { item: CardItem; last: boolean }) {
+  const t = useTheme();
+  const { text, options, yn } = item.props as { text: string; options: Option<unknown>[]; yn?: boolean };
+  return (
+    <PopIn style={s.row}>
+      <Ava e="🤖" show={last} size={t.avatarBot} />
+      <BotBubble last={last}>
+        <T color={t.c.botInk}>{text}</T>
+        <Row gap={10} style={{ marginTop: 10 }}>
+          {options.map((o, i) => (
+            <Choice key={o.label} big label={o.label} icon={o.e} filled={!!yn && i === 0}
+              dim={item.done && item.picked !== i} disabled={item.done}
+              onPress={() => { item.finish(o.v, i); addMeEmoji([o.e], o.label); }} />
+          ))}
+        </Row>
+        <SpeakButton text={text} color={t.c.botInk} />
+      </BotBubble>
+    </PopIn>
+  );
+}
+
+function MeRow({ item, last }: { item: Extract<ChatItem, { type: 'me' }>; last: boolean }) {
   const t = useTheme();
   const st = useLexi();
+  const emoji = item.emoji && t.icons ? item.emoji : null;
+  // One answer at 88 px, several a little smaller, so they still fit the width.
+  const size = emoji ? (emoji.length === 1 ? 88 : emoji.length === 2 ? 68 : emoji.length === 3 ? 56 : 46) : 0;
   return (
-    <Rise>
-      <View style={[s.row, { flexDirection: 'row-reverse' }]}>
-        <Ava e={st.settings.avatar} hidden={cont} />
-        <View style={[s.bubble, s.meBubble, { maxWidth: t.narrow ? '86%' : '82%', paddingHorizontal: t.fs * 0.9, paddingVertical: t.fs * 0.55, backgroundColor: t.c.me }]}>
-          <T color={t.c.meInk}>{text}</T>
+    <PopIn style={[s.row, { flexDirection: 'row-reverse' }]}>
+      <Ava e={st.settings.avatar} show={last} size={t.avatarMe} />
+      {emoji ? (
+        <View style={{ maxWidth: t.contentW - t.avatarMe - 8, alignItems: 'flex-end' }} accessible accessibilityLabel={'You answered ' + (item.caption || '')}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', gap: 4 }}>
+            {emoji.map((e, i) => <Text key={i} style={t.emoji(size)}>{t.toned(e)}</Text>)}
+          </View>
+          {item.caption ? <T em={0.8} soft style={{ textAlign: 'right' }}>{item.caption}</T> : null}
         </View>
-      </View>
-    </Rise>
+      ) : (
+        <View style={[s.bubble, t.shadow, {
+          maxWidth: t.bubbleW, paddingHorizontal: Math.round(t.fs * 0.85), paddingVertical: Math.round(t.fs * 0.6),
+          backgroundColor: t.c.me, borderBottomRightRadius: last && t.icons ? 6 : R.m, borderWidth: t.dark ? 1 : 0, borderColor: t.c.line,
+        }]}>
+          <T color={t.c.meInk}>{item.text}</T>
+        </View>
+      )}
+    </PopIn>
   );
 }
 
-/** Three dots bobbing up and down: the Animated circle from the board's React Native sketch. */
-function Typing({ cont }: { cont: boolean }) {
+/** Circles moving up and down: the board's "Move a Circle up/down" React Native sketch. */
+function Typing({ last }: { last: boolean }) {
   const t = useTheme();
   const vals = useRef([0, 1, 2].map(() => new Animated.Value(0))).current;
   useEffect(() => {
     if (reduceMotion) return;
     const loops = vals.map((v, i) => Animated.loop(Animated.sequence([
       Animated.delay(i * 150),
-      Animated.timing(v, { toValue: -7, duration: 500, useNativeDriver: true }),
-      Animated.timing(v, { toValue: 0, duration: 500, useNativeDriver: true }),
+      Animated.timing(v, { toValue: -8, duration: 420, useNativeDriver: true }),
+      Animated.timing(v, { toValue: 0, duration: 420, useNativeDriver: true }),
       Animated.delay((2 - i) * 150),
     ])));
     loops.forEach(l => l.start());
@@ -95,51 +147,60 @@ function Typing({ cont }: { cont: boolean }) {
   }, [vals]);
   return (
     <View style={s.row}>
-      <Ava e="🤖" hidden={cont} />
-      <View accessibilityLabel="Lexi is typing" style={[s.bubble, s.botBubble, { flexDirection: 'row', gap: 6, paddingHorizontal: 15, paddingVertical: 14, backgroundColor: t.c.bot }]}>
+      <Ava e="🤖" show={last} size={t.avatarBot} />
+      <View accessibilityLabel="Lexi is typing" style={[s.bubble, t.shadow, {
+        flexDirection: 'row', gap: 8, paddingHorizontal: 18, paddingVertical: 18, backgroundColor: t.c.bot,
+        borderBottomLeftRadius: last && t.icons ? 6 : R.m, borderWidth: t.c.botLine ? 1 : 0, borderColor: t.c.botLine || 'transparent',
+      }]}>
         {vals.map((v, i) => <Animated.View key={i} style={[s.dot, { backgroundColor: t.c.botInk, transform: [{ translateY: v }] }]} />)}
       </View>
     </View>
   );
 }
 
-const who = (i?: ChatItem) => (!i ? null : i.type === 'typing' ? 'bot' : i.type === 'card' ? 'card' : i.type);
+const side = (i?: ChatItem) =>
+  !i ? null : i.type === 'bot' || i.type === 'typing' || (i.type === 'card' && i.card === 'question') ? 'bot' : i.type === 'me' ? 'me' : 'card';
 
 export function ChatLog({ visible }: { visible: boolean }) {
   const t = useTheme();
   const items = useChatItems();
   const ref = useRef<ScrollViewInstance>(null);
   const pending = useRef(true);
+  const [h, setH] = useState(0);
   useEffect(() => { pending.current = true; }, [items.length]);
   useEffect(() => {
     if (!visible) return;
     const id = setTimeout(() => ref.current?.scrollToEnd({ animated: false }), 60);
     return () => clearTimeout(id);
   }, [visible]);
-  const indent = t.icons && !t.narrow ? 42 : 0;
+  const bw = Math.round(t.contentW * 0.82), bh = Math.round(bw * (1076 / 560));
   return (
-    <ScrollView
-      ref={ref}
-      accessibilityLabel="Chat with Lexi"
-      keyboardShouldPersistTaps="handled"
-      contentContainerStyle={{ gap: 10, paddingTop: 18, paddingBottom: 28, paddingHorizontal: t.narrow ? 10 : 12 }}
-      onContentSizeChange={() => { if (pending.current) { pending.current = false; ref.current?.scrollToEnd({ animated: !reduceMotion }); } }}>
-      {items.map((it, i) => {
-        const prev = who(items[i - 1]);
-        if (it.type === 'bot') return <BotRow key={it.id} text={it.text} info={it.info} cont={prev === 'bot'} />;
-        if (it.type === 'typing') return <Typing key={it.id} cont={prev === 'bot'} />;
-        if (it.type === 'me') return <MeRow key={it.id} text={it.text} cont={prev === 'me'} />;
-        return <View key={it.id} style={{ marginLeft: indent }}><CardView item={it} /></View>;
-      })}
-    </ScrollView>
+    <View style={{ flex: 1 }} onLayout={e => setH(e.nativeEvent.layout.height)}>
+      {t.butterfly && h ? (
+        <Image source={BUTTERFLY} resizeMode="contain" accessible={false} pointerEvents="none"
+          style={{ position: 'absolute', alignSelf: 'center', top: Math.max(0, (h - Math.min(bh, h * 0.92)) / 2), width: bw, height: Math.min(bh, h * 0.92), tintColor: '#FFB877', opacity: 0.18 }} />
+      ) : null}
+      <ScrollView
+        ref={ref}
+        accessibilityLabel="Chat with Lexi"
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ gap: 24, paddingTop: 20, paddingBottom: 28, paddingHorizontal: t.pad }}
+        onContentSizeChange={() => { if (pending.current) { pending.current = false; ref.current?.scrollToEnd({ animated: !reduceMotion }); } }}>
+        {items.map((it, i) => {
+          const last = side(items[i + 1]) !== side(it);
+          if (it.type === 'bot') return <BotRow key={it.id} text={it.text} info={it.info} last={last} />;
+          if (it.type === 'typing') return <Typing key={it.id} last={last} />;
+          if (it.type === 'me') return <MeRow key={it.id} item={it} last={last} />;
+          if (it.card === 'question') return <QuestionRow key={it.id} item={it} last={last} />;
+          return <PopIn key={it.id}><CardView item={it} /></PopIn>;
+        })}
+      </ScrollView>
+    </View>
   );
 }
 
 const s = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
-  ava: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center' },
-  bubble: { flexDirection: 'row', alignItems: 'flex-end', borderRadius: 20 },
-  botBubble: { borderBottomLeftRadius: 6 },
-  meBubble: { borderBottomRightRadius: 6 },
-  dot: { width: 10, height: 10, borderRadius: 5 },
+  bubble: { borderRadius: R.m },
+  dot: { width: 12, height: 12, borderRadius: 6 },
 });

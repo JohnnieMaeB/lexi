@@ -1,42 +1,51 @@
 // The cards Lexi puts in the chat: answer buttons, the tab legend, the mood picker, topic chips and
 // one card per topic. Each calls finish() once; the chat then locks it (dimmed, no taps).
 import React, { useState } from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { TOPICS, type Pick, type Topic } from '../content';
-import { addMe, type ChatItem } from '../chat';
+import { addMeEmoji, type ChatItem } from '../chat';
 import { useField } from '../fields';
 import { showView, type TopicAnswer, type Todo } from '../store';
-import { useTheme } from '../theme';
-import { Btn, Card, Chip, Choice, Row, T } from '../ui';
+import { R, useTheme } from '../theme';
+import { Btn, Card, Chip, Choice, Ico, Row, T } from '../ui';
 import { Box, NoteLine } from './Inputs';
 import { MoodPicker, TopicOpts, type Selected } from './Pickers';
 
 type CardItem = Extract<ChatItem, { type: 'card' }>;
 type Opt = { e: string; label: string; v?: unknown; run?: () => void };
 
+/** Menus Lexi offers (Guided check-in / Write on my own / Open journal): big pills. */
 function ChoicesCard({ item }: { item: CardItem }) {
-  const { options, yn } = item.props as { options: Opt[]; yn?: boolean };
+  const { options } = item.props as { options: Opt[] };
   return (
     <Row>
       {options.map((o, i) => (
-        <Choice key={o.label} label={o.label} icon={o.e} filled={!!yn && i === 0}
+        <Choice key={o.label} label={o.label} icon={o.e}
           dim={item.done && item.picked !== i} disabled={item.done}
           onPress={() => {
             if (o.run) { o.run(); return; }
-            item.finish(o.v, i); addMe(o.e + ' ' + o.label);
+            item.finish(o.v, i); addMeEmoji([o.e], o.label);
           }} />
       ))}
     </Row>
   );
 }
 
+/** The ⚙️ 🏡 📖 legend from the Chat Bot Plan: huge emoji on white tiles. */
 function LegendCard() {
+  const t = useTheme();
+  const w = Math.floor((t.contentW - 20) / 3);
+  const tiles: [string, string, 'settings' | 'home' | 'journal'][] = [['⚙️', 'Settings', 'settings'], ['🏡', 'Home', 'home'], ['📖', 'Journal', 'journal']];
   return (
-    <Row gap={8}>
-      <Chip icon="⚙️" label="Settings" onPress={() => showView('settings')} />
-      <Chip icon="🏡" label="Home" onPress={() => showView('home')} />
-      <Chip icon="📖" label="Journal" onPress={() => showView('journal')} />
-    </Row>
+    <View style={{ flexDirection: 'row', gap: 10 }}>
+      {tiles.map(([e, name, v]) => (
+        <Pressable key={v} onPress={() => showView(v)} accessibilityRole="button" accessibilityLabel={name}
+          style={({ pressed }) => [t.shadow, { width: w, paddingVertical: 12, borderRadius: R.m, alignItems: 'center', backgroundColor: t.c.surface, transform: [{ scale: pressed ? 0.96 : 1 }] }]}>
+          <Ico e={e} size={Math.min(64, Math.round(w * 0.5))} />
+          <T em={0.85} bold>{name}</T>
+        </Pressable>
+      ))}
+    </View>
   );
 }
 
@@ -60,7 +69,7 @@ function TopicsCard({ item }: { item: CardItem }) {
   return (
     <Card done={item.done}>
       <Row gap={8}>
-        {TOPICS.map(tp => <Chip key={tp.key} icon={tp.icon} label={tp.name} selected={sel.includes(tp.key)} onPress={() => flip(tp.key)} />)}
+        {TOPICS.map(tp => <Chip key={tp.key} icon={tp.icon} iconSize={30} label={tp.name} selected={sel.includes(tp.key)} onPress={() => flip(tp.key)} />)}
       </Row>
       <Row end>
         <Btn label="Just my mood today" onPress={() => item.finish([])} />
@@ -128,6 +137,7 @@ function TopicAnswerCard({ item }: { item: CardItem }) {
 
 export function CardView({ item }: { item: CardItem }) {
   switch (item.card) {
+    case 'question': return null; // drawn as a bot bubble by ChatLog
     case 'choices': return <ChoicesCard item={item} />;
     case 'legend': return <LegendCard />;
     case 'mood': return <MoodCard item={item} />;

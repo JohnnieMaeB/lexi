@@ -1,32 +1,61 @@
-// Colors, type and spacing. Palettes are the CSS tokens from lexi.html (Material theme seeded at #E38100,
-// purple #8100E3 and mint #79EAB9 from the board's Theme frame).
+// Colors, type, sizes and depth from docs/DESIGN.md (Lexi Miro board, Screens 11-15, Theme frame, Inspo Board).
 import { createContext, useContext } from 'react';
-import { Platform, type TextStyle } from 'react-native';
-import { FONTS, SIZES, SPACING, type BandKey, type Settings } from './content';
+import { Platform, type TextStyle, type ViewStyle } from 'react-native';
+import type { BandKey, Settings, ThemeKey } from './content';
 import { stripEmoji, tone } from './text';
+import { SIZES, SPACING } from './content';
 
 export type Palette = {
-  bg: string; surface: string; surface2: string; ink: string; inkSoft: string; line: string;
-  accent: string; onAccent: string; accent2: string; onAccent2: string;
-  bot: string; botInk: string; me: string; meInk: string;
+  bg: string;            // canvas behind everything
+  bar: string;           // top bar, side rails and bottom dock ("none" themes use the background)
+  onBar: string;
+  surface: string;       // tiles, cards, the input pill, the active nav tile
+  surface2: string;      // quieter fills (confirm boxes, empty day cards)
+  field: string;         // text boxes inside cards
+  ink: string; inkSoft: string; line: string;
+  ring: string;          // selected tiles, chips and day cards
+  yes: string; onYes: string;            // primary pills (the board's 👍🏽 pill)
+  bot: string; botInk: string; botLine: string | null;
+  me: string; meInk: string;
   bContent: string; bContentInk: string; bStressed: string; bStressedInk: string; bLow: string; bLowInk: string;
-  sel: string; scrim: string; shadow: string; danger: string;
+  sel: string; scrim: string; danger: string;
+  shadowOpacity: number;
 };
 
-const LIGHT: Palette = {
-  bg: '#FAEFE8', surface: '#FFF8F5', surface2: '#F2DFD1', ink: '#201B17', inkSoft: '#51443A', line: '#D6C3B6',
-  accent: '#E38100', onAccent: '#1E1000', accent2: '#8100E3', onAccent2: '#FFFFFF',
-  bot: '#79EAB9', botInk: '#06281A', me: '#FFDCC1', meInk: '#2E1500',
-  bContent: '#E38100', bContentInk: '#1E1000', bStressed: '#79EAB9', bStressedInk: '#06281A', bLow: '#8100E3', bLowInk: '#FFFFFF',
-  sel: '#EBD9F7', scrim: 'rgba(32,27,23,0.5)', shadow: 'rgba(32,27,23,0.22)', danger: '#C0352B',
+const BANDS_LIGHT = { bContent: '#E38100', bContentInk: '#1E1000', bStressed: '#79EAB9', bStressedInk: '#06281A', bLow: '#8100E3', bLowInk: '#FFFFFF' };
+const BANDS_DARK = { bContent: '#E38100', bContentInk: '#1E1000', bStressed: '#79EAB9', bStressedInk: '#06281A', bLow: '#A866FF', bLowInk: '#1D0038' };
+const LIGHT_BASE = {
+  bg: '#E6E6E6', surface: '#FFFFFF', surface2: '#F1F1F1', field: '#F6F6F6',
+  ink: '#020000', inkSoft: '#474747', line: '#CDCDCD',
+  yes: '#8100E3', onYes: '#FFFFFF', botLine: null, me: '#FFFFFF', meInk: '#020000',
+  sel: '#FFFFFF', scrim: 'rgba(0,0,0,0.45)', danger: '#C0352B', shadowOpacity: 0.08,
+  ...BANDS_LIGHT,
 };
-const DARK: Palette = {
-  bg: '#201B17', surface: '#2B241F', surface2: '#3A302A', ink: '#ECE0DA', inkSoft: '#D6C3B6', line: '#51443A',
-  accent: '#E38100', onAccent: '#1E1000', accent2: '#C99BFF', onAccent2: '#24004A',
-  bot: '#FFB877', botInk: '#4C2700', me: '#5A422D', meInk: '#FFDCC1',
-  bContent: '#F29A2E', bContentInk: '#1E1000', bStressed: '#79EAB9', bStressedInk: '#06281A', bLow: '#A866FF', bLowInk: '#1D0038',
-  sel: '#3E2F55', scrim: 'rgba(0,0,0,0.6)', shadow: 'rgba(0,0,0,0.5)', danger: '#C0352B',
+
+export const PALETTES: Record<Exclude<ThemeKey, 'auto'>, Palette> = {
+  // Screen 11
+  orange: { ...LIGHT_BASE, bar: '#E38100', onBar: '#020000', ring: '#E38100', bot: '#79EAB9', botInk: '#020000' },
+  // Screen 13
+  purple: { ...LIGHT_BASE, bar: '#8100E3', onBar: '#FFFFFF', ring: '#8100E3', bot: '#79EAB9', botInk: '#020000' },
+  // Theme frame. The ring is a deeper mint so a selected white tile still reads as selected.
+  mint: { ...LIGHT_BASE, bar: '#79EAB9', onBar: '#06281A', ring: '#1F8F62', bot: '#FFDCC1', botInk: '#2E1500' },
+  // Screen 12: black, bars blend into the background, outlined dark bubbles with orange words, mint Yes.
+  night: {
+    bg: '#020000', bar: '#020000', onBar: '#E38100', surface: '#1A1A1A', surface2: '#262626', field: '#0D0D0D',
+    ink: '#F4F4F4', inkSoft: '#BDBDBD', line: '#3A3A3A', ring: '#E38100',
+    yes: '#79EAB9', onYes: '#020000', bot: '#1A1A1A', botInk: '#E38100', botLine: '#FFFFFF', me: '#262626', meInk: '#F4F4F4',
+    sel: '#262626', scrim: 'rgba(0,0,0,0.6)', danger: '#E5534B', shadowOpacity: 0.35, ...BANDS_DARK,
+  },
+  // Screen 15: the board's Material 3 dark theme seeded at #E38100, with the butterfly engraving.
+  ember: {
+    bg: '#201B17', bar: '#201B17', onBar: '#FFB877', surface: '#2B241F', surface2: '#3A302A', field: '#201B17',
+    ink: '#ECE0DA', inkSoft: '#D6C3B6', line: '#51443A', ring: '#FFB877',
+    yes: '#FFB877', onYes: '#4C2700', bot: '#FFB877', botInk: '#4C2700', botLine: null, me: '#51443A', meInk: '#FFDCC1',
+    sel: '#3A302A', scrim: 'rgba(0,0,0,0.6)', danger: '#E5534B', shadowOpacity: 0.35, ...BANDS_DARK,
+  },
 };
+export const OUTLINE_EMBER = '#9E8E82';
+export const resolveTheme = (k: ThemeKey, systemDark: boolean): Exclude<ThemeKey, 'auto'> => (k === 'auto' ? (systemDark ? 'ember' : 'orange') : k);
 
 /* ---------- fonts ----------
    Lexend and Atkinson Hyperlegible ship with the app (Google Fonts, OFL). Verdana is a Microsoft font that
@@ -50,19 +79,33 @@ export function mix(a: string, b: string, pct: number): string {
   return '#' + A.map((v, i) => Math.round(v * pct + B[i] * (1 - pct)).toString(16).padStart(2, '0')).join('');
 }
 
+/** Radii 14 / 22 / 28 (DESIGN.md "Polish rules"). Tiles use 20. */
+export const R = { s: 14, tile: 20, m: 22, l: 28, pill: 999 } as const;
+
 export type Theme = ReturnType<typeof makeTheme>;
 
 export function makeTheme(S: Settings, systemDark: boolean, windowWidth: number) {
-  const dark = S.mode === 'dark' || (S.mode === 'auto' && systemDark);
-  const c: Palette = { ...(dark ? DARK : LIGHT) };
-  if (S.accent === 'purple') { c.accent = '#8100E3'; c.onAccent = '#FFFFFF'; }
-  if (S.accent === 'mint') { c.accent = '#79EAB9'; c.onAccent = '#06281A'; c.bot = '#FFDCC1'; c.botInk = '#2E1500'; }
+  const key = resolveTheme(S.theme, systemDark);
+  const c = PALETTES[key];
+  const dark = key === 'night' || key === 'ember';
   const fs = (SIZES[S.size] || SIZES.m)[1];
   const lh = (SPACING[S.spacing] || SPACING.wide)[1];
   const icons = S.icons;
+  // 14 px rails (10 px under 380 px), 10 px of breathing room inside them.
+  const rail = windowWidth < 380 ? 10 : 14;
+  const pad = 10;
+  const contentW = windowWidth - rail * 2 - pad * 2;
+  const shadow: ViewStyle = { shadowColor: '#000000', shadowOpacity: c.shadowOpacity, shadowRadius: 18, shadowOffset: { width: 0, height: 6 }, elevation: dark ? 3 : 2 };
   const t = {
-    c, dark, fs, lh, icons, accent: S.accent,
-    narrow: windowWidth <= 420,
+    c, key, dark, fs, lh, icons, rail, pad, contentW,
+    narrow: windowWidth < 380,
+    /** Bot bubbles are a fixed column, about 64 % of the content width (board: 222 of 347 px). */
+    bubbleW: Math.round(Math.min(contentW * 0.64, fs * 26)),
+    avatarBot: 46, avatarMe: 52,
+    /** Ember draws the butterfly engraving behind the chat. */
+    butterfly: key === 'ember',
+    barsBlend: c.bar === c.bg,
+    shadow,
     /** Text style at `em` times the base size, in the body font (or Lexend for headings). */
     text(em = 1, o: { bold?: boolean; display?: boolean; color?: string } = {}): TextStyle {
       const size = Math.round(fs * em * 10) / 10;
@@ -72,8 +115,8 @@ export function makeTheme(S: Settings, systemDark: boolean, windowWidth: number)
         color: o.color ?? c.ink,
       };
     },
-    /** Same text with emoji at a fixed line height (tiles, avatars). */
-    emoji(px: number): TextStyle { return { fontSize: px, lineHeight: Math.round(px * 1.25), color: c.ink }; },
+    /** Emoji at a fixed pixel size (they don't shrink with the text size: emoji are how Lexi talks). */
+    emoji(px: number): TextStyle { return { fontSize: px, lineHeight: Math.round(px * 1.22), color: c.ink, textAlign: 'center' }; },
     fontPreview(font: Settings['font']): TextStyle { return face(font, false); },
     /** Apply the skin tone, and hide emoji when icons are off (lexi.html's `.ico` spans). */
     rich(s: string): string { const toned = tone(s, S.tone); return icons ? toned : stripEmoji(toned); },
@@ -88,7 +131,6 @@ export function makeTheme(S: Settings, systemDark: boolean, windowWidth: number)
   return t;
 }
 
-export const fontLabel = (k: Settings['font']) => FONTS[k];
 export const ThemeContext = createContext<Theme | null>(null);
 export function useTheme(): Theme {
   const t = useContext(ThemeContext);

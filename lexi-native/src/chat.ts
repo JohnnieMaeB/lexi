@@ -7,10 +7,12 @@ import { state } from './store';
 import { speak } from './speech';
 import { sleep } from './text';
 
-export type CardKind = 'choices' | 'legend' | 'mood' | 'topics' | 'topicAnswer';
+/** `question` is a bot bubble with its answer pills inside (Yes / No on Screens 11-13). */
+export type CardKind = 'question' | 'choices' | 'legend' | 'mood' | 'topics' | 'topicAnswer';
 export type ChatItem =
   | { id: string; type: 'bot'; text: string; info?: boolean }
-  | { id: string; type: 'me'; text: string }
+  /** `emoji` set: the answer shows as huge emoji with a small caption and no bubble. */
+  | { id: string; type: 'me'; text: string; emoji?: string[]; caption?: string }
   | { id: string; type: 'typing' }
   | { id: string; type: 'card'; card: CardKind; props: any; done: boolean; picked?: number; finish: (v: unknown, picked?: number) => void };
 
@@ -43,6 +45,10 @@ export function addBot(text: string, opts: { info?: boolean; quiet?: boolean } =
   if (state.settings.autoread && !opts.quiet) speak(text, { queue: true });
 }
 export function addMe(text: string) { push({ id: nextId('m'), type: 'me', text }); }
+/** An answer made of emoji picks: shown huge, with the words as a caption. */
+export function addMeEmoji(emoji: string[], caption: string) {
+  push({ id: nextId('m'), type: 'me', text: caption, emoji, caption });
+}
 
 /** Put a card in the log and wait until it calls finish(). The card then locks, as in lexi.html. */
 export function addCard<T>(card: CardKind, props: object = {}, lockOnFinish = true): Promise<T> {
@@ -63,6 +69,11 @@ export function say(text: string, opts?: { info?: boolean }): Promise<void> {
 }
 export async function sayMany(lines: string[]) { for (const l of lines) await say(l); }
 
+/** Lexi asks, and the answer pills sit inside her bubble. */
 export function ask<T>(text: string, options: Option<T>[], yn = false): Promise<T> {
-  return say(text).then(() => addCard<T>('choices', { options, yn }));
+  sayQueue = sayQueue.then(async () => { const done = showTyping(); await sleep(delayFor(text)); done(); });
+  return sayQueue.then(() => {
+    if (state.settings.autoread) speak(text, { queue: true });
+    return addCard<T>('question', { text, options, yn });
+  });
 }

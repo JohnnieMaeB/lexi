@@ -77,10 +77,10 @@ function Sheet() {
   return (
     <View style={[StyleSheet.absoluteFill, { backgroundColor: t.c.scrim }]}>
       <View accessibilityViewIsModal style={{ flex: 1, backgroundColor: t.c.bg }}>
-        <View style={[s.head, { paddingTop: insets.top + 10, backgroundColor: t.c.accent }]}>
+        <View style={[s.head, { paddingTop: insets.top, height: 56 + insets.top, backgroundColor: t.c.bar, borderBottomWidth: t.barsBlend ? 1 : 0, borderBottomColor: t.c.line }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
-            <Ico e="✏️" />
-            <T em={1.15} display bold color={t.c.onAccent} accessibilityRole="header">Write on my own</T>
+            <Ico e="✏️" size={28} />
+            <T em={1.1} display bold color={t.c.onBar} accessibilityRole="header">Write on my own</T>
           </View>
           <Chip icon="✖️" label="Close" onPress={close} style={{ borderColor: 'transparent' }} />
         </View>
@@ -89,7 +89,7 @@ function Sheet() {
           <View style={[s.moodBox, { borderColor: t.c.line, backgroundColor: t.c.surface }]}>
             <Pressable onPress={() => setMoodOpen(!moodOpen)} accessibilityRole="button" accessibilityState={{ expanded: moodOpen }}
               style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, paddingHorizontal: 14, paddingVertical: 8 }}>
-              <Ico e="🌡️" />
+              <Ico e="🌡️" size={28} />
               <T bold>How do you feel?</T>
               <T em={0.85} soft>(you can skip this)</T>
               <View style={{ flex: 1 }} />
@@ -141,8 +141,8 @@ function Sheet() {
 }
 
 const s = StyleSheet.create({
-  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingHorizontal: 16, paddingBottom: 10 },
-  moodBox: { borderWidth: 2, borderRadius: 16, overflow: 'hidden' },
-  tidy: { gap: 10, padding: 12, borderRadius: 16 },
+  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingHorizontal: 16 },
+  moodBox: { borderWidth: 2, borderRadius: 22, overflow: 'hidden' },
+  tidy: { gap: 10, padding: 14, borderRadius: 22 },
   foot: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'flex-end', paddingHorizontal: 16, paddingTop: 12, borderTopWidth: 2 },
 });

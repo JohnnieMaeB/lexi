@@ -22,6 +22,18 @@ export function stripEmoji(t: string): string {
   EMOJI_RE.lastIndex = 0;
   return String(t).replace(EMOJI_RE, '').replace(LEFTOVER_RE, '').replace(/[ \t]{2,}/g, ' ').replace(/ *\n */g, '\n').trim();
 }
+/** What Lexi says out loud for a line, and the key of its recorded clip (the web app's `speechText()`):
+ *  "Stress(ors)" read as "Stressors", line breaks as ". ", emoji removed, runs of spaces collapsed. */
+export function speechKey(t: string): string {
+  EMOJI_RE.lastIndex = 0;
+  return String(t).replace(/Stress\(ors\)/g, 'Stressors').replace(/\n+/g, '. ')
+    .replace(EMOJI_RE, '').replace(LEFTOVER_RE, '').replace(/\s{2,}/g, ' ').trim();
+}
+/** Every emoji in a string, in order (skin tones and ZWJ sequences stay whole). */
+export function emojiList(s: string): string[] {
+  EMOJI_RE.lastIndex = 0;
+  return String(s).match(EMOJI_RE) || [];
+}
 export function firstEmoji(s: string): string {
   EMOJI_RE.lastIndex = 0;
   const m = String(s).match(EMOJI_RE);

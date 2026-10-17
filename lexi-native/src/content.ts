@@ -43,17 +43,25 @@ export const YES_NO: Option<boolean>[] = [{ v: true, e: '👍🏽', label: 'Yes'
 export type FontKey = 'verdana' | 'lexend' | 'atkinson';
 export type SizeKey = 's' | 'm' | 'l' | 'xl';
 export type SpacingKey = 'normal' | 'wide' | 'xwide';
-export type AccentKey = 'orange' | 'purple' | 'mint';
-export type ModeKey = 'auto' | 'light' | 'dark';
+/** docs/DESIGN.md "Themes". `auto` = Orange in light mode, Ember in dark mode. */
+export type ThemeKey = 'auto' | 'orange' | 'purple' | 'mint' | 'night' | 'ember';
 export type Settings = {
-  icons: boolean; font: FontKey; size: SizeKey; spacing: SpacingKey; accent: AccentKey;
-  mode: ModeKey; tone: string; avatar: string; autoread: boolean;
+  icons: boolean; font: FontKey; size: SizeKey; spacing: SpacingKey; theme: ThemeKey;
+  tone: string; avatar: string; autoread: boolean;
+  /** 'natural' plays Lexi's recorded clips for her fixed lines; 'device' reads everything with a phone voice. */
+  lexiVoice: 'natural' | 'device';
+  /** Read-aloud voice identifier from expo-speech; '' = the best voice on this phone. */
+  voice: string; rate: number; pitch: number;
 };
-export const DEFAULTS: Settings = { icons: true, font: 'verdana', size: 'm', spacing: 'wide', accent: 'orange', mode: 'auto', tone: '\u{1F3FD}', avatar: '👧🏽', autoread: false };
+export const DEFAULTS: Settings = {
+  icons: true, font: 'verdana', size: 'm', spacing: 'wide', theme: 'auto', tone: '\u{1F3FD}', avatar: '👧🏽', autoread: false,
+  lexiVoice: 'natural', voice: '', rate: 0.95, pitch: 1,
+};
 export const FONTS: Record<FontKey, string> = { verdana: 'Verdana', lexend: 'Lexend', atkinson: 'Atkinson Hyperlegible' };
 export const SIZES: Record<SizeKey, [string, number]> = { s: ['Small', 16], m: ['Medium', 18], l: ['Large', 20], xl: ['Extra large', 23] };
 export const SPACING: Record<SpacingKey, [string, number]> = { normal: ['Normal', 1.5], wide: ['Wide', 1.7], xwide: ['Extra wide', 2] };
-export const ACCENTS: Record<AccentKey, [string, string]> = { orange: ['Orange', '#E38100'], purple: ['Purple', '#8100E3'], mint: ['Mint', '#79EAB9'] };
-export const MODES: Record<ModeKey, [string, string]> = { auto: ['Match my device', '🌗'], light: ['Light', '☀️'], dark: ['Dark', '🌙'] };
+export const THEME_NAMES: Record<ThemeKey, string> = { auto: 'Match my device', orange: 'Orange', purple: 'Purple', mint: 'Mint', night: 'Night', ember: 'Ember' };
+export const RATE_RANGE = [0.6, 1.4] as const;
+export const PITCH_RANGE = [0.8, 1.2] as const;
 export const TONES: [string, string][] = [['', 'Yellow'], ['\u{1F3FB}', 'Light'], ['\u{1F3FC}', 'Medium light'], ['\u{1F3FD}', 'Medium'], ['\u{1F3FE}', 'Medium dark'], ['\u{1F3FF}', 'Dark']];
 export const AVATARS = ['👧🏽', '🧒🏽', '👦🏽', '👩🏽', '🧑🏽', '👨🏽', '🦊', '🐱', '🌻', '⭐'];

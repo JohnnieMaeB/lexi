@@ -17,18 +17,19 @@ export function EmojiPicker() {
   const [tab, setTab] = useState(0);
   if (!target) return null;
   const pick = (em: string) => { target.insert(em); if (target.single) closeEmoji(); };
-  const bottom = insets.bottom + (st.sheetOpen ? 96 : 150);
+  // Sits just above the dock (nav row + input pill) or the sheet's footer.
+  const bottom = insets.bottom + (st.sheetOpen ? 96 : 164);
   return (
     <>
       <Pressable style={StyleSheet.absoluteFill} onPress={closeEmoji} accessibilityLabel="Close emoji picker" accessibilityRole="button" />
       <View accessibilityViewIsModal accessibilityLabel="Pick an emoji"
-        style={[s.pop, { bottom, maxHeight: Math.min(height * 0.48, 390), borderColor: t.c.line, backgroundColor: t.c.surface, shadowColor: t.c.shadow }]}>
+        style={[s.pop, { bottom, maxHeight: Math.min(height * 0.48, 390), borderColor: t.c.line, backgroundColor: t.c.surface, shadowColor: '#000000' }]}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, borderBottomWidth: 2, borderBottomColor: t.c.line }}
           contentContainerStyle={{ gap: 4, padding: 8 }} keyboardShouldPersistTaps="always">
           {EMOJI_SETS.map(([icon, name], i) => (
             <Pressable key={name} onPress={() => setTab(i)} accessibilityRole="tab" accessibilityLabel={name} accessibilityState={{ selected: i === tab }}
               style={[s.tab, { backgroundColor: i === tab ? t.c.sel : 'transparent' }]}>
-              <Text style={t.emoji(21)}>{t.toned(icon)}</Text>
+              <Text style={t.emoji(26)}>{t.toned(icon)}</Text>
             </Pressable>
           ))}
         </ScrollView>
@@ -37,7 +38,7 @@ export function EmojiPicker() {
           {EMOJI_SETS[tab][2].split(' ').filter(Boolean).map(em => (
             <Pressable key={em} onPress={() => pick(t.toned(em))} accessibilityRole="button" accessibilityLabel={t.toned(em)}
               style={({ pressed }) => [s.cell, { backgroundColor: pressed ? t.c.sel : 'transparent' }]}>
-              <Text style={t.emoji(26)}>{t.toned(em)}</Text>
+              <Text style={t.emoji(32)}>{t.toned(em)}</Text>
             </Pressable>
           ))}
         </ScrollView>
@@ -52,8 +53,8 @@ export function Toast() {
   const insets = useSafeAreaInsets();
   if (!st.toast) return null;
   return (
-    <View pointerEvents="none" style={[s.toastWrap, { bottom: insets.bottom + 140 }]}>
-      <View accessibilityLiveRegion="polite" accessibilityRole="alert" style={[s.toast, { backgroundColor: t.c.ink, shadowColor: t.c.shadow }]}>
+    <View pointerEvents="none" style={[s.toastWrap, { bottom: insets.bottom + 176 }]}>
+      <View accessibilityLiveRegion="polite" accessibilityRole="alert" style={[s.toast, { backgroundColor: t.c.ink, shadowColor: '#000000' }]}>
         <T em={0.9} color={t.c.bg}>{st.toast.msg}</T>
       </View>
     </View>
@@ -61,10 +62,10 @@ export function Toast() {
 }
 
 const s = StyleSheet.create({
-  pop: { position: 'absolute', left: 16, right: 16, borderWidth: 2, borderRadius: 20, shadowOpacity: 1, shadowRadius: 20, shadowOffset: { width: 0, height: 12 }, elevation: 12, overflow: 'hidden' },
-  tab: { minWidth: 44, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  pop: { position: 'absolute', left: 16, right: 16, borderWidth: 2, borderRadius: 28, shadowOpacity: 0.22, shadowRadius: 20, shadowOffset: { width: 0, height: 12 }, elevation: 12, overflow: 'hidden' },
+  tab: { minWidth: 48, height: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', padding: 8, gap: 2 },
-  cell: { width: 46, height: 44, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  cell: { width: 52, height: 50, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   toastWrap: { position: 'absolute', left: 16, right: 16, alignItems: 'center' },
-  toast: { paddingHorizontal: 18, paddingVertical: 9, borderRadius: 999, shadowOpacity: 1, shadowRadius: 12, shadowOffset: { width: 0, height: 8 }, elevation: 8 },
+  toast: { paddingHorizontal: 18, paddingVertical: 9, borderRadius: 999, shadowOpacity: 0.25, shadowRadius: 12, shadowOffset: { width: 0, height: 8 }, elevation: 8 },
 });

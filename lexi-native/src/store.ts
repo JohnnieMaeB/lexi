@@ -5,7 +5,7 @@ import { useSyncExternalStore } from 'react';
 import * as SQLite from 'expo-sqlite';
 import Storage from 'expo-sqlite/kv-store';
 import * as SecureStore from 'expo-secure-store';
-import { DEFAULTS, type Pick, type Settings } from './content';
+import { DEFAULTS, PITCH_RANGE, RATE_RANGE, type Pick, type Settings } from './content';
 
 export type Todo = { t: string; done: boolean };
 export type TopicAnswer = { key: string; picks: Pick[]; note: string; todos: Todo[] };
@@ -40,10 +40,28 @@ function writeKv(k: string, v: unknown) {
   Storage.setItem(k, JSON.stringify(v)).catch(e => console.warn('kv save', k, e));
 }
 
+/** Older builds stored `accent` (orange / purple / mint) and `mode` (auto / light / dark) instead of `theme`. */
+function loadSettings(): Settings {
+  const raw = readKv<Partial<Settings> & { accent?: string; mode?: string }>(KEYS.settings, {}) || {};
+  const { accent, mode, ...rest } = raw;
+  const s: Settings = { ...DEFAULTS, ...rest };
+  if (!rest.theme && (accent || mode)) {
+    const a = accent === 'purple' || accent === 'mint' ? accent : 'orange';
+    s.theme = mode === 'dark' ? 'ember' : mode === 'light' ? a : a === 'orange' ? 'auto' : a;
+  }
+  if (!THEME_KEYS.includes(s.theme)) s.theme = 'auto';
+  s.rate = clamp(Number(s.rate) || DEFAULTS.rate, RATE_RANGE);
+  s.pitch = clamp(Number(s.pitch) || DEFAULTS.pitch, PITCH_RANGE);
+  if (accent || mode) writeKv(KEYS.settings, s);
+  return s;
+}
+const THEME_KEYS: Settings['theme'][] = ['auto', 'orange', 'purple', 'mint', 'night', 'ember'];
+const clamp = (v: number, [lo, hi]: readonly [number, number]) => Math.min(hi, Math.max(lo, v));
+
 export const state: State = {
   loaded: false,
   entries: [],
-  settings: { ...DEFAULTS, ...readKv<Partial<Settings>>(KEYS.settings, {}) },
+  settings: loadSettings(),
   custom: readKv<Custom>(KEYS.custom, {}) || {},
   onboarded: !!readKv(KEYS.onboarded, false),
   apiKey: null,
