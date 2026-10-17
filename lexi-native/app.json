@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "Lexi",
+    "slug": "lexi-native",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.example.lexi"
+    },
+    "android": {
+      "package": "com.example.lexi",
+      "adaptiveIcon": {
+        "backgroundColor": "#E38100",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      "expo-sqlite",
+      "expo-secure-store",
+      "expo-font",
+      "expo-splash-screen",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Lexi listens when you tap the mic, so you can say your words instead of typing them.",
+          "speechRecognitionPermission": "Lexi turns what you say into words in your journal.",
+          "androidSpeechServicePackages": ["com.google.android.googlequicksearchbox"]
+        }
+      ]
+    ]
+  }
+}

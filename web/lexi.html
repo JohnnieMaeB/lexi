@@ -1,0 +1,1347 @@
+<title>Lexi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Lexend:wght@400;600&display=swap">
+<style>
+/* Layout: one phone-width chat column held between two colored rails (the side strips from the Lexi wireframes), accent top bar above, composer and three-icon nav below */
+:root{
+  --bg:#FAEFE8;          /* cream ground: dyslexia guidance avoids pure white glare */
+  --surface:#FFF8F5;
+  --surface-2:#F2DFD1;
+  --ink:#201B17;
+  --ink-soft:#51443A;
+  --line:#D6C3B6;
+  --accent:#E38100;      /* Lexi orange, the board's theme seed */
+  --on-accent:#1E1000;
+  --accent-2:#8100E3;    /* purple: yes/primary actions */
+  --on-accent-2:#FFFFFF;
+  --bot:#79EAB9;         /* mint chat bubbles */
+  --bot-ink:#06281A;
+  --me:#FFDCC1;
+  --me-ink:#2E1500;
+  --b-content:#E38100; --b-content-ink:#1E1000;
+  --b-stressed:#79EAB9; --b-stressed-ink:#06281A;
+  --b-low:#8100E3; --b-low-ink:#FFFFFF;
+  --sel:#EBD9F7;
+  --scrim:rgba(32,27,23,.5);
+  --shadow:rgba(32,27,23,.22);
+  --font:Verdana,"Atkinson Hyperlegible","DejaVu Sans",Tahoma,sans-serif;
+  --font-display:"Lexend",Verdana,"DejaVu Sans",sans-serif;
+  --fs:18px;
+  --lh:1.7;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#201B17; --surface:#2B241F; --surface-2:#3A302A; --ink:#ECE0DA; --ink-soft:#D6C3B6; --line:#51443A;
+    --accent:#E38100; --on-accent:#1E1000; --accent-2:#C99BFF; --on-accent-2:#24004A;
+    --bot:#FFB877; --bot-ink:#4C2700; --me:#5A422D; --me-ink:#FFDCC1;
+    --b-content:#F29A2E; --b-content-ink:#1E1000; --b-stressed:#79EAB9; --b-stressed-ink:#06281A; --b-low:#A866FF; --b-low-ink:#1D0038;
+    --sel:#3E2F55; --scrim:rgba(0,0,0,.6); --shadow:rgba(0,0,0,.5);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#201B17; --surface:#2B241F; --surface-2:#3A302A; --ink:#ECE0DA; --ink-soft:#D6C3B6; --line:#51443A;
+  --accent:#E38100; --on-accent:#1E1000; --accent-2:#C99BFF; --on-accent-2:#24004A;
+  --bot:#FFB877; --bot-ink:#4C2700; --me:#5A422D; --me-ink:#FFDCC1;
+  --b-content:#F29A2E; --b-content-ink:#1E1000; --b-stressed:#79EAB9; --b-stressed-ink:#06281A; --b-low:#A866FF; --b-low-ink:#1D0038;
+  --sel:#3E2F55; --scrim:rgba(0,0,0,.6); --shadow:rgba(0,0,0,.5);
+  color-scheme:dark;
+}
+/* Lexi's own light/dark switch (Settings) overrides the viewer theme inside the app */
+.app[data-mode="light"]{
+  --bg:#FAEFE8; --surface:#FFF8F5; --surface-2:#F2DFD1; --ink:#201B17; --ink-soft:#51443A; --line:#D6C3B6;
+  --accent:#E38100; --on-accent:#1E1000; --accent-2:#8100E3; --on-accent-2:#FFFFFF;
+  --bot:#79EAB9; --bot-ink:#06281A; --me:#FFDCC1; --me-ink:#2E1500;
+  --b-content:#E38100; --b-content-ink:#1E1000; --b-stressed:#79EAB9; --b-stressed-ink:#06281A; --b-low:#8100E3; --b-low-ink:#FFFFFF;
+  --sel:#EBD9F7; --scrim:rgba(32,27,23,.5); --shadow:rgba(32,27,23,.22);
+  color-scheme:light;
+}
+.app[data-mode="dark"]{
+  --bg:#201B17; --surface:#2B241F; --surface-2:#3A302A; --ink:#ECE0DA; --ink-soft:#D6C3B6; --line:#51443A;
+  --accent:#E38100; --on-accent:#1E1000; --accent-2:#C99BFF; --on-accent-2:#24004A;
+  --bot:#FFB877; --bot-ink:#4C2700; --me:#5A422D; --me-ink:#FFDCC1;
+  --b-content:#F29A2E; --b-content-ink:#1E1000; --b-stressed:#79EAB9; --b-stressed-ink:#06281A; --b-low:#A866FF; --b-low-ink:#1D0038;
+  --sel:#3E2F55; --scrim:rgba(0,0,0,.6); --shadow:rgba(0,0,0,.5);
+  color-scheme:dark;
+}
+/* the three color themes from the board's Theme frame */
+.app[data-accent="purple"]{ --accent:#8100E3; --on-accent:#FFFFFF; }
+.app[data-accent="mint"]{ --accent:#79EAB9; --on-accent:#06281A; --bot:#FFDCC1; --bot-ink:#2E1500; }
+
+html{height:100%;box-sizing:border-box}
+*,*::before,*::after{box-sizing:inherit}
+body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:var(--font)}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent-2);outline-offset:2px}
+
+.app{height:100%;display:flex;justify-content:center;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:var(--fs);line-height:var(--lh);letter-spacing:.012em;word-spacing:.08em}
+.phone{width:100%;max-width:560px;height:100%;min-height:0;display:flex;flex-direction:column;position:relative}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;background:var(--accent);color:var(--on-accent)}
+.brand{display:flex;align-items:center;gap:.4em;font-family:var(--font-display);font-weight:600;font-size:1.15em;line-height:1.2}
+.brand .ico{font-size:1.25em}
+.topbar .date{font-size:.8em;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+.rails{flex:1;min-height:0;display:flex;border-inline:10px solid var(--accent);background:var(--bg)}
+.view{flex:1;min-width:0;overflow-y:auto;overscroll-behavior:contain;padding:18px 12px 28px}
+
+/* chat */
+.chat{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;align-items:flex-end;gap:8px}
+.row.me{flex-direction:row-reverse}
+.ava{flex:0 0 34px;width:34px;height:34px;display:grid;place-items:center;font-size:26px;line-height:1}
+.row.cont .ava{visibility:hidden}
+.bubble{max-width:min(82%,26em);padding:.55em .9em;border-radius:20px;background:var(--bot);color:var(--bot-ink);overflow-wrap:anywhere}
+.row.bot .bubble{border-bottom-left-radius:6px}
+.row.me .bubble{background:var(--me);color:var(--me-ink);border-bottom-right-radius:6px}
+.bubble.info{background:var(--surface);color:var(--ink);border:2px dashed var(--bot)}
+.row.emoji-only .bubble{background:transparent;padding:0;font-size:2em;line-height:1.2;letter-spacing:.08em}
+.speak{display:inline-flex;align-items:center;gap:.25em;margin-left:.35em;padding:0 .25em;border:0;border-radius:8px;background:transparent;color:inherit;font-size:.8em;cursor:pointer;vertical-align:baseline;opacity:.8}
+.speak:hover{opacity:1}
+.card-row{margin-left:42px}
+.dots{display:flex;gap:6px;padding:.8em .95em}
+.dots i{display:block;width:10px;height:10px;border-radius:50%;background:var(--bot-ink);animation:bob 1s ease-in-out infinite}
+.dots i:nth-child(2){animation-delay:.15s}
+.dots i:nth-child(3){animation-delay:.3s}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.row.in{animation:rise .25s ease-out}
+@keyframes rise{from{transform:translateY(6px)}to{transform:none}}
+
+.card{display:flex;flex-direction:column;gap:14px;max-width:100%;padding:14px;border:2px solid var(--line);border-radius:22px;background:var(--surface)}
+.card.done{opacity:.6}
+.card h3,.band-name{font-family:var(--font-display)}
+
+.choices{display:flex;flex-wrap:wrap;gap:10px}
+.choice{display:inline-flex;align-items:center;gap:.45em;min-height:48px;padding:.3em 1.15em;border-radius:999px;border:2px solid var(--accent-2);background:var(--surface);color:var(--ink);cursor:pointer}
+.choices.yn .choice:first-child{background:var(--accent-2);color:var(--on-accent-2)}
+.choice .ico{font-size:1.35em;line-height:1}
+.choices.done .choice{cursor:default}
+.choices.done .choice:not(.picked){opacity:.4}
+
+.btn{display:inline-flex;align-items:center;gap:.4em;min-height:48px;padding:.3em 1.2em;border-radius:999px;border:2px solid var(--accent-2);background:transparent;color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--accent-2);color:var(--on-accent-2)}
+.btn.danger{border-color:#C0352B;background:#C0352B;color:#FFFFFF}
+.btn:disabled{opacity:.45;cursor:default}
+.row-btns{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end}
+
+/* emoji tiles */
+.mood{display:flex;flex-direction:column;gap:10px}
+.band{padding:10px;border-radius:18px;background:color-mix(in srgb,var(--b) 24%,var(--surface))}
+[data-band="content"]{--b:var(--b-content);--b-ink:var(--b-content-ink)}
+[data-band="stressed"]{--b:var(--b-stressed);--b-ink:var(--b-stressed-ink)}
+[data-band="low"]{--b:var(--b-low);--b-ink:var(--b-low-ink)}
+.band-name{display:inline-block;margin:0 0 8px;padding:.1em .8em;border-radius:999px;background:var(--b);color:var(--b-ink);font-size:.85em;font-weight:600}
+.opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(4.6em,1fr));gap:8px}
+.opt{display:flex;flex-direction:column;align-items:center;gap:2px;min-height:4.4em;padding:8px 4px 6px;border:2px solid transparent;border-radius:16px;background:var(--surface);color:var(--ink);cursor:pointer}
+.opt .ico{font-size:1.9em;line-height:1.15}
+.opt .lbl{font-size:.72em;line-height:1.3;text-align:center;overflow-wrap:anywhere}
+.opt[aria-pressed="true"]{border-color:var(--accent-2);background:var(--sel)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:.4em;min-height:44px;padding:.25em .95em;border:2px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);cursor:pointer}
+.chip .ico{font-size:1.25em;line-height:1}
+.chip[aria-pressed="true"]{border-color:var(--accent-2);background:var(--sel);font-weight:700}
+.adder-form{display:flex;flex-direction:column;gap:10px;padding:12px;border:2px dashed var(--line);border-radius:16px}
+.adder-line{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.adder-line input.emo{flex:0 0 4.2em;text-align:center;font-size:1.3em}
+.adder-line input.word{flex:1 1 9em;min-width:0}
+.err{margin:0;color:#C0352B;font-weight:700;font-size:.9em}
+.err:empty{display:none}
+
+textarea,input[type="text"]{width:100%;padding:.45em .75em;border:2px solid var(--line);border-radius:14px;background:var(--bg);color:var(--ink);line-height:var(--lh)}
+textarea{resize:vertical}
+.field-label{font-weight:700;font-size:.9em}
+.note-line{display:flex;gap:8px;align-items:flex-start}
+.note-line textarea{flex:1;min-width:0}
+.todo-edit{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.todo-edit li{display:flex;align-items:center;gap:8px;padding:.2em .2em .2em .8em;border-radius:12px;background:var(--bg)}
+.todo-edit li span{flex:1;min-width:0;overflow-wrap:anywhere}
+
+/* composer + nav */
+.composer{display:flex;align-items:flex-end;gap:8px;padding:10px 16px;background:var(--accent)}
+.composer textarea{flex:1;min-width:0;max-height:7.6em;resize:none;border-color:transparent;border-radius:22px;background:var(--surface)}
+.round{flex:0 0 48px;width:48px;height:48px;display:grid;place-items:center;border:0;border-radius:50%;background:var(--surface);color:var(--ink);font-size:1.35em;cursor:pointer}
+.round.send{background:var(--accent-2);color:var(--on-accent-2)}
+.app[data-accent="purple"] .round.send{background:var(--surface);color:var(--accent-2)}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);background:var(--surface);border-top:2px solid var(--line)}
+.tab{display:flex;flex-direction:column;align-items:center;padding:6px 4px 8px;border:0;background:transparent;color:var(--ink-soft);font-size:.8em;line-height:1.3;cursor:pointer}
+.tab .ico{font-size:1.65em;line-height:1.25}
+.tab[aria-current="page"]{color:var(--ink);font-weight:700;box-shadow:inset 0 4px 0 var(--accent)}
+
+/* emoji picker */
+.emoji-pop{position:fixed;z-index:30;left:50%;transform:translateX(-50%);bottom:calc(150px + env(safe-area-inset-bottom,0px));width:min(528px,calc(100% - 32px));max-height:min(48vh,390px);display:flex;flex-direction:column;border:2px solid var(--line);border-radius:20px;background:var(--surface);box-shadow:0 12px 40px var(--shadow)}
+.emoji-tabs{display:flex;gap:4px;padding:8px;overflow-x:auto;border-bottom:2px solid var(--line)}
+.emoji-tabs button{flex:0 0 auto;min-width:44px;height:40px;border:0;border-radius:10px;background:transparent;font-size:1.3em;cursor:pointer}
+.emoji-tabs button[aria-selected="true"]{background:var(--sel)}
+.emoji-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:2px;padding:8px;overflow-y:auto}
+.emoji-grid button{height:44px;border:0;border-radius:10px;background:transparent;font-size:26px;line-height:1;cursor:pointer}
+.emoji-grid button:hover{background:var(--sel)}
+
+/* free-write sheet */
+.sheet{position:fixed;inset:0;z-index:20;display:flex;justify-content:center;background:var(--scrim)}
+.sheet-panel{width:100%;max-width:560px;height:100%;display:flex;flex-direction:column;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:var(--fs);line-height:var(--lh)}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;background:var(--accent);color:var(--on-accent)}
+.sheet-head h2{margin:0;font-family:var(--font-display);font-size:1.15em;font-weight:600}
+.sheet-head .chip{border-color:transparent}
+.sheet-body{flex:1;min-height:0;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px}
+.sheet-foot{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));border-top:2px solid var(--line);background:var(--surface)}
+details.fw-mood{border:2px solid var(--line);border-radius:16px;background:var(--surface)}
+details.fw-mood summary{padding:.5em .9em;cursor:pointer;font-weight:700}
+details.fw-mood[open] summary{border-bottom:2px solid var(--line)}
+details.fw-mood .mood{padding:10px}
+#fw-text{min-height:12em}
+.tools{display:flex;flex-wrap:wrap;gap:8px}
+.tidy{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:16px;background:var(--bot);color:var(--bot-ink)}
+.tidy p{margin:0;white-space:pre-wrap}
+.tidy .btn{color:var(--bot-ink);border-color:var(--bot-ink)}
+.tidy .btn.primary{background:var(--bot-ink);color:var(--bot)}
+
+.toast{position:fixed;z-index:40;left:50%;transform:translateX(-50%);bottom:calc(140px + env(safe-area-inset-bottom,0px));max-width:calc(100% - 32px);padding:.55em 1.1em;border-radius:999px;background:var(--ink);color:var(--bg);font-size:.9em;box-shadow:0 8px 24px var(--shadow)}
+
+/* journal */
+.j-head{display:flex;flex-direction:column;gap:4px}
+h2.title{margin:0;font-family:var(--font-display);font-weight:600;font-size:1.45em;line-height:1.25;text-wrap:balance}
+.muted{color:var(--ink-soft);font-size:.85em;margin:0}
+.strip-wrap{margin-top:16px;padding:12px;border-radius:18px;background:var(--surface)}
+.strip-wrap h3{margin:0 0 8px;font-family:var(--font-display);font-size:.9em;font-weight:600}
+.strip{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:4px}
+.dd{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.66em;line-height:1.2;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.dd i{display:block;width:100%;max-width:24px;aspect-ratio:1;border-radius:50%;border:2px solid var(--line);background:transparent}
+.dd.has i{border-color:color-mix(in srgb,var(--ink) 30%,transparent)}
+.dd.today{color:var(--ink);font-weight:700}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:10px;font-size:.75em;color:var(--ink-soft)}
+.legend span{display:inline-flex;align-items:center;gap:.4em}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;border:2px solid color-mix(in srgb,var(--ink) 30%,transparent)}
+.j-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.day-group h3{margin:24px 0 8px;font-family:var(--font-display);font-size:1em;font-weight:600;color:var(--ink-soft)}
+.entries{display:flex;flex-direction:column;gap:12px}
+.entry{display:flex;flex-direction:column;gap:10px;padding:12px 14px;border:2px solid var(--line);border-radius:20px;background:var(--surface)}
+.entry-head{display:flex;align-items:center;gap:8px;font-size:.85em;color:var(--ink-soft)}
+.entry-head .spacer{flex:1}
+.entry-head button{min-height:40px;padding:0 .6em;border:0;border-radius:10px;background:transparent;color:var(--ink);cursor:pointer;font-size:1em}
+.entry-head button:hover{background:var(--sel)}
+.mchips{display:flex;flex-wrap:wrap;gap:6px}
+.mchip{display:inline-flex;align-items:center;gap:.3em;padding:.05em .7em;border-radius:999px;background:color-mix(in srgb,var(--b) 30%,var(--surface));font-size:.85em}
+.tlist{display:flex;flex-direction:column;gap:6px;margin:0}
+.tlist dt{font-weight:700;font-size:.9em}
+.tlist dd{margin:0 0 4px}
+.todos{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.todos label{display:flex;align-items:center;gap:.6em;cursor:pointer}
+.todos input{width:22px;height:22px;flex:0 0 22px;accent-color:var(--accent-2)}
+.todos .done span{text-decoration:line-through;opacity:.65}
+.entry .text{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.reflection{margin:0;padding:.5em .85em;border-radius:16px;background:var(--bot);color:var(--bot-ink);white-space:pre-wrap}
+.confirm{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px;border-radius:14px;background:var(--surface-2)}
+.confirm p{margin:0;flex:1 1 12em;font-weight:700}
+.empty{margin-top:24px;padding:20px;border:2px dashed var(--line);border-radius:20px;text-align:center}
+.empty .big{font-size:2.6em;line-height:1.2}
+
+/* settings */
+.set{display:flex;flex-direction:column;gap:8px;padding:16px 0;border-bottom:2px solid var(--line)}
+.set:last-child{border-bottom:0}
+.set h3{margin:0;font-family:var(--font-display);font-size:1em;font-weight:600}
+.set p{margin:0;font-size:.85em;color:var(--ink-soft)}
+.swatch{display:inline-block;width:1em;height:1em;border-radius:50%;border:2px solid color-mix(in srgb,var(--ink) 30%,transparent)}
+.customs{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.customs li{display:inline-flex;align-items:center;gap:.3em;padding:.1em .2em .1em .8em;border-radius:999px;background:color-mix(in srgb,var(--b,var(--line)) 30%,var(--surface))}
+.customs button{min-width:36px;min-height:36px;border:0;border-radius:50%;background:transparent;cursor:pointer}
+
+/* icons off: words replace emoji everywhere except the emoji picker */
+.only-text{display:none}
+.app[data-icons="off"] .ico{display:none}
+.app[data-icons="off"] .only-text{display:inline}
+.app[data-icons="off"] .ava{display:none}
+.app[data-icons="off"] .card-row{margin-left:0}
+.app[data-icons="off"] .row.emoji-only{display:none}
+.app[data-icons="off"] .opt{min-height:3em;justify-content:center}
+.app[data-icons="off"] .opt .lbl{font-size:.85em}
+.app[data-icons="off"] .round{flex:0 0 auto;width:auto;padding:0 1em;border-radius:999px;font-size:.9em}
+.app[data-icons="off"] .tab{font-size:.9em;padding:14px 4px}
+
+@media (prefers-reduced-motion: reduce){
+  .dots i,.row.in{animation:none}
+}
+@media (max-width:420px){
+  .rails{border-inline-width:7px}
+  .view{padding-inline:10px}
+  .card-row{margin-left:0}
+  .bubble{max-width:86%}
+}
+</style>
+
+<div class="app" id="app" data-accent="orange" data-icons="on">
+  <div class="phone">
+    <header class="topbar">
+      <div class="brand"><span class="ico" aria-hidden="true">🤖</span><span>Lexi</span></div>
+      <div class="date" id="today"></div>
+    </header>
+    <div class="rails">
+      <main class="view chat" id="view-home" role="log" aria-live="polite" aria-label="Chat with Lexi"></main>
+      <section class="view" id="view-journal" aria-label="My journal" hidden></section>
+      <section class="view" id="view-settings" aria-label="Settings" hidden></section>
+    </div>
+    <form class="composer" id="composer" autocomplete="off">
+      <label for="msg" class="only-text" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Message Lexi</label>
+      <textarea id="msg" rows="1" placeholder="Ask Lexi…" aria-label="Message Lexi"></textarea>
+      <button type="button" class="round" id="msg-emoji" data-emoji-btn aria-label="Add emoji"><span class="ico" aria-hidden="true">🙂</span><span class="only-text">Emoji</span></button>
+      <button type="submit" class="round send" id="msg-send" aria-label="Send"><span class="ico" aria-hidden="true">➤</span><span class="only-text">Send</span></button>
+    </form>
+    <nav class="tabs" aria-label="Main">
+      <button type="button" class="tab" data-view="settings"><span class="ico" aria-hidden="true">⚙️</span><span>Settings</span></button>
+      <button type="button" class="tab" data-view="home" aria-current="page"><span class="ico" aria-hidden="true">🏡</span><span>Home</span></button>
+      <button type="button" class="tab" data-view="journal"><span class="ico" aria-hidden="true">📖</span><span>Journal</span></button>
+    </nav>
+  </div>
+
+  <div class="sheet" id="sheet" hidden>
+    <div class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+      <header class="sheet-head">
+        <h2 id="sheet-title"><span class="ico" aria-hidden="true">✏️</span> Write on my own</h2>
+        <button type="button" class="chip" id="fw-close"><span class="ico" aria-hidden="true">✖️</span><span>Close</span></button>
+      </header>
+      <div class="sheet-body">
+        <details class="fw-mood" id="fw-mood-wrap">
+          <summary><span class="ico" aria-hidden="true">🌡️</span> How do you feel? <span class="muted">(you can skip this)</span></summary>
+          <div id="fw-mood"></div>
+        </details>
+        <label class="field-label" for="fw-text">Your words</label>
+        <textarea id="fw-text" rows="8" placeholder="Write anything. Spelling doesn't matter here."></textarea>
+        <div class="tools">
+          <button type="button" class="chip" id="fw-emoji" data-emoji-btn><span class="ico" aria-hidden="true">🙂</span><span>Emoji</span></button>
+          <button type="button" class="chip" id="fw-tidy" hidden><span class="ico" aria-hidden="true">✨</span><span>Tidy spelling</span></button>
+          <button type="button" class="chip" id="fw-read" hidden><span class="ico" aria-hidden="true">🔊</span><span>Read it back</span></button>
+        </div>
+        <div class="tidy" id="fw-tidy-out" hidden></div>
+      </div>
+      <footer class="sheet-foot">
+        <button type="button" class="btn" id="fw-cancel">Cancel</button>
+        <button type="button" class="btn primary" id="fw-save"><span class="ico" aria-hidden="true">✔️</span><span>Save to journal</span></button>
+      </footer>
+    </div>
+  </div>
+
+  <div class="emoji-pop" id="emoji-pop" role="dialog" aria-label="Pick an emoji" hidden>
+    <div class="emoji-tabs" id="emoji-tabs" role="tablist"></div>
+    <div class="emoji-grid" id="emoji-grid"></div>
+  </div>
+  <div class="toast" id="toast" role="status" hidden></div>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+/* ---------- helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const reduceMotion = (() => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return false; } })();
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+  del(k) { try { localStorage.removeItem(k); } catch {} }
+};
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const EMOJI_RE = /\p{Extended_Pictographic}(?:️|\p{Emoji_Modifier})*(?:‍\p{Extended_Pictographic}(?:️|\p{Emoji_Modifier})*)*/gu;
+let uid = 0;
+const nextId = p => p + '-' + (++uid);
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function button(cls, label, icon, wordsOnly) {
+  const b = el('button', cls); b.type = 'button';
+  if (icon) { const i = el('span', 'ico', tone(icon)); i.setAttribute('aria-hidden', 'true'); b.append(i); }
+  if (label) b.append(el('span', 'lbl', label));
+  else if (wordsOnly) { b.append(el('span', 'only-text', wordsOnly)); b.setAttribute('aria-label', wordsOnly); }
+  return b;
+}
+const tone = s => String(s).replace(/\u{1F3FD}/gu, profile.settings.tone);
+function renderRich(text) {
+  return esc(tone(text)).replace(EMOJI_RE, m => '<span class="ico">' + m + '</span>');
+}
+function rich(node, text) { node.dataset.raw = text; node.innerHTML = renderRich(text); return node; }
+function stripEmoji(t) {
+  return String(t).replace(EMOJI_RE, '').replace(/[\u{1F3FB}-\u{1F3FF}‍️]/gu, '').replace(/\s{2,}/g, ' ').trim();
+}
+function firstEmoji(s) { const m = String(s).match(EMOJI_RE); return m ? m[0] : ''; }
+function dayKey(d = new Date()) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function parseDay(k) { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); }
+
+/* ---------- content from the Lexi board ---------- */
+// Mood descriptors: the App Plan "Guided Categories" table. No "Happy" on purpose: Content is the goal.
+const BANDS = [
+  { key: 'content', name: 'Content', items: [['🙌🏽','Proud'],['🥰','Loved'],['🤗','Cared for'],['🙏🏽','Thankful'],['😂','Amused'],['😇','At peace'],['🧘🏽‍♀️','Calm'],['👏🏽','Did it'],['🎓','Learning'],['🔮','Hopeful'],['👩🏽‍🔬','Curious'],['👩🏽‍🎨','Creative'],['🎨','Inspired'],['👩🏽‍💻','Focused'],['⚒️','Productive'],['👷🏽‍♀️','Building'],['👩🏽‍🔧','Fixing things']] },
+  { key: 'stressed', name: 'Stressed', items: [['🧗🏽‍♀️','Uphill'],['🕵🏽‍♀️','Searching'],['😖','Tense'],['😭','Overwhelmed'],['🤦🏽‍♀️','Frustrated'],['🤦🏽‍♂️','Fed up'],['💪🏽','Pushing through'],['🥊','Fighting it'],['👩🏽‍⚖️','Judged']] },
+  { key: 'low', name: 'Low self-esteem', items: [['🥺','Fragile'],['😔','Down'],['😓','Drained'],['🤯','Overloaded'],['😤','Annoyed'],['🤬','Angry'],['🤥','Like a fraud'],['🙃','Upside down'],['💩','Rubbish']] }
+];
+const BAND_BY = Object.fromEntries(BANDS.map(b => [b.key, b]));
+const TOPICS = [
+  { key: 'body', icon: '🫀', name: 'Physical health', q: 'How is your body today?', opts: [['💪🏽','Strong'],['😴','Tired'],['🤕','Sore'],['🤒','Unwell'],['🏃🏽‍♀️','Moved'],['🛋️','Rested']] },
+  { key: 'diet', icon: '🥗', name: 'Diet', q: 'How did you eat and drink?', opts: [['🥗','Fresh food'],['🍔','Quick food'],['💧','Drank water'],['☕','Lots of coffee'],['🍽️','Skipped a meal'],['🍫','Treats']] },
+  { key: 'esteem', icon: '🪞', name: 'Self-esteem', q: 'How do you see yourself today?', opts: [['🌱','Growing'],['🧱','Solid'],['🦁','Brave'],['🌫️','Unsure'],['🥺','Fragile'],['🤥','Like a fraud']] },
+  { key: 'people', icon: '🫂', name: 'Relationships', q: 'How are things with people?', opts: [['🫂','Close'],['💬','Talking'],['🏝️','Alone time'],['🌵','Distant'],['⚡','Tension'],['💔','Hurt']] },
+  { key: 'money', icon: '💰', name: 'Financial health', q: 'How do you feel about money?', opts: [['🧘🏽','Steady'],['📊','Planning'],['😬','Tight'],['🆘','Worried'],['🤷🏽','Not thinking about it']] },
+  { key: 'stress', icon: '🌋', name: 'Stress(ors)', q: 'What is weighing on you?', opts: [['💼','Work'],['📚','School'],['📝','Reading and writing'],['🏠','Home'],['🫂','People'],['💰','Money'],['🩺','Health'],['⏰','Time']] },
+  { key: 'todo', icon: '✅', name: 'To dos', q: 'What do you need to do?', todo: true },
+  { key: 'joy', icon: '🎨', name: 'Hobbies and passions', q: 'What did you enjoy?', opts: [['🎨','Art'],['🎮','Games'],['🎵','Music'],['⚽','Sport'],['🌿','Outdoors'],['🍳','Cooking'],['📺','Shows'],['📚','Stories']] },
+  { key: 'thanks', icon: '🙏🏽', name: 'Gratitude', q: 'One thing you are thankful for?', opts: [['🫂','A person'],['🏠','A place'],['🐾','A pet'],['🍲','Food'],['🌤️','A moment'],['🧠','Myself']] }
+];
+const TOPIC_BY = Object.fromEntries(TOPICS.map(t => [t.key, t]));
+const EMOJI_SETS = [
+  ['😀', 'Feelings', '😀 😃 😄 😁 😆 😅 😂 🤣 🥲 😊 😇 🙂 🙃 😉 😌 😍 🥰 😘 😋 😛 😜 🤪 🤨 🧐 🤓 😎 🤩 🥳 😏 😒 😞 😔 😟 😕 🙁 😣 😖 😫 😩 🥺 😢 😭 😤 😠 😡 🤬 🤯 😳 🥵 🥶 😱 😨 😰 😥 😓 🫣 🤗 🫡 🤔 🫢 🤭 🤫 🤥 😶 😐 😑 😬 🫠 🙄 😯 😦 😧 😮 😲 🥱 😴 🤤 😪 😵‍💫 🤐 🥴 🤢 🤮 🤧 😷 🤒 🤕'],
+  ['✋🏽', 'People', '👋🏽 ✋🏽 👌🏽 ✌🏽 🤞🏽 🫰🏽 🤟🏽 🤙🏽 👈🏽 👉🏽 👆🏽 👇🏽 👍🏽 👎🏽 ✊🏽 👊🏽 👏🏽 🙌🏽 🫶🏽 👐🏽 🤲🏽 🤝 🙏🏽 ✍🏽 💪🏽 🧠 🫀 👀 👧🏽 👦🏽 🧒🏽 👩🏽 🧑🏽 👨🏽 👵🏽 🧓🏽 👴🏽 🙋🏽‍♀️ 🙆🏽‍♀️ 🙅🏽‍♀️ 💁🏽‍♀️ 🤷🏽‍♀️ 🤷🏽‍♂️ 🤦🏽‍♀️ 🤦🏽‍♂️ 🧘🏽‍♀️ 🧗🏽‍♀️ 🏃🏽‍♀️ 🚶🏽‍♀️ 💃🏽 🕺🏽 👩🏽‍🎨 👩🏽‍💻 👩🏽‍🔬 👩🏽‍🔧 👷🏽‍♀️ 👩🏽‍🎓 👩🏽‍🍳 👩🏽‍⚖️ 🕵🏽‍♀️ 🫂 👪'],
+  ['⚽', 'Activities', '⚽ 🏀 🏈 ⚾ 🎾 🏐 🏓 🏸 🥊 🥋 ⛳ 🛹 ⛸️ 🎿 🏋🏽‍♀️ 🤸🏽‍♀️ 🚴🏽‍♀️ 🏊🏽‍♀️ 🎮 🕹️ 🎲 🧩 ♟️ 🎯 🎳 🎨 🖌️ 🎭 🎤 🎧 🎼 🎹 🥁 🎸 🎻 📚 📖 ✏️ 📝 📸 🎬 📺 🧶 🧵 🪴'],
+  ['🌿', 'Nature', '🐶 🐱 🐭 🐹 🐰 🦊 🐻 🐼 🐨 🐯 🦁 🐮 🐷 🐸 🐵 🐔 🐧 🐦 🦄 🐝 🦋 🐢 🐬 🐳 🐾 🌱 🌿 ☘️ 🍀 🌵 🌴 🌳 🍁 🍂 🌷 🌹 🌻 🌼 🌸 💐 🍄 🌍 🌙 ⭐ 🌟 ✨ ⚡ 🔥 🌈 ☀️ 🌤️ ⛅ 🌧️ ⛈️ ❄️ ☃️ 🌊 💧 🌫️'],
+  ['🍎', 'Food', '🍎 🍐 🍊 🍋 🍌 🍉 🍇 🍓 🫐 🍒 🍑 🥭 🍍 🥥 🥝 🍅 🥑 🥦 🥕 🌽 🥔 🍞 🥐 🧀 🥚 🍳 🥞 🍗 🍔 🍟 🍕 🌭 🥪 🌮 🥗 🍝 🍜 🍲 🍣 🍱 🍚 🍪 🍩 🍰 🎂 🍫 🍬 🍿 ☕ 🍵 🧃 🥤 🧋 🍽️'],
+  ['💡', 'Things', '📱 💻 ⌨️ 🖥️ 📷 💡 🕯️ 📓 📒 📅 ⏰ ⌛ 🎁 🎈 🎉 🎊 🏠 🏡 🏫 🏢 🏥 🚗 🚌 🚲 ✈️ 🧳 💰 💳 🪙 💊 🩺 🛏️ 🛋️ 🚿 🧸 🔑 🧭 🗺️ ⚙️ 🧰 🔧 🔨 ⚒️ 🏷️'],
+  ['❤️', 'Symbols', '❤️ 🧡 💛 💚 💙 💜 🖤 🤍 🤎 💔 ❣️ 💕 💞 💗 💖 ✅ ✔️ ❌ ✖️ ❓ ❗ ⚠️ ℹ️ 💤 💭 💬 🔆 🆘 🚫 ⭕ 🔴 🟠 🟡 🟢 🔵 🟣 ⚫ ⚪ ➕ ➖ 💯 🔁 ▶️ ⏸️']
+];
+const YES_NO = [{ v: true, e: '👍🏽', label: 'Yes' }, { v: false, e: '👎🏽', label: 'No' }];
+
+/* ---------- settings ---------- */
+const DEFAULTS = { icons: true, font: 'verdana', size: 'm', spacing: 'wide', accent: 'orange', mode: 'auto', tone: '\u{1F3FD}', avatar: '👧🏽', autoread: false };
+const FONTS = {
+  verdana: ['Verdana', 'Verdana,"Atkinson Hyperlegible","DejaVu Sans",Tahoma,sans-serif'],
+  lexend: ['Lexend', '"Lexend",Verdana,sans-serif'],
+  atkinson: ['Atkinson Hyperlegible', '"Atkinson Hyperlegible",Verdana,sans-serif']
+};
+const SIZES = { s: ['Small', '16px'], m: ['Medium', '18px'], l: ['Large', '20px'], xl: ['Extra large', '23px'] };
+const SPACING = { normal: ['Normal', '1.5'], wide: ['Wide', '1.7'], xwide: ['Extra wide', '2'] };
+const ACCENTS = { orange: ['Orange', '#E38100'], purple: ['Purple', '#8100E3'], mint: ['Mint', '#79EAB9'] };
+const MODES = { auto: ['Match my device', '🌗'], light: ['Light', '☀️'], dark: ['Dark', '🌙'] };
+const TONES = [['', 'Yellow'], ['\u{1F3FB}', 'Light'], ['\u{1F3FC}', 'Medium light'], ['\u{1F3FD}', 'Medium'], ['\u{1F3FE}', 'Medium dark'], ['\u{1F3FF}', 'Dark']];
+const AVATARS = ['👧🏽', '🧒🏽', '👦🏽', '👩🏽', '🧑🏽', '👨🏽', '🦊', '🐱', '🌻', '⭐'];
+
+const profile = {
+  settings: { ...DEFAULTS, ...LS.get('lexi.settings', {}) },
+  custom: LS.get('lexi.custom', {}) || {},
+  onboarded: !!LS.get('lexi.onboarded', false)
+};
+const app = $('#app');
+const canSpeak = typeof window.speechSynthesis !== 'undefined' && typeof window.SpeechSynthesisUtterance !== 'undefined';
+
+function applySettings() {
+  const S = profile.settings;
+  app.dataset.accent = ACCENTS[S.accent] ? S.accent : 'orange';
+  if (S.mode === 'light' || S.mode === 'dark') app.dataset.mode = S.mode; else delete app.dataset.mode;
+  app.dataset.icons = S.icons ? 'on' : 'off';
+  app.style.setProperty('--fs', (SIZES[S.size] || SIZES.m)[1]);
+  app.style.setProperty('--lh', (SPACING[S.spacing] || SPACING.wide)[1]);
+  app.style.setProperty('--font', (FONTS[S.font] || FONTS.verdana)[1]);
+}
+
+/* ---------- storage: private per-person journal in the artifact db, device storage as fallback ---------- */
+const Store = {
+  mode: 'loading', loaded: false, cloud: [], local: LS.get('lexi.entries', []) || [], subs: new Set(),
+  profileRef: null, entriesCol: null, chains: {}
+};
+Store.ready = new Promise(r => { Store._ready = r; });
+Store.all = () => [...Store.cloud, ...Store.local].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+Store.emit = () => Store.subs.forEach(f => { try { f(); } catch (e) { console.error(e); } });
+Store.saveLocal = () => LS.set('lexi.entries', Store.local);
+Store.newId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+Store.chain = (id, fn) => (Store.chains[id] = (Store.chains[id] || Promise.resolve()).then(fn, fn));
+
+Store.add = async entry => {
+  await Store.ready;
+  if (Store.mode === 'cloud') {
+    const id = Store.newId('e');
+    try { await Store.entriesCol.doc(id).set(entry); return { id, src: 'cloud' }; }
+    catch (e) {
+      console.warn('save failed', e);
+      toast(e && e.code === 'quota_exceeded' ? 'Your journal is full. Delete old entries, then save again.' : 'Saved on this device only.');
+    }
+  }
+  const id = Store.newId('l');
+  Store.local.unshift({ ...entry, id, _src: 'local' });
+  Store.saveLocal(); Store.emit();
+  return { id, src: 'local' };
+};
+Store.update = (id, src, patch) => {
+  if (src === 'cloud') {
+    return Store.chain(id, () => Store.entriesCol.doc(id).update(patch)).catch(e => { console.warn(e); toast("Couldn't save that change. Try again."); });
+  }
+  const e = Store.local.find(x => x.id === id);
+  if (e) { Object.assign(e, patch); Store.saveLocal(); Store.emit(); }
+  return Promise.resolve();
+};
+Store.remove = (id, src) => {
+  if (src === 'cloud') {
+    Store.cloud = Store.cloud.filter(x => x.id !== id); Store.emit();
+    return Store.chain(id, () => Store.entriesCol.doc(id).delete()).catch(e => { console.warn(e); toast("Couldn't delete that entry. Try again."); });
+  }
+  Store.local = Store.local.filter(x => x.id !== id); Store.saveLocal(); Store.emit();
+  return Promise.resolve();
+};
+
+let profTimer = null, profChain = Promise.resolve();
+function mirrorProfile() {
+  LS.set('lexi.settings', profile.settings); LS.set('lexi.custom', profile.custom); LS.set('lexi.onboarded', profile.onboarded);
+}
+function writeProfileNow() {
+  if (Store.mode !== 'cloud') return;
+  const body = { settings: { ...profile.settings }, custom: JSON.parse(JSON.stringify(profile.custom)), onboarded: !!profile.onboarded, updatedAt: Date.now() };
+  profChain = profChain.then(() => Store.profileRef.set(body)).catch(e => console.warn('profile save', e));
+}
+function saveProfile() {
+  mirrorProfile();
+  clearTimeout(profTimer);
+  profTimer = setTimeout(writeProfileNow, 700);
+}
+function mergeProfile(d) {
+  if (!d) return;
+  const wasOnboarded = profile.onboarded;
+  profile.settings = { ...DEFAULTS, ...(d.settings || {}) };
+  profile.custom = d.custom || {};
+  profile.onboarded = !!d.onboarded || wasOnboarded;
+  mirrorProfile(); applySettings(); retone(); renderSettings(); renderJournal();
+  if (wasOnboarded && !d.onboarded) writeProfileNow();
+}
+
+async function initStore() {
+  const C = window.claude;
+  let db = null, user = null, id = null;
+  if (C && typeof C.use === 'function') {
+    try { [db, user] = await Promise.all([C.use('db'), C.use('user')]); } catch (e) { console.warn(e); }
+    if (user) { try { id = await user.id(); } catch {} }
+  }
+  if (db && id) {
+    try {
+      Store.profileRef = db.doc('data/users/' + id + '/profile');
+      Store.entriesCol = Store.profileRef.collection('entries');
+      Store.mode = 'cloud';
+      try {
+        const snap = await Store.profileRef.get();
+        if (snap.exists) mergeProfile(snap.data()); else writeProfileNow();
+      } catch (e) { console.warn('profile read', e); }
+      Store.entriesCol.orderBy('createdAt', 'desc').limit(500).onSnapshot(snap => {
+        Store.cloud = snap.docs.map(d => ({ ...d.data(), id: d.id, _src: 'cloud' }));
+        Store.loaded = true; Store.emit();
+      }, err => {
+        console.warn('entries', err);
+        toast("Couldn't open your saved journal. Showing this device only.");
+        Store.loaded = true; Store.emit();
+      });
+    } catch (e) { console.warn(e); Store.mode = 'local'; }
+  } else Store.mode = 'local';
+  if (Store.mode === 'local') Store.loaded = true;
+  Store._ready(); Store.emit();
+}
+
+/* ---------- Claude (sample) ---------- */
+let sampleFn = null, sampleOk = false;
+async function initSample() {
+  const C = window.claude;
+  if (!C || typeof C.use !== 'function') return;
+  try { const s = await C.use('sample'); if (s) { sampleFn = s; sampleOk = true; updateAIUi(); } } catch {}
+}
+function sampleErr(e) {
+  const c = e && e.code;
+  if (['not_granted', 'sampling_disabled', 'not_declared', 'capability_disabled', 'capability_removed'].includes(c)) {
+    sampleOk = false; updateAIUi();
+    return "I can't use my chat brain here. 🔌 Check-ins and writing still work.";
+  }
+  if (c === 'cancelled') return null;
+  if (c === 'rate_limited') return 'I need a short break. ⏳ Try again in a little while.';
+  if (c === 'refused') return "I can't help with that one. 🙏🏽";
+  if (c === 'session_expired') return 'Please sign in again, then try once more. 🔑';
+  return 'Something went wrong on my side. 🔌 Try again?';
+}
+function updateAIUi() {
+  $('#fw-tidy').hidden = !(sampleFn && sampleOk);
+  $('#fw-read').hidden = !canSpeak;
+}
+
+/* ---------- speech ---------- */
+function speak(text) {
+  if (!canSpeak) return;
+  const t = stripEmoji(text);
+  if (!t) return;
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.rate = 0.95; speechSynthesis.speak(u); } catch {}
+}
+
+/* ---------- toast ---------- */
+let toastTimer = null;
+function toast(msg) {
+  const t = $('#toast'); rich(t, msg); t.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 3200);
+}
+
+/* ---------- chat ---------- */
+const chat = $('#view-home');
+let lastWho = null;
+function scrollDown() { requestAnimationFrame(() => chat.scrollTo({ top: chat.scrollHeight, behavior: reduceMotion ? 'auto' : 'smooth' })); }
+function makeRow(who, cont) {
+  const r = el('div', 'row ' + who + (cont ? ' cont' : '') + (reduceMotion ? '' : ' in'));
+  const ava = el('span', 'ava' + (who === 'me' ? ' me-ava' : ''));
+  ava.setAttribute('aria-hidden', 'true');
+  rich(ava, who === 'bot' ? '🤖' : profile.settings.avatar);
+  r.append(ava);
+  return r;
+}
+function speakBtn(text) {
+  if (!canSpeak || !stripEmoji(text)) return null;
+  const b = el('button', 'speak'); b.type = 'button'; b.setAttribute('aria-label', 'Read aloud');
+  b.innerHTML = '<span class="ico" aria-hidden="true">🔊</span><span class="only-text">Read</span>';
+  b.onclick = () => speak(text);
+  return b;
+}
+function botRow(text, { info = false, cont = false } = {}) {
+  const r = makeRow('bot', cont);
+  if (!stripEmoji(text)) r.classList.add('emoji-only');
+  const b = el('div', 'bubble' + (info ? ' info' : ''));
+  b.append(rich(el('span', 'txt'), text));
+  const sb = speakBtn(text); if (sb) b.append(sb);
+  r.append(b);
+  return r;
+}
+function addBot(text, opts = {}) {
+  const r = botRow(text, { ...opts, cont: lastWho === 'bot' });
+  chat.append(r); lastWho = 'bot'; scrollDown();
+  if (profile.settings.autoread) speak(text);
+  return r;
+}
+function addMe(text) {
+  const r = makeRow('me', lastWho === 'me');
+  const b = el('div', 'bubble'); b.append(rich(el('span', 'txt'), text)); r.append(b);
+  chat.append(r); lastWho = 'me'; scrollDown();
+  return r;
+}
+function addCard(node) {
+  const r = el('div', 'row card-row'); r.append(node);
+  chat.append(r); lastWho = 'card'; scrollDown();
+  return r;
+}
+function showTyping() {
+  const r = makeRow('bot', lastWho === 'bot'); r.classList.add('typing');
+  const b = el('div', 'bubble dots'); b.setAttribute('aria-label', 'Lexi is typing');
+  b.innerHTML = '<i></i><i></i><i></i>';
+  r.append(b); chat.append(r); scrollDown();
+  return r;
+}
+const delayFor = t => reduceMotion ? 150 : Math.min(1300, 380 + [...String(t)].length * 14);
+let sayQueue = Promise.resolve();
+function say(text, opts) {
+  sayQueue = sayQueue.then(async () => { const t = showTyping(); await sleep(delayFor(text)); t.remove(); addBot(text, opts); });
+  return sayQueue;
+}
+async function sayMany(lines) { for (const l of lines) await say(l); }
+function lock(node) { node.classList.add('done'); $$('button,input,textarea', node).forEach(x => { x.disabled = true; }); }
+
+function ask(text, options) {
+  return say(text).then(() => new Promise(res => {
+    const wrap = el('div', 'choices' + (options === YES_NO ? ' yn' : ''));
+    options.forEach(o => {
+      const b = button('choice', o.label, o.e);
+      b.onclick = () => {
+        b.classList.add('picked'); lock(wrap); wrap.classList.add('done');
+        addMe(o.e + ' ' + o.label); res(o.v);
+      };
+      wrap.append(b);
+    });
+    addCard(wrap);
+    $('button', wrap).focus({ preventScroll: true });
+  }));
+}
+function offerActions() {
+  const wrap = el('div', 'choices');
+  [['🧭', 'Guided check-in', () => startGuided()], ['✏️', 'Write on my own', () => openSheet()], ['📖', 'Open journal', () => showView('journal')]].forEach(([i, l, fn]) => {
+    const b = button('choice', l, i); b.onclick = fn; wrap.append(b);
+  });
+  addCard(wrap);
+}
+
+/* emoji tile pickers */
+const itemKey = m => (m.band || '') + '|' + m.e + '|' + m.label;
+function optBtn(item, selected, onChange) {
+  const b = el('button', 'opt'); b.type = 'button';
+  const k = itemKey(item);
+  b.setAttribute('aria-pressed', selected.has(k) ? 'true' : 'false');
+  b.setAttribute('aria-label', item.label);
+  const i = el('span', 'ico'); i.setAttribute('aria-hidden', 'true'); rich(i, item.e);
+  b.append(i, el('span', 'lbl', item.label));
+  b.onclick = () => {
+    if (selected.has(k)) selected.delete(k); else selected.set(k, { e: item.e, label: item.label, ...(item.band ? { band: item.band } : {}) });
+    b.setAttribute('aria-pressed', selected.has(k) ? 'true' : 'false');
+    onChange && onChange();
+  };
+  return b;
+}
+function customAdder(withBand, onAdd) {
+  const wrap = el('div', 'adder');
+  const open = button('chip', 'My own', '➕');
+  const form = el('div', 'adder-form'); form.hidden = true;
+  const line = el('div', 'adder-line');
+  const emo = el('input', 'emo'); emo.type = 'text'; emo.id = nextId('emo'); emo.maxLength = 16; emo.placeholder = '🙂'; emo.setAttribute('aria-label', 'Emoji');
+  const pick = button('chip', 'Pick', '🙂'); pick.dataset.emojiBtn = '';
+  pick.onclick = () => openEmoji(emo, { single: true });
+  const word = el('input', 'word'); word.type = 'text'; word.id = nextId('word'); word.maxLength = 28; word.placeholder = 'Your word'; word.setAttribute('aria-label', 'Your word');
+  line.append(emo, pick, word);
+  form.append(line);
+  let band = 'content';
+  if (withBand) {
+    const bands = el('div', 'chips'); bands.setAttribute('aria-label', 'Which group?');
+    BANDS.forEach(bd => {
+      const c = el('button', 'chip'); c.type = 'button'; c.dataset.band = bd.key;
+      c.innerHTML = '<span class="swatch" style="background:var(--b)"></span>';
+      c.append(el('span', '', bd.name));
+      c.setAttribute('aria-pressed', bd.key === band ? 'true' : 'false');
+      c.onclick = () => { band = bd.key; $$('.chip', bands).forEach(x => x.setAttribute('aria-pressed', x === c ? 'true' : 'false')); };
+      bands.append(c);
+    });
+    form.append(bands);
+  }
+  const err = el('p', 'err');
+  const add = button('btn primary', 'Add', '✔️');
+  const foot = el('div', 'row-btns'); foot.append(add);
+  form.append(err, foot);
+  open.onclick = () => { form.hidden = !form.hidden; if (!form.hidden) word.focus(); };
+  const submit = () => {
+    const e = firstEmoji(emo.value), w = word.value.trim();
+    if (!e && !w) { err.textContent = 'Add a word or an emoji.'; return; }
+    onAdd({ e: e || '🏷️', label: w || e, ...(withBand ? { band } : {}) });
+  };
+  add.onclick = submit;
+  word.onkeydown = ev => { if (ev.key === 'Enter') { ev.preventDefault(); submit(); } };
+  wrap.append(open, form);
+  return wrap;
+}
+function moodPicker(selected, onChange) {
+  const holder = el('div');
+  const mount = () => {
+    const wrap = el('div', 'mood');
+    BANDS.forEach(b => {
+      const sec = el('section', 'band'); sec.dataset.band = b.key;
+      sec.append(el('h3', 'band-name', b.name));
+      const grid = el('div', 'opts');
+      const items = [...b.items.map(([e, label]) => ({ e, label })), ...((profile.custom.mood || []).filter(m => m.band === b.key))];
+      items.forEach(m => grid.append(optBtn({ ...m, band: b.key }, selected, onChange)));
+      sec.append(grid); wrap.append(sec);
+    });
+    wrap.append(customAdder(true, m => {
+      profile.custom.mood = [...(profile.custom.mood || []), m];
+      saveProfile(); selected.set(itemKey(m), m); mount(); onChange && onChange(); renderSettings();
+    }));
+    holder.replaceChildren(wrap);
+  };
+  mount();
+  return holder;
+}
+function topicOpts(T, selected, onChange) {
+  const holder = el('div');
+  const mount = () => {
+    const wrap = el('div', 'mood');
+    const grid = el('div', 'opts');
+    [...T.opts.map(([e, label]) => ({ e, label })), ...((profile.custom[T.key] || []))].forEach(m => grid.append(optBtn(m, selected, onChange)));
+    wrap.append(grid, customAdder(false, m => {
+      profile.custom[T.key] = [...(profile.custom[T.key] || []), m];
+      saveProfile(); selected.set(itemKey(m), m); mount(); onChange && onChange(); renderSettings();
+    }));
+    holder.replaceChildren(wrap);
+  };
+  mount();
+  return holder;
+}
+
+function moodCard() {
+  return new Promise(res => {
+    const selected = new Map();
+    const card = el('div', 'card');
+    const done = button('btn primary', 'Done', '✔️'); done.disabled = true;
+    const skip = button('btn', 'Skip', '⏭️');
+    card.append(moodPicker(selected, () => { done.disabled = selected.size === 0; }));
+    const btns = el('div', 'row-btns'); btns.append(skip, done); card.append(btns);
+    done.onclick = () => { lock(card); res([...selected.values()]); };
+    skip.onclick = () => { lock(card); res([]); };
+    addCard(card);
+  });
+}
+function topicCard() {
+  return new Promise(res => {
+    const sel = new Set();
+    const card = el('div', 'card');
+    const chips = el('div', 'chips');
+    const go = button('btn primary', "Let's go", '➜'); go.disabled = true;
+    const none = button('btn', 'Just my mood today');
+    TOPICS.forEach(t => {
+      const c = button('chip', t.name, t.icon); c.setAttribute('aria-pressed', 'false');
+      c.onclick = () => { if (sel.has(t.key)) sel.delete(t.key); else sel.add(t.key); c.setAttribute('aria-pressed', sel.has(t.key) ? 'true' : 'false'); go.disabled = sel.size === 0; };
+      chips.append(c);
+    });
+    const btns = el('div', 'row-btns'); btns.append(none, go);
+    card.append(chips, btns);
+    go.onclick = () => { lock(card); res(TOPICS.filter(t => sel.has(t.key)).map(t => t.key)); };
+    none.onclick = () => { lock(card); res([]); };
+    addCard(card);
+  });
+}
+function noteField(placeholder) {
+  const line = el('div', 'note-line');
+  const ta = el('textarea'); ta.id = nextId('note'); ta.rows = 2; ta.placeholder = placeholder; ta.setAttribute('aria-label', placeholder);
+  const eb = button('chip', '', '🙂', 'Emoji'); eb.dataset.emojiBtn = '';
+  eb.onclick = () => openEmoji(ta);
+  line.append(ta, eb);
+  return { line, ta };
+}
+function topicAnswerCard(T) {
+  return new Promise(res => {
+    const card = el('div', 'card');
+    const ans = { key: T.key, picks: [], note: '', todos: [] };
+    const next = button('btn primary', 'Next', '➜');
+    const skip = button('btn', 'Skip', '⏭️');
+    if (T.todo) {
+      const list = el('ul', 'todo-edit');
+      const line = el('div', 'note-line');
+      const inp = el('input'); inp.type = 'text'; inp.id = nextId('todo'); inp.placeholder = 'Add a to do'; inp.setAttribute('aria-label', 'Add a to do'); inp.maxLength = 120;
+      const add = button('btn', 'Add', '➕');
+      const draw = () => {
+        list.replaceChildren(...ans.todos.map((t, i) => {
+          const li = el('li'); li.append(rich(el('span'), t.t));
+          const x = button('chip', '', '✖️', 'Remove'); x.setAttribute('aria-label', 'Remove ' + t.t);
+          x.onclick = () => { ans.todos.splice(i, 1); draw(); };
+          li.append(x); return li;
+        }));
+      };
+      const addItem = () => { const v = inp.value.trim(); if (!v) return; ans.todos.push({ t: v, done: false }); inp.value = ''; draw(); inp.focus(); };
+      add.onclick = addItem;
+      inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); addItem(); } };
+      line.append(inp, add);
+      card.append(list, line);
+      next.onclick = () => { addItem(); lock(card); res(ans.todos.length ? ans : null); };
+    } else {
+      const selected = new Map();
+      const { line, ta } = noteField('A few words (you can skip this)');
+      card.append(topicOpts(T, selected), line);
+      next.onclick = () => {
+        ans.picks = [...selected.values()]; ans.note = ta.value.trim();
+        lock(card); res(ans.picks.length || ans.note ? ans : null);
+      };
+    }
+    skip.onclick = () => { lock(card); res(null); };
+    const btns = el('div', 'row-btns'); btns.append(skip, next); card.append(btns);
+    addCard(card);
+  });
+}
+function answerText(a) {
+  const bits = [];
+  if (a.picks && a.picks.length) bits.push(a.picks.map(p => p.e + ' ' + p.label).join(' · '));
+  if (a.todos && a.todos.length) bits.push(a.todos.map(t => '☐ ' + t.t).join(' · '));
+  if (a.note) bits.push(a.note);
+  return bits.join(' — ');
+}
+function moodShares(moods) {
+  const c = { content: 0, stressed: 0, low: 0 };
+  (moods || []).forEach(m => { if (c[m.band] != null) c[m.band]++; });
+  return c;
+}
+function reactionFor(moods) {
+  if (!moods.length) return "That's okay. We can keep going. 🙂";
+  const c = moodShares(moods);
+  const top = Object.entries(c).sort((a, b) => b[1] - a[1]);
+  if (top[0][1] === top[1][1]) return 'Mixed days are normal. Thanks for being honest. 🧩';
+  if (top[0][0] === 'content') return 'Content is a good place to be. 🌤️';
+  if (top[0][0] === 'stressed') return 'Thanks for telling me. That sounds like a lot. 🫂';
+  return "I hear you. Low days are real. You don't have to fix it right now. 🤝";
+}
+
+/* ---------- guided check-in ---------- */
+let guidedActive = false;
+async function startGuided(fromIntro) {
+  showView('home');
+  if (guidedActive) { toast('Your check-in is already open below. 👇'); scrollDown(); return; }
+  guidedActive = true;
+  try {
+    if (!fromIntro) await say("Let's check in. 🧭");
+    await say('How do you feel? Pick as many as you like.');
+    const moods = await moodCard();
+    addMe(moods.length ? moods.map(m => m.e + ' ' + m.label).join(' · ') : '⏭️ Skip');
+    await say(reactionFor(moods));
+    await say('What do you want to talk about today?');
+    const keys = await topicCard();
+    addMe(keys.length ? keys.map(k => TOPIC_BY[k].icon + ' ' + TOPIC_BY[k].name).join(' · ') : 'Just my mood today');
+    const topics = [];
+    for (const k of keys) {
+      const T = TOPIC_BY[k];
+      await say(T.icon + ' ' + T.q);
+      const a = await topicAnswerCard(T);
+      addMe(a ? answerText(a) : '⏭️ Skip');
+      if (a) topics.push(a);
+    }
+    if (!moods.length && !topics.length) { await say("Nothing to save this time. That's okay. 🏡"); offerActions(); return; }
+    const entry = { kind: 'guided', createdAt: Date.now(), day: dayKey(), moods, topics, text: '' };
+    const ref = await Store.add(entry);
+    await say('Saved to your journal. 📖 ✔️');
+    await say('👏🏽👏🏽👏🏽👏🏽');
+    if (sampleFn && sampleOk) {
+      const want = await ask('Want a short reflection on today?', YES_NO);
+      if (want) await reflect(entry, ref);
+    }
+    offerActions();
+  } finally { guidedActive = false; }
+}
+
+function entrySummary(en) {
+  const parts = [];
+  if (en.moods && en.moods.length) parts.push('Mood: ' + en.moods.map(m => m.label + (m.band ? ' (' + BAND_BY[m.band].name + ')' : '')).join(', '));
+  (en.topics || []).forEach(tp => {
+    const T = TOPIC_BY[tp.key]; const bits = [];
+    if (tp.picks && tp.picks.length) bits.push(tp.picks.map(p => p.label).join(', '));
+    if (tp.todos && tp.todos.length) bits.push(tp.todos.map(x => x.t + (x.done ? ' (done)' : '')).join(', '));
+    if (tp.note) bits.push(tp.note);
+    parts.push((T ? T.name : tp.key) + ': ' + bits.join('. '));
+  });
+  if (en.text) parts.push('Writing: ' + en.text);
+  return parts.join('\n');
+}
+function cleanLines(text) {
+  return String(text).split(/\n+/).map(s => s.replace(/\*\*(.+?)\*\*/g, '$1').replace(/^\s*(?:[-*•]|\d+\.)\s+/, '').replace(/^#+\s*/, '').trim()).filter(Boolean);
+}
+async function reflect(entry, ref) {
+  const t = showTyping();
+  try {
+    const { text } = await sampleFn(
+      'Write a short reflection for a dyslexic person about their journal check-in below.\n' +
+      'Rules: 2 or 3 very short sentences, each on its own line. Simple, common words. 1 or 2 emoji. Talk to them as "you". ' +
+      'Name what they shared without judging it. No toxic positivity: never say "be happy", "cheer up" or "look on the bright side". ' +
+      'No advice unless the entry asks for it. No lists, no markdown.\n\nCheck-in:\n' + entrySummary(entry)
+    );
+    t.remove();
+    cleanLines(text).forEach(l => addBot(l));
+    if (ref) Store.update(ref.id, ref.src, { reflection: cleanLines(text).join('\n') });
+  } catch (e) {
+    t.remove();
+    const m = sampleErr(e); if (m) addBot(m, { info: true });
+  }
+}
+
+/* ---------- free chat with Lexi ---------- */
+let turns = [], chatCtl = null;
+function journalContext() {
+  const es = Store.all().slice(0, 5);
+  if (!es.length) return 'No entries yet.';
+  return es.map(e => e.day + ' (' + (e.kind === 'free' ? 'free writing' : 'check-in') + '): ' + entrySummary(e).replace(/\n/g, ' | ').slice(0, 300)).join('\n');
+}
+function lexiRules() {
+  return [
+    'You are Lexi, a friendly journaling chatbot inside an app made for dyslexic people. Stay in character.',
+    'How you write:',
+    '- Reply in 1 to 3 very short lines. Each line is one short sentence on its own line.',
+    '- Use simple, common words. No lists, no markdown, no headings.',
+    '- Use 1 or 2 emoji per reply to carry meaning. The user reads emoji easily.',
+    '- No toxic positivity. Never say "be happy", "cheer up", "look on the bright side" or "everything happens for a reason". Accept feelings as they are. Content is the goal, not happy.',
+    '- You are not a therapist and you do not diagnose. If the user mentions hurting themselves or being in danger, say you care and tell them to contact someone they trust or their local emergency number now (in the US, call or text 988). Keep it short.',
+    'What the app can do (use this to answer questions about the app):',
+    '- 🧭 Guided check-in on the 🏡 Home tab: pick mood emoji in three groups (Content, Stressed, Low self-esteem), then topics: physical health, diet, self-esteem, relationships, financial health, stressors, to dos, hobbies and passions, gratitude. There is no "Happy" option on purpose. ➕ My own adds custom words and emoji.',
+    '- ✏️ Write on my own: free writing with an emoji button, ✨ Tidy spelling and 🔊 Read it back.',
+    '- 📖 Journal tab: entries by day, a 14-day mood strip, tick off to dos, 🔊 read entries aloud, 🗑 delete entries.',
+    '- ⚙️ Settings tab: turn icons off, font (Verdana, Lexend, Atkinson Hyperlegible), text size, line spacing, colors (orange, purple, mint), light or dark, skin tone, avatar, read Lexi out loud, replay the intro.',
+    'The user\'s recent journal entries are below. Mention them only when the user asks about their journal or feelings.',
+    journalContext(),
+    'The conversation follows.'
+  ].join('\n');
+}
+function fallbackReply(t) {
+  const s = t.toLowerCase();
+  if (/suicid|kill myself|hurt myself|self.?harm|end it all|want to die/.test(s)) return ["I'm really glad you told me. 💛", 'Please reach out to someone you trust or your local emergency number now.', 'In the US you can call or text 988.'];
+  if (/delete|remove|erase/.test(s)) return ['To delete an entry, open 📖 Journal.', 'Then tap 🗑️ on that entry.'];
+  if (/icon|emoji/.test(s)) return ['You can turn icons on or off in ⚙️ Settings. 🧠'];
+  if (/font|size|spacing|dark|colou?r|read|voice/.test(s)) return ['Fonts, text size, spacing, colors and read aloud are in ⚙️ Settings.'];
+  if (/check|guide|start|help|how/.test(s)) return ["Tap 🧭 Guided check-in and I'll go step by step with you.", 'Or tap ✏️ to write on your own.'];
+  return null;
+}
+const sendBtn = $('#msg-send');
+function setSending(on) {
+  sendBtn.setAttribute('aria-label', on ? 'Stop' : 'Send');
+  sendBtn.innerHTML = on ? '<span class="ico" aria-hidden="true">⏹️</span><span class="only-text">Stop</span>' : '<span class="ico" aria-hidden="true">➤</span><span class="only-text">Send</span>';
+}
+async function sendChat(text) {
+  addMe(text);
+  if (!sampleFn || !sampleOk) {
+    const r = fallbackReply(text);
+    if (r) await sayMany(r);
+    else { await sayMany(["I can't chat freely right now. 🔌", 'You can still do a check-in or write on your own.']); offerActions(); }
+    return;
+  }
+  turns.push({ role: 'user', content: text });
+  if (turns.length > 16) turns = turns.slice(-16);
+  while (turns.length && turns[0].role !== 'user') turns.shift();
+  await sayQueue;
+  const ctl = new AbortController(); chatCtl = ctl; setSending(true);
+  const typing = showTyping();
+  const group = el('div', 'chat'); let started = false;
+  const draw = txt => {
+    const lines = cleanLines(txt);
+    group.replaceChildren(...lines.map((l, i) => botRow(l, { cont: i > 0 || lastWho === 'bot' })));
+  };
+  try {
+    const res = await sampleFn([{ role: 'user', content: lexiRules() }, ...turns], {
+      cache: false, modelTier: 'quick', signal: ctl.signal,
+      onText: ({ text: t }) => { if (!started) { started = true; typing.replaceWith(group); } draw(t); scrollDown(); }
+    });
+    if (!started) { typing.replaceWith(group); draw(res.text); }
+    lastWho = 'bot';
+    turns.push({ role: 'assistant', content: res.text });
+    if (profile.settings.autoread) speak(res.text);
+    if (res.truncated) addBot('That got cut short. Ask me for less at a time. ✂️', { info: true });
+  } catch (e) {
+    typing.remove();
+    if (e && e.code === 'refused') group.remove();
+    if (started) lastWho = 'bot';
+    const m = sampleErr(e); if (m) addBot(m, { info: true });
+  } finally {
+    if (chatCtl === ctl) { chatCtl = null; setSending(false); }
+    scrollDown();
+  }
+}
+
+/* ---------- onboarding (Chat Bot Plan) ---------- */
+function legendCard() {
+  const w = el('div', 'chips');
+  [['⚙️', 'Settings', 'settings'], ['🏡', 'Home', 'home'], ['📖', 'Journal', 'journal']].forEach(([i, l, v]) => {
+    const b = button('chip', l, i); b.onclick = () => showView(v); w.append(b);
+  });
+  return w;
+}
+async function intro() {
+  await say("Hi! I'm Lexi, the journaling chatbot. 🤖 I'm here to make journaling easy and fun.");
+  await say("I speak English, but I'm better at emoji. 😉");
+  await say('ℹ️ This means information.', { info: true });
+  await say('ℹ️ My developer created me to help dyslexic people journal.', { info: true });
+  await say("ℹ️ Text blocks will never be too large, and I'll rely a lot on icons and emojis.", { info: true });
+  await say("🧠 If icons don't work for your brain, you can turn them off in settings.", { info: true });
+  await sayQueue; addCard(legendCard());
+  await say('📖 This is your journal. Everything you save goes there.');
+  const go = await ask('Would you like to start?', YES_NO);
+  profile.onboarded = true; saveProfile();
+  if (!go) { await say("No problem. I'll be right here. 🏡"); offerActions(); return; }
+  await say('👏🏽👏🏽👏🏽👏🏽');
+  const help = await ask('Would you like help?', YES_NO);
+  if (help) {
+    await say('You can choose to journal with me by selecting the guided experience. 🧭');
+    startGuided(true);
+  } else {
+    await say("If you're feeling frisky and want to tackle it on your own, I'll be waiting to answer any questions you may have.");
+    const w = el('div', 'choices');
+    const a = button('choice', 'Start writing', '✏️'); a.onclick = () => openSheet();
+    const b = button('choice', 'Guided check-in', '🧭'); b.onclick = () => startGuided();
+    w.append(a, b); addCard(w);
+  }
+}
+async function welcomeBack() {
+  const today = Store.all().filter(e => e.day === dayKey()).length;
+  await say(today ? "Welcome back! 🏡 You've saved " + today + (today === 1 ? ' entry' : ' entries') + ' today. ✔️' : 'Welcome back! 🏡');
+  await say('What would you like to do?');
+  offerActions();
+}
+
+/* ---------- emoji picker: any emoji, any time ---------- */
+const pop = $('#emoji-pop');
+let emojiTarget = null, emojiSingle = false, emojiTab = 0;
+function renderEmojiTabs() {
+  const tabs = $('#emoji-tabs');
+  tabs.replaceChildren(...EMOJI_SETS.map(([icon, name], i) => {
+    const b = el('button'); b.type = 'button'; b.textContent = tone(icon); b.title = name;
+    b.setAttribute('role', 'tab'); b.setAttribute('aria-label', name); b.setAttribute('aria-selected', i === emojiTab ? 'true' : 'false');
+    b.onclick = () => { emojiTab = i; renderEmojiTabs(); renderEmojiGrid(); };
+    return b;
+  }));
+}
+function renderEmojiGrid() {
+  const g = $('#emoji-grid');
+  g.replaceChildren(...EMOJI_SETS[emojiTab][2].split(' ').filter(Boolean).map(em => {
+    const b = el('button'); b.type = 'button'; b.textContent = tone(em);
+    b.onclick = () => insertEmoji(tone(em));
+    return b;
+  }));
+  g.scrollTop = 0;
+}
+function openEmoji(target, { single = false } = {}) {
+  emojiTarget = target; emojiSingle = single;
+  pop.style.bottom = target.closest('.sheet') ? 'calc(96px + env(safe-area-inset-bottom,0px))' : '';
+  renderEmojiTabs(); renderEmojiGrid(); pop.hidden = false;
+}
+function insertEmoji(em) {
+  const t = emojiTarget; if (!t) return;
+  if (emojiSingle) { t.value = em; pop.hidden = true; }
+  else {
+    const s = t.selectionStart ?? t.value.length, e = t.selectionEnd ?? t.value.length;
+    t.value = t.value.slice(0, s) + em + t.value.slice(e);
+    const p = s + em.length; try { t.setSelectionRange(p, p); } catch {}
+  }
+  t.dispatchEvent(new Event('input', { bubbles: true }));
+}
+document.addEventListener('pointerdown', e => {
+  if (!pop.hidden && !pop.contains(e.target) && !e.target.closest('[data-emoji-btn]')) pop.hidden = true;
+});
+
+/* ---------- free-write sheet ---------- */
+const sheet = $('#sheet'), fwText = $('#fw-text'), fwOut = $('#fw-tidy-out');
+let fwMood = new Map(), draftTimer = null, lastFocus = null;
+function openSheet() {
+  lastFocus = document.activeElement;
+  fwMood = new Map();
+  $('#fw-mood').replaceChildren(moodPicker(fwMood));
+  $('#fw-mood-wrap').open = false;
+  fwText.value = LS.get('lexi.draft', '') || '';
+  fwOut.hidden = true; updateAIUi();
+  sheet.hidden = false;
+  setTimeout(() => fwText.focus(), 30);
+}
+function closeSheet() { sheet.hidden = true; pop.hidden = true; if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true }); }
+fwText.addEventListener('input', () => { clearTimeout(draftTimer); draftTimer = setTimeout(() => LS.set('lexi.draft', fwText.value), 400); });
+$('#fw-close').onclick = closeSheet;
+$('#fw-cancel').onclick = closeSheet;
+$('#fw-emoji').onclick = () => openEmoji(fwText);
+$('#fw-read').onclick = () => speak(fwText.value);
+$('#fw-save').onclick = async () => {
+  const text = fwText.value.trim(), moods = [...fwMood.values()];
+  if (!text && !moods.length) { toast('Write something or pick a mood first. ✏️'); return; }
+  $('#fw-save').disabled = true;
+  try {
+    await Store.add({ kind: 'free', createdAt: Date.now(), day: dayKey(), moods, topics: [], text });
+    clearTimeout(draftTimer); LS.del('lexi.draft'); fwText.value = '';
+    closeSheet(); toast('Saved to your journal. 📖');
+    if (!$('#view-home').hidden) say("Saved. 📖 I'm here if you have questions.");
+  } finally { $('#fw-save').disabled = false; }
+};
+$('#fw-tidy').onclick = async () => {
+  const text = fwText.value.trim();
+  if (!text) { toast('Write something first. ✏️'); return; }
+  if (!sampleFn || !sampleOk) return;
+  const btn = $('#fw-tidy'); btn.disabled = true;
+  fwOut.hidden = false; fwOut.replaceChildren(rich(el('p'), '✨ Tidying your spelling…'));
+  try {
+    const { text: fixed } = await sampleFn(
+      'Fix only the spelling mistakes and obvious typos in the journal text below. Keep the writer\'s own words, tone, slang, emoji, capital letters and line breaks. ' +
+      'Do not add, remove or reword ideas. Reply with only the corrected text and nothing else.\n\nText:\n' + text,
+      { modelTier: 'quick' }
+    );
+    const clean = fixed.trim();
+    const p = el('p'); p.textContent = clean;
+    const use = button('btn primary', 'Use this', '✔️');
+    const keep = button('btn', 'Keep mine', '✖️');
+    use.onclick = () => { fwText.value = clean; fwText.dispatchEvent(new Event('input')); fwOut.hidden = true; toast('Spelling tidied. ✨'); };
+    keep.onclick = () => { fwOut.hidden = true; };
+    const say1 = speakBtn(clean);
+    const btns = el('div', 'row-btns'); if (say1) btns.append(say1); btns.append(keep, use);
+    fwOut.replaceChildren(rich(el('strong'), "✨ Lexi's tidy version"), p, btns);
+  } catch (e) {
+    const m = sampleErr(e);
+    if (m) fwOut.replaceChildren(rich(el('p'), m)); else fwOut.hidden = true;
+  } finally { btn.disabled = false; }
+};
+
+/* ---------- views ---------- */
+function showView(v) {
+  ['home', 'journal', 'settings'].forEach(n => { $('#view-' + n).hidden = n !== v; });
+  $$('.tab').forEach(t => { if (t.dataset.view === v) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current'); });
+  $('#composer').hidden = v !== 'home';
+  pop.hidden = true;
+  if (v === 'journal') renderJournal();
+  if (v === 'home') scrollDown();
+}
+$$('.tab').forEach(t => { t.onclick = () => showView(t.dataset.view); });
+
+/* ---------- journal ---------- */
+const jv = $('#view-journal');
+let confirmId = null;
+function fmtDay(k) {
+  const today = dayKey(), y = new Date(); y.setDate(y.getDate() - 1);
+  if (k === today) return 'Today';
+  if (k === dayKey(y)) return 'Yesterday';
+  return parseDay(k).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
+}
+function shareGradient(c) {
+  const total = c.content + c.stressed + c.low;
+  if (!total) return '';
+  let at = 0; const stops = [];
+  [['content', 'var(--b-content)'], ['stressed', 'var(--b-stressed)'], ['low', 'var(--b-low)']].forEach(([k, col]) => {
+    if (!c[k]) return; const end = at + c[k] / total * 100;
+    stops.push(col + ' ' + at.toFixed(1) + '% ' + end.toFixed(1) + '%'); at = end;
+  });
+  return 'conic-gradient(' + stops.join(',') + ')';
+}
+function entryHtml(en) {
+  const time = new Date(en.createdAt || Date.now()).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  const kind = en.kind === 'free' ? ['✏️', 'Free writing'] : ['🧭', 'Check-in'];
+  const key = esc(en.id) + '|' + esc(en._src);
+  let h = '<article class="entry">';
+  h += '<div class="entry-head"><span class="ico" aria-hidden="true">' + kind[0] + '</span><span>' + kind[1] + ' · ' + esc(time) + '</span><span class="spacer"></span>';
+  if (canSpeak) h += '<button type="button" data-act="read" data-key="' + key + '" aria-label="Read this entry aloud"><span class="ico" aria-hidden="true">🔊</span><span class="only-text">Read</span></button>';
+  h += '<button type="button" data-act="del" data-key="' + key + '" aria-label="Delete this entry"><span class="ico" aria-hidden="true">🗑️</span><span class="only-text">Delete</span></button></div>';
+  if (confirmId === en.id) {
+    h += '<div class="confirm"><p>Delete this entry? This can\'t be undone.</p><button type="button" class="btn" data-act="del-no">Keep it</button><button type="button" class="btn danger" data-act="del-yes" data-key="' + key + '">Delete</button></div>';
+  }
+  if (en.moods && en.moods.length) {
+    h += '<div class="mchips">' + en.moods.map(m => '<span class="mchip" data-band="' + esc(m.band || '') + '">' + renderRich(m.e) + '<span>' + esc(m.label) + '</span></span>').join('') + '</div>';
+  }
+  if (en.topics && en.topics.length) {
+    h += '<dl class="tlist">';
+    en.topics.forEach((tp, ti) => {
+      const T = TOPIC_BY[tp.key];
+      h += '<dt>' + (T ? renderRich(T.icon) + ' ' + esc(T.name) : esc(tp.key)) + '</dt><dd>';
+      if (tp.picks && tp.picks.length) h += '<div>' + tp.picks.map(p => renderRich(p.e) + ' ' + esc(p.label)).join(' · ') + '</div>';
+      if (tp.todos && tp.todos.length) {
+        h += '<ul class="todos">' + tp.todos.map((td, i) => '<li class="' + (td.done ? 'done' : '') + '"><label><input type="checkbox" id="td-' + esc(en.id) + '-' + ti + '-' + i + '" data-todo="' + key + '|' + ti + '|' + i + '"' + (td.done ? ' checked' : '') + '><span>' + renderRich(td.t) + '</span></label></li>').join('') + '</ul>';
+      }
+      if (tp.note) h += '<div>' + renderRich(tp.note) + '</div>';
+      h += '</dd>';
+    });
+    h += '</dl>';
+  }
+  if (en.text) h += '<p class="text">' + renderRich(en.text) + '</p>';
+  if (en.reflection) h += '<p class="reflection">' + renderRich('🤖 ' + en.reflection) + '</p>';
+  return h + '</article>';
+}
+function renderJournal() {
+  if (!Store.loaded) {
+    jv.innerHTML = '<div class="j-head"><h2 class="title">' + renderRich('📖') + ' My journal</h2><p class="muted">Opening your journal…</p></div>';
+    return;
+  }
+  const all = Store.all();
+  const byDay = new Map();
+  all.forEach(e => { const k = e.day || dayKey(new Date(e.createdAt)); if (!byDay.has(k)) byDay.set(k, []); byDay.get(k).push(e); });
+  const where = Store.mode === 'cloud' ? '🔒 Private to you, saved to your account.' : '💾 Saved on this device only.';
+  let h = '<div class="j-head"><h2 class="title">' + renderRich('📖') + ' My journal</h2><p class="muted">' + renderRich(all.length + (all.length === 1 ? ' entry' : ' entries') + ' · ' + where) + '</p></div>';
+  // 14-day mood strip
+  h += '<div class="strip-wrap"><h3>Last 14 days</h3><div class="strip" role="img" aria-label="Mood over the last 14 days">';
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const k = dayKey(d), es = byDay.get(k) || [];
+    const c = moodShares(es.flatMap(e => e.moods || []));
+    const g = shareGradient(c);
+    const style = g ? ' style="background:' + g + '"' : (es.length ? ' style="background:var(--surface-2)"' : '');
+    h += '<div class="dd' + (es.length ? ' has' : '') + (i === 0 ? ' today' : '') + '"><i' + style + '></i><span>' + d.toLocaleDateString(undefined, { weekday: 'narrow' }) + '</span><span>' + d.getDate() + '</span></div>';
+  }
+  h += '</div><div class="legend"><span><i style="background:var(--b-content)"></i>Content</span><span><i style="background:var(--b-stressed)"></i>Stressed</span><span><i style="background:var(--b-low)"></i>Low self-esteem</span><span><i></i>No entry</span></div></div>';
+  h += '<div class="j-actions"><button type="button" class="btn primary" data-act="checkin">' + renderRich('🧭') + ' Guided check-in</button><button type="button" class="btn" data-act="write">' + renderRich('✏️') + ' Write on my own</button></div>';
+  if (!all.length) {
+    h += '<div class="empty"><div class="big">' + renderRich('📖') + '</div><p><strong>Your journal is empty.</strong></p><p class="muted">Do a check-in or write on your own. Your entries will show up here, newest first.</p></div>';
+  } else {
+    byDay.forEach((es, k) => { h += '<section class="day-group"><h3>' + esc(fmtDay(k)) + '</h3><div class="entries">' + es.map(entryHtml).join('') + '</div></section>'; });
+  }
+  jv.innerHTML = h;
+}
+function findEntry(key) { const [id, src] = key.split('|'); return { en: Store.all().find(e => e.id === id && e._src === src), id, src }; }
+jv.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const act = b.dataset.act;
+  if (act === 'checkin') return startGuided();
+  if (act === 'write') return openSheet();
+  if (act === 'read') { const { en } = findEntry(b.dataset.key); if (en) speak(entrySummary(en) + (en.reflection ? '\n' + en.reflection : '')); return; }
+  if (act === 'del') { confirmId = findEntry(b.dataset.key).id; renderJournal(); const y = $('[data-act="del-no"]', jv); if (y) y.focus(); return; }
+  if (act === 'del-no') { confirmId = null; renderJournal(); return; }
+  if (act === 'del-yes') { const { id, src } = findEntry(b.dataset.key); confirmId = null; Store.remove(id, src); toast('Entry deleted. 🗑️'); return; }
+});
+jv.addEventListener('change', e => {
+  const cb = e.target.closest('[data-todo]'); if (!cb) return;
+  const [id, src, ti, i] = cb.dataset.todo.split('|');
+  const { en } = findEntry(id + '|' + src); if (!en) return;
+  const topics = JSON.parse(JSON.stringify(en.topics || []));
+  if (!topics[ti] || !topics[ti].todos || !topics[ti].todos[i]) return;
+  topics[ti].todos[i].done = cb.checked;
+  cb.closest('li').classList.toggle('done', cb.checked);
+  if (src === 'local') Store.update(id, src, { topics }); else { en.topics = topics; Store.update(id, src, { topics }); }
+});
+Store.subs.add(() => { if (!jv.hidden) renderJournal(); });
+
+/* ---------- settings ---------- */
+const sv = $('#view-settings');
+let wipeAsk = false;
+function segBtn(setting, val, label, extra = '') {
+  const on = String(profile.settings[setting]) === String(val);
+  return '<button type="button" class="chip" data-set="' + setting + '" data-val="' + esc(val) + '" aria-pressed="' + on + '"' + extra + '>' + label + '</button>';
+}
+function renderSettings() {
+  const S = profile.settings;
+  let h = '<div class="j-head"><h2 class="title">' + renderRich('⚙️') + ' Settings</h2><p class="muted">Make Lexi easy on your eyes and your brain.</p></div>';
+  h += '<section class="set"><h3>' + renderRich('🧠') + ' Icons and emoji</h3><p>If icons don\'t work for your brain, turn them off. Words will show instead.</p><div class="chips">' +
+    segBtn('icons', true, 'Icons on') + segBtn('icons', false, 'Words only') + '</div></section>';
+  h += '<section class="set"><h3>' + renderRich('🔤') + ' Font</h3><div class="chips">' +
+    Object.entries(FONTS).map(([k, [n, stack]]) => segBtn('font', k, esc(n), ' style="font-family:' + esc(stack) + '"')).join('') + '</div></section>';
+  h += '<section class="set"><h3>' + renderRich('🔠') + ' Text size</h3><div class="chips">' +
+    Object.entries(SIZES).map(([k, [n]]) => segBtn('size', k, esc(n))).join('') + '</div></section>';
+  h += '<section class="set"><h3>' + renderRich('↕️') + ' Line spacing</h3><p>Wider gaps between lines can make reading easier.</p><div class="chips">' +
+    Object.entries(SPACING).map(([k, [n]]) => segBtn('spacing', k, esc(n))).join('') + '</div></section>';
+  h += '<section class="set"><h3>' + renderRich('🎨') + ' Colors</h3><div class="chips">' +
+    Object.entries(ACCENTS).map(([k, [n, hex]]) => segBtn('accent', k, '<span class="swatch" style="background:' + hex + '"></span>' + esc(n))).join('') + '</div></section>';
+  h += '<section class="set"><h3>' + renderRich('🌗') + ' Light or dark</h3><p>Dark flips the background and the text.</p><div class="chips">' +
+    Object.entries(MODES).map(([k, [n, i]]) => segBtn('mode', k, renderRich(i) + ' ' + esc(n))).join('') + '</div></section>';
+  h += '<section class="set"><h3>' + renderRich('✋🏽') + ' Skin tone</h3><div class="chips">' +
+    TONES.map(([t, n]) => segBtn('tone', t, '<span aria-hidden="true">✋' + t + '</span> ' + esc(n))).join('') + '</div></section>';
+  h += '<section class="set"><h3>' + renderRich(S.avatar) + ' My avatar</h3><div class="chips">' +
+    AVATARS.map(a => segBtn('avatar', a, '<span style="font-size:1.4em">' + esc(tone(a)) + '</span>', ' aria-label="Avatar ' + esc(a) + '"')).join('') + '</div></section>';
+  h += '<section class="set"><h3>' + renderRich('🔊') + ' Read aloud</h3>' + (canSpeak
+    ? '<p>Lexi can read every message out loud. You can also tap 🔊 on any message.</p><div class="chips">' + segBtn('autoread', true, 'Read Lexi out loud') + segBtn('autoread', false, 'Only when I tap') + '</div>'
+    : '<p>This browser can\'t read text out loud.</p>') + '</section>';
+  const customs = [];
+  (profile.custom.mood || []).forEach((m, i) => customs.push(['mood', i, m]));
+  TOPICS.forEach(t => (profile.custom[t.key] || []).forEach((m, i) => customs.push([t.key, i, m])));
+  h += '<section class="set"><h3>' + renderRich('🏷️') + ' My own words</h3>' + (customs.length
+    ? '<p>Words and emoji you added. Tap ✖️ to remove one.</p><ul class="customs">' + customs.map(([g, i, m]) => '<li data-band="' + esc(m.band || '') + '">' + renderRich(m.e) + ' ' + esc(m.label) + '<button type="button" data-act="rm-custom" data-g="' + esc(g) + '" data-i="' + i + '" aria-label="Remove ' + esc(m.label) + '">✖️</button></li>').join('') + '</ul>'
+    : '<p>Add your own feeling words with ➕ My own during a check-in.</p>') + '</section>';
+  h += '<section class="set"><h3>' + renderRich('💾') + ' Your journal</h3><p>' + (Store.mode === 'cloud' ? 'Private to you and saved to your account.' : Store.mode === 'local' ? 'Saved on this device only.' : 'Connecting…') + '</p><div class="chips">' +
+    '<button type="button" class="chip" data-act="replay">' + renderRich('🔁') + ' Replay Lexi\'s intro</button>' +
+    '<button type="button" class="chip" data-act="wipe">' + renderRich('🗑️') + ' Delete all entries</button></div>' +
+    (wipeAsk ? '<div class="confirm"><p>Delete all ' + Store.all().length + ' entries? This can\'t be undone.</p><button type="button" class="btn" data-act="wipe-no">Keep them</button><button type="button" class="btn danger" data-act="wipe-yes">Delete all</button></div>' : '') + '</section>';
+  sv.innerHTML = h;
+}
+sv.addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.set) {
+    const k = b.dataset.set; let v = b.dataset.val;
+    if (v === 'true') v = true; else if (v === 'false') v = false;
+    profile.settings[k] = v; applySettings(); saveProfile();
+    if (k === 'tone' || k === 'avatar') retone();
+    renderSettings(); renderJournal();
+    const again = $('[data-set="' + k + '"][aria-pressed="true"]', sv); if (again) again.focus({ preventScroll: true });
+    return;
+  }
+  const act = b.dataset.act;
+  if (act === 'rm-custom') { const g = b.dataset.g, i = +b.dataset.i; (profile.custom[g] || []).splice(i, 1); saveProfile(); renderSettings(); return; }
+  if (act === 'replay') { showView('home'); intro(); return; }
+  if (act === 'wipe') { wipeAsk = true; renderSettings(); return; }
+  if (act === 'wipe-no') { wipeAsk = false; renderSettings(); return; }
+  if (act === 'wipe-yes') {
+    wipeAsk = false; renderSettings();
+    const list = Store.all();
+    for (const en of list) await Store.remove(en.id, en._src);
+    toast('All entries deleted. 🗑️');
+  }
+});
+function retone() {
+  $$('[data-raw]').forEach(n => { n.innerHTML = renderRich(n.dataset.raw); });
+  $$('.me-ava').forEach(n => rich(n, profile.settings.avatar));
+}
+
+/* ---------- composer ---------- */
+const form = $('#composer'), msg = $('#msg');
+function autosize() { msg.style.height = 'auto'; msg.style.height = Math.min(msg.scrollHeight + 4, 160) + 'px'; }
+msg.addEventListener('input', autosize);
+msg.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); form.requestSubmit(); } });
+form.addEventListener('submit', e => {
+  e.preventDefault();
+  if (chatCtl) { chatCtl.abort(); return; }
+  const v = msg.value.trim(); if (!v) return;
+  msg.value = ''; autosize(); pop.hidden = true;
+  sendChat(v);
+});
+$('#msg-emoji').onclick = () => { if (!pop.hidden && emojiTarget === msg) { pop.hidden = true; return; } openEmoji(msg); };
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (!pop.hidden) { pop.hidden = true; return; }
+  if (!sheet.hidden) closeSheet();
+});
+
+/* ---------- boot ---------- */
+$('#today').textContent = new Date().toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+applySettings(); updateAIUi(); renderSettings(); renderJournal();
+Store.subs.add(() => { if (!sv.hidden) renderSettings(); });
+initStore(); initSample();
+if (location.hash === '#journal') showView('journal'); else if (location.hash === '#settings') showView('settings');
+(async () => {
+  const t = showTyping();
+  await Promise.race([Store.ready, sleep(2500)]);
+  t.remove();
+  if (profile.onboarded) welcomeBack(); else intro();
+})();
+})();
+</script>
