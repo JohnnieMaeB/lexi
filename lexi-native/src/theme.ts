@@ -3,7 +3,7 @@ import { createContext, useContext } from 'react';
 import { Platform, type TextStyle, type ViewStyle } from 'react-native';
 import type { BandKey, Settings, ThemeKey } from './content';
 import { stripEmoji, tone } from './text';
-import { SIZES, SPACING } from './content';
+import { LETTERS, SIZES, SPACING } from './content';
 
 export type Palette = {
   bg: string;            // canvas behind everything
@@ -84,24 +84,37 @@ export const R = { s: 14, tile: 20, m: 22, l: 28, pill: 999 } as const;
 
 export type Theme = ReturnType<typeof makeTheme>;
 
-export function makeTheme(S: Settings, systemDark: boolean, windowWidth: number) {
+// RN has no word-spacing style, so Roomy / Extra roomy add a thin (≈0.2 em) or thin + hair (≈0.3 em) space after
+// each space in displayed text. That's close to the spec's +0.16 / +0.32 em; typed text in inputs is left alone.
+const WORD_GAP: Record<Settings['letters'], string> = { normal: '', roomy: ' ', xroomy: '  ' };
+
+/** `fontScale` is the phone's text size setting. Text scales by itself (allowFontScaling stays on everywhere),
+ *  so layout that holds text or emoji (avatars, tiles, bubble caps) is multiplied by it too. */
+export function makeTheme(S: Settings, systemDark: boolean, windowWidth: number, fontScale = 1) {
   const key = resolveTheme(S.theme, systemDark);
   const c = PALETTES[key];
   const dark = key === 'night' || key === 'ember';
   const fs = (SIZES[S.size] || SIZES.m)[1];
   const lh = (SPACING[S.spacing] || SPACING.wide)[1];
+  const [, ls] = LETTERS[S.letters] || LETTERS.normal;
+  const gap = WORD_GAP[S.letters] || '';
+  const k = Math.max(1, Math.min(fontScale || 1, 3));
   const icons = S.icons;
   // 14 px rails (10 px under 380 px), 10 px of breathing room inside them.
   const rail = windowWidth < 380 ? 10 : 14;
   const pad = 10;
   const contentW = windowWidth - rail * 2 - pad * 2;
+  const em = fs * k;
+  // Bot bubbles are a fixed column, about 64 % of the content width (board: 222 of 347 px). Roomy spacing or
+  // 24 px+ text widens them to min(86 %, 26 em) (FEATURES_DO_NEXT §1).
+  const wide = S.letters !== 'normal' || fs >= 24 || em >= 24;
   const shadow: ViewStyle = { shadowColor: '#000000', shadowOpacity: c.shadowOpacity, shadowRadius: 18, shadowOffset: { width: 0, height: 6 }, elevation: dark ? 3 : 2 };
   const t = {
-    c, key, dark, fs, lh, icons, rail, pad, contentW,
+    c, key, dark, fs, lh, icons, rail, pad, contentW, k, em,
     narrow: windowWidth < 380,
-    /** Bot bubbles are a fixed column, about 64 % of the content width (board: 222 of 347 px). */
-    bubbleW: Math.round(Math.min(contentW * 0.64, fs * 26)),
-    avatarBot: 46, avatarMe: 52,
+    // ...never wider than what's left beside the 🤖 avatar.
+    bubbleW: Math.round(Math.min(contentW * (wide ? 0.86 : 0.64), em * 26, contentW - (icons ? Math.round(46 * k) + 8 : 0))),
+    avatarBot: Math.round(46 * k), avatarMe: Math.round(52 * k),
     /** Ember draws the butterfly engraving behind the chat. */
     butterfly: key === 'ember',
     barsBlend: c.bar === c.bg,
@@ -111,15 +124,19 @@ export function makeTheme(S: Settings, systemDark: boolean, windowWidth: number)
       const size = Math.round(fs * em * 10) / 10;
       return {
         ...(o.display ? { fontFamily: FACE.lexend[o.bold ? 1 : 0] } : face(S.font, !!o.bold)),
-        fontSize: size, lineHeight: Math.round(size * lh), letterSpacing: size * 0.012,
+        fontSize: size, lineHeight: Math.round(size * lh), letterSpacing: size * ls,
         color: o.color ?? c.ink,
       };
     },
     /** Emoji at a fixed pixel size (they don't shrink with the text size: emoji are how Lexi talks). */
     emoji(px: number): TextStyle { return { fontSize: px, lineHeight: Math.round(px * 1.22), color: c.ink, textAlign: 'center' }; },
     fontPreview(font: Settings['font']): TextStyle { return face(font, false); },
-    /** Apply the skin tone, and hide emoji when icons are off (lexi.html's `.ico` spans). */
-    rich(s: string): string { const toned = tone(s, S.tone); return icons ? toned : stripEmoji(toned); },
+    /** Apply the skin tone, hide emoji when icons are off (lexi.html's `.ico` spans), and widen word gaps. */
+    rich(s: string): string {
+      const toned = tone(s, S.tone);
+      const out = icons ? toned : stripEmoji(toned);
+      return gap ? out.replace(/ /g, ' ' + gap) : out;
+    },
     toned(s: string): string { return tone(s, S.tone); },
     band(k: BandKey | string | undefined): { b: string; ink: string } {
       if (k === 'content') return { b: c.bContent, ink: c.bContentInk };

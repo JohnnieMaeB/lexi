@@ -2,13 +2,13 @@
 // Copy and order match lexi.html.
 import { BAND_BY, TOPIC_BY, YES_NO, type Pick } from './content';
 import { addBot, addCard, addMe, addMeEmoji, ask, say, sayMany, sayQueue, showTyping } from './chat';
-import { aiErrorText, claude, type Msg } from './ai';
+import { aiErrorText, claude, parseJsonReply, type Msg } from './ai';
+import { asLevel, maxLevel, riskCheck, styleCheck, type Level } from './safety';
 import {
   addEntry, aiReady, ready, setOnboarded, setSending, setSheet, showView, state, toast, updateEntry,
   type Entry, type NewEntry, type TopicAnswer,
 } from './store';
-import { speak } from './speech';
-import { cleanLines, dayKey, sleep } from './text';
+import { dayKey, sleep } from './text';
 
 /* ---------- helpers ---------- */
 export function moodShares(moods: Pick[] | undefined) {
@@ -89,6 +89,10 @@ export async function startGuided(fromIntro = false) {
     const entry: NewEntry = { kind: 'guided', createdAt: Date.now(), day: dayKey(), moods, topics, text: '' };
     const id = await addEntry(entry);
     await say('Saved to your journal. 📖 ✔️');
+    // Check-in notes and to-dos get the same crisis check as other writing (§8). No celebration after it fires.
+    const notes = topics.flatMap(tp => [tp.note, ...(tp.todos || []).map(td => td.t)]).filter(Boolean).join('\n');
+    const level = notes ? await checkSavedWriting(notes) : 'none';
+    if (level !== 'none') { await safetyFlow(level); return; }
     await say('👏🏽👏🏽👏🏽👏🏽');
     if (aiReady()) {
       const want = await ask('Want a short reflection on today?', YES_NO, true);
@@ -98,6 +102,19 @@ export async function startGuided(fromIntro = false) {
   } finally { guidedActive = false; }
 }
 
+/* ---------- AI rules shared by chat and reflections (§9) ---------- */
+function kindRules(): string[] {
+  return [
+    '- Accept the feeling. Never agree with harsh words the user says about themselves (like "I\'m stupid" or "I\'m useless"). Gently disagree with the label, not the feeling. Example: "Reading is hard for you. That doesn\'t make you stupid."',
+    "- Don't flatter or just agree. Be honest and kind.",
+    "- You are an AI. Never say you are a person or a therapist. Don't use therapy words like therapy, diagnosis, treatment or disorder.",
+    '- When things sound heavy, suggest a real person: a friend, family, a doctor or a helpline.',
+    '- No idioms or sayings (like "hang in there" or "silver lining").',
+    ...(state.settings.icons ? [] : ['- Do not use emoji.']),
+  ];
+}
+const TAG_RULE = '- Start your reply with exactly one tag on its own line: [ok], [check] if the user might be unsafe or very hopeless, or [risk] if they talk about wanting to die or hurt themselves.';
+
 async function reflect(entry: NewEntry, id: string) {
   const done = showTyping();
   try {
@@ -106,19 +123,55 @@ async function reflect(entry: NewEntry, id: string) {
       messages: [{
         role: 'user',
         content: 'Write a short reflection for a dyslexic person about their journal check-in below.\n' +
-          'Rules: 2 or 3 very short sentences, each on its own line. Simple, common words. 1 or 2 emoji. Talk to them as "you". ' +
+          'Rules: 2 or 3 very short sentences, each on its own line. Simple, common words. ' + (state.settings.icons ? '1 or 2 emoji. ' : '') + 'Talk to them as "you". ' +
           'Name what they shared without judging it. No toxic positivity: never say "be happy", "cheer up" or "look on the bright side". ' +
-          'No advice unless the entry asks for it. No lists, no markdown.\n\nCheck-in:\n' + entrySummary(entry),
+          'No advice unless the entry asks for it. No lists, no markdown.\n' + kindRules().join('\n') + '\n\nCheck-in:\n' + entrySummary(entry),
       }],
     });
     done();
-    const lines = cleanLines(text);
-    lines.forEach(l => addBot(l, { quiet: true }));
-    if (state.settings.autoread) speak(text, { queue: true });
+    // Every reflection goes through the reply style check (§10); each sentence is its own bubble.
+    const { lines } = styleCheck(text, { icons: state.settings.icons });
+    lines.forEach(l => addBot(l));
     updateEntry(id, { reflection: lines.join('\n') });
   } catch (e) {
     done();
     const m = aiErrorText(e); if (m) addBot(m, { info: true });
+  }
+}
+
+/* ---------- safety (§8): the fixed, recorded lines. Lexi never contacts anyone. ---------- */
+const SAVED_CHECK_PROMPT = 'You check journal text for self-harm or suicide risk. The writer is dyslexic, so expect misspellings, sound-alike spellings and emoji. Reply with only JSON: {"level":"none"|"check"|"risk"}. "risk" = says they want to die, kill or hurt themselves, or has a plan. "check" = sounds hopeless, wants to disappear, or gives unclear dark hints. Otherwise "none".\n\nText:\n';
+
+/** Local check plus, when the chat brain is on and there are 3+ words, one quick AI check. Final = max. */
+export async function checkSavedWriting(text: string): Promise<Level> {
+  const local = riskCheck(text);
+  if (local === 'risk' || !aiReady() || text.trim().split(/\s+/).length < 3) return local;
+  try {
+    const { text: out } = await claude({ effort: 'low', messages: [{ role: 'user', content: SAVED_CHECK_PROMPT + text }] });
+    return maxLevel(local, asLevel((parseJsonReply(out) as { level?: unknown } | null)?.level));
+  } catch (e) { console.warn('safety check', e); return local; }
+}
+
+export async function safetyFlow(level: Level) {
+  if (level === 'risk') { await riskFlow(true); return; }
+  if (level !== 'check') return;
+  await say('That sounds really hard. 💛');
+  const safe = await ask('Are you safe right now?', YES_NO, true);
+  if (safe) await say("Okay. I'm glad. I'm here if you want to talk.");
+  else await riskFlow(false);
+}
+async function riskFlow(fromStart: boolean) {
+  if (fromStart) await say("I'm really glad you told me. 💛");
+  await say('Your safety matters most right now.');
+  await sayQueue; addCard('crisis', {}, false);
+  await say('Please talk to someone now. You can call or text these lines.');
+  const safe = await ask('Are you safe right now?', YES_NO, true);
+  if (safe) {
+    await say("Thank you for telling me. I'm here if you want to talk.");
+    await say('Tap Help at the top any time. 🆘');
+  } else {
+    await say('Please call your local emergency number now. 🆘');
+    await sayQueue; addCard('crisis', { emergencyOnly: true }, false);
   }
 }
 
@@ -134,23 +187,26 @@ function lexiRules(): string {
     'How you write:',
     '- Reply in 1 to 3 very short lines. Each line is one short sentence on its own line.',
     '- Use simple, common words. No lists, no markdown, no headings.',
-    '- Use 1 or 2 emoji per reply to carry meaning. The user reads emoji easily.',
+    ...(state.settings.icons ? ['- Use 1 or 2 emoji per reply to carry meaning. The user reads emoji easily.'] : []),
     '- No toxic positivity. Never say "be happy", "cheer up", "look on the bright side" or "everything happens for a reason". Accept feelings as they are. Content is the goal, not happy.',
-    '- You are not a therapist and you do not diagnose. If the user mentions hurting themselves or being in danger, say you care and tell them to contact someone they trust or their local emergency number now (in the US, call or text 988). Keep it short.',
+    '- If the user mentions hurting themselves or being in danger, say you care and tell them to contact someone they trust or their local emergency number now. The app shows them help lines for their country. Keep it short.',
+    ...kindRules(),
+    TAG_RULE,
     'What the app can do (use this to answer questions about the app):',
     '- 🧭 Guided check-in on the 🏡 Home tab: pick mood emoji in three groups (Content, Stressed, Low self-esteem), then topics: physical health, diet, self-esteem, relationships, financial health, stressors, to dos, hobbies and passions, gratitude. There is no "Happy" option on purpose. ➕ My own adds custom words and emoji.',
     '- 🎙 The mic next to 🙂 turns speech into words, in the chat box and when writing.',
-    '- ✏️ Write on my own: free writing with an emoji button, 🎙 voice typing, ✨ Tidy spelling and 🔊 Read it back.',
-    '- 📖 Journal tab: entries by day, a 14-day mood strip, tick off to dos, 🔊 read entries aloud, 🗑 delete entries.',
-    "- ⚙️ Settings tab: theme (Orange, Purple, Mint, Night, Ember, or match the device), turn icons off, font (Verdana, Lexend, Atkinson Hyperlegible), text size, line spacing, Lexi's voice (her own recorded voice or a device voice, with speed and pitch), skin tone, avatar, read Lexi out loud, replay the intro.",
+    '- ✏️ Write on my own: free writing with an emoji button, 🎙 voice typing, ✨ Tidy spelling (one word at a time, the original is kept) and 🔊 Read it back.',
+    '- 📖 Journal tab: days journaled, feelings named, day cards for the last 14 days, entries by day, tick off to dos, 🔊 read entries aloud, 🗑 delete entries.',
+    '- 🆘 Help at the top of every screen: help lines for their country, how to use Lexi, how Lexi keeps them safe, and privacy.',
+    "- ⚙️ Settings tab: theme (Orange, Purple, Mint, Night, Ember, or match the device), turn icons off, font (Verdana, Lexend, Atkinson Hyperlegible), text size, line spacing, letter spacing, Lexi's voice (her own recorded voice or a device voice, with speed and pitch), skin tone, avatar, read Lexi out loud, privacy, replay the intro.",
     "The user's recent journal entries are below. Mention them only when the user asks about their journal or feelings. Newer entries may arrive later in the chat as system notes.",
     journalContext(),
     'The conversation follows.',
   ].join('\n');
 }
 function fallbackReply(t: string): string[] | null {
+  // Crisis words never get here: sendChat runs riskCheck first and starts the safety flow.
   const s = t.toLowerCase();
-  if (/suicid|kill myself|hurt myself|self.?harm|end it all|want to die/.test(s)) return ["I'm really glad you told me. 💛", 'Please reach out to someone you trust or your local emergency number now.', 'In the US you can call or text 988.'];
   if (/delete|remove|erase/.test(s)) return ['To delete an entry, open 📖 Journal.', 'Then tap 🗑️ on that entry.'];
   if (/\bmic\b|microphone|dictat|voice typ|speech to text/.test(s)) return ['Tap 🎙 next to 🙂 and say your words. I type them for you.'];
   if (/voice|robot|speak|read/.test(s)) return ['You can pick my voice in ⚙️ Settings. 🔊', 'There is a speed slider too.'];
@@ -172,6 +228,10 @@ export function stopChat() { chatCtl?.abort(); }
 
 export async function sendChat(text: string) {
   addMe(text);
+  // Local crisis check on every message (§8). A local "risk" starts the safety flow straight away: the AI can
+  // only raise the level, never lower it, so waiting for its reply would just delay the help lines.
+  const local = riskCheck(text);
+  if (local === 'risk' || (local === 'check' && !aiReady())) { await safetyFlow(local); return; }
   if (!aiReady()) {
     const r = fallbackReply(text);
     if (r) await sayMany(r);
@@ -189,13 +249,16 @@ export async function sendChat(text: string) {
   await sayQueue;
   const ctl = new AbortController(); chatCtl = ctl; setSending(true);
   const done = showTyping();
+  let level: Level = local;
   try {
     const res = await claude({ system: s.system, messages: s.messages, effort: 'low', signal: ctl.signal });
     done();
+    // The reply goes back into the history exactly as returned (tag and all); what's shown is checked (§10).
     s.messages.push({ role: 'assistant', content: res.content as Msg['content'] });
-    cleanLines(res.text).forEach(l => addBot(l, { quiet: true }));
-    if (state.settings.autoread) speak(res.text, { queue: true });
+    const { tag, lines } = styleCheck(res.text, { icons: state.settings.icons });
+    lines.forEach(l => addBot(l));
     if (res.truncated) addBot('That got cut short. Ask me for less at a time. ✂️', { info: true });
+    level = maxLevel(local, asLevel(tag));
   } catch (e) {
     done();
     // Nothing answered this turn, so take it back out; the history stays user/assistant pairs.
@@ -205,6 +268,7 @@ export async function sendChat(text: string) {
   } finally {
     if (chatCtl === ctl) { chatCtl = null; setSending(false); }
   }
+  if (level !== 'none') await safetyFlow(level);
 }
 
 /* ---------- onboarding (Chat Bot Plan) ---------- */

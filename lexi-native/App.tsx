@@ -15,13 +15,14 @@ import { AtkinsonHyperlegible_700Bold } from '@expo-google-fonts/atkinson-hyperl
 import { ChatLog } from './src/components/ChatLog';
 import { Dock } from './src/components/Composer';
 import { FreeWriteSheet } from './src/components/FreeWrite';
+import { AiLabel, HelpPill, HelpSheet } from './src/components/Help';
 import { EmojiPicker, Toast } from './src/components/Overlays';
 import { closeEmoji, getEmojiTarget } from './src/fields';
 import { JournalScreen } from './src/screens/Journal';
 import { SettingsScreen } from './src/screens/Settings';
 import { boot } from './src/script';
 import { loadVoices } from './src/speech';
-import { initStore, setSheet, showView, state, useLexi } from './src/store';
+import { initStore, setHelp, setSheet, showView, state, useLexi } from './src/store';
 import { shortDate } from './src/text';
 import { ThemeContext, makeTheme, useTheme } from './src/theme';
 import { T } from './src/ui';
@@ -45,8 +46,9 @@ export default function App() {
 function Themed() {
   const st = useLexi();
   const scheme = useColorScheme();
-  const { width } = useWindowDimensions();
-  const theme = useMemo(() => makeTheme(st.settings, scheme === 'dark', width), [st.settings, scheme, width]);
+  // fontScale is the phone's text size; it changes live when the person changes it in system settings.
+  const { width, fontScale } = useWindowDimensions();
+  const theme = useMemo(() => makeTheme(st.settings, scheme === 'dark', width, fontScale), [st.settings, scheme, width, fontScale]);
   useEffect(() => { boot(); }, []);
   return (
     <ThemeContext.Provider value={theme}>
@@ -70,6 +72,7 @@ function useBackButton() {
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
       if (getEmojiTarget()) { closeEmoji(); return true; }
+      if (state.helpOpen) { setHelp(false); return true; }
       if (state.sheetOpen) { stopVoice('fw'); setSheet(false); return true; }
       if (state.view !== 'home') { showView('home'); return true; }
       return false;
@@ -95,8 +98,12 @@ function Shell() {
             {t.icons ? <Text style={t.emoji(26)}>🤖</Text> : null}
             <T display bold color={t.c.onBar} accessibilityRole="header" style={{ fontSize: 18, lineHeight: 24 }}>Lexi</T>
           </View>
-          <T em={0.75} color={t.c.onBar}>{shortDate()}</T>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <T em={0.75} color={t.c.onBar}>{shortDate()}</T>
+            <HelpPill />
+          </View>
         </View>
+        {home ? <AiLabel /> : null}
 
         <View style={{ flex: 1, borderLeftWidth: t.rail, borderRightWidth: t.rail, borderColor: t.c.bar, backgroundColor: t.c.bg }}>
           {/* Home stays mounted so the conversation and half-done cards survive tab switches. */}
@@ -108,6 +115,7 @@ function Shell() {
         <Dock bottomInset={insets.bottom} keyboardOpen={kb} />
       </KeyboardAvoidingView>
       <FreeWriteSheet />
+      <HelpSheet />
       <EmojiPicker />
       <Toast />
     </View>

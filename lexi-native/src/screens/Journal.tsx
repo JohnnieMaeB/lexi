@@ -7,20 +7,24 @@ import { speak } from '../speech';
 import { removeEntry, toast, updateEntry, useLexi, type Entry } from '../store';
 import { dayKey, fmtDay, fmtTime, stripEmoji } from '../text';
 import { R, mix, useTheme } from '../theme';
-import { Btn, Ico, Row, Swatch, T } from '../ui';
+import { Btn, Chip, Ico, Row, Swatch, T } from '../ui';
 
 const SHORT_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const countWords = (s: string) => stripEmoji(s).split(/\s+/).filter(w => /[A-Za-z0-9]/.test(w)).length;
 
-/** Check-ins, the current streak (today or yesterday counts) and the words people wrote themselves. */
-function stats(all: Entry[], byDay: Map<string, Entry[]>) {
-  const checkIns = all.filter(e => e.kind === 'guided').length;
-  let streak = 0;
+/** FEATURES_DO_NEXT §11: days journaled, feelings named and entries; streak and words only if switched on.
+ *  The streak allows rest days: one missed day doesn't break the run, two in a row do. */
+export function stats(all: Entry[], byDay: Map<string, Entry[]>) {
+  const days = byDay.size;
+  const feelings = all.reduce((n, e) => n + (e.moods || []).length, 0);
+  let streak = 0, missed = 0;
   const d = new Date();
-  if (!byDay.has(dayKey(d))) d.setDate(d.getDate() - 1);
-  while (byDay.has(dayKey(d))) { streak++; d.setDate(d.getDate() - 1); }
+  for (let i = 0; i < 3660 && missed < 2; i++) {
+    if (byDay.has(dayKey(d))) { streak++; missed = 0; } else missed++;
+    d.setDate(d.getDate() - 1);
+  }
   const words = all.reduce((n, e) => n + countWords(e.text || '') + (e.topics || []).reduce((m, tp) => m + countWords(tp.note || '') + (tp.todos || []).reduce((k, td) => k + countWords(td.t), 0), 0), 0);
-  return { checkIns, streak, words };
+  return { days, feelings, entries: all.length, streak, words };
 }
 
 /** The day's most-picked mood emoji (latest wins a tie). */
@@ -60,7 +64,7 @@ function DayCards({ byDay }: { byDay: Map<string, Entry[]> }) {
         const bands = ([['content', t.c.bContent], ['stressed', t.c.bStressed], ['low', t.c.bLow]] as const).filter(([k]) => c[k]);
         const desc = SHORT_DAYS[d.getDay()] + ' ' + d.getDate() + ': ' + (es.length ? es.length + (es.length === 1 ? ' entry' : ' entries') : 'no entry');
         return (
-          <View key={i} accessible accessibilityLabel={desc} style={[s.day, es.length ? t.shadow : null, {
+          <View key={i} accessible accessibilityLabel={desc} style={[s.day, es.length ? t.shadow : null, { width: Math.round(84 * Math.min(t.k, 1.6)),
             backgroundColor: es.length ? t.c.surface : mix(t.c.surface, t.c.bg, 0.45),
             borderWidth: today ? 3 : es.length ? 0 : 2, borderStyle: es.length || today ? 'solid' : 'dashed',
             borderColor: today ? t.c.ring : t.c.line,
@@ -80,17 +84,16 @@ function DayCards({ byDay }: { byDay: Map<string, Entry[]> }) {
   );
 }
 
+/** An empty box, or ✅ once done (no strikethrough anywhere, §3). */
 function CheckBox({ on }: { on: boolean }) {
   const t = useTheme();
-  return (
-    <View style={{ width: 26, height: 26, borderRadius: 8, borderWidth: 2, borderColor: t.c.yes, backgroundColor: on ? t.c.yes : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-      {on ? <Text style={{ color: t.c.onYes, fontSize: 16, lineHeight: 18, fontWeight: '700' }}>✓</Text> : null}
-    </View>
-  );
+  if (on) return <Text style={[t.emoji(26), { width: 30 }]}>✅</Text>;
+  return <View style={{ width: 26, height: 26, marginHorizontal: 2, borderRadius: 8, borderWidth: 2, borderColor: t.c.yes }} />;
 }
 
 function EntryCard({ en, confirming, setConfirm }: { en: Entry; confirming: boolean; setConfirm: (id: string | null) => void }) {
   const t = useTheme();
+  const [showOriginal, setShowOriginal] = useState(false);
   const kind = en.kind === 'free' ? ['✏️', 'Free writing'] : ['🧭', 'Check-in'];
   const toggleTodo = (ti: number, i: number) => {
     const topics = en.topics.map((tp, a) => (a !== ti ? tp : { ...tp, todos: tp.todos.map((td, b) => (b !== i ? td : { ...td, done: !td.done })) }));
@@ -147,14 +150,17 @@ function EntryCard({ en, confirming, setConfirm }: { en: Entry; confirming: bool
               <Pressable key={i} onPress={() => toggleTodo(ti, i)} accessibilityRole="checkbox" accessibilityState={{ checked: td.done }} accessibilityLabel={td.t}
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44 }}>
                 <CheckBox on={td.done} />
-                <T style={td.done ? { textDecorationLine: 'line-through', opacity: 0.65 } : undefined}>{td.t}</T>
+                <T style={td.done ? { opacity: 0.6 } : undefined}>{td.t}</T>
               </Pressable>
             ))}
             {tp.note ? <T>{tp.note}</T> : null}
           </View>
         );
       })}
-      {en.text ? <T>{en.text}</T> : null}
+      {en.text ? <T>{showOriginal && en.original ? en.original : en.text}</T> : null}
+      {en.original ? (
+        <Row><Chip icon={showOriginal ? '✨' : '📝'} label={showOriginal ? 'See the tidied words' : 'See my original words'} selected={showOriginal} onPress={() => setShowOriginal(!showOriginal)} /></Row>
+      ) : null}
       {en.reflection ? (
         <View style={[s.reflection, { backgroundColor: t.c.bot, borderWidth: t.c.botLine ? 1 : 0, borderColor: t.c.botLine || 'transparent' }]}>
           <Ico e="🤖" size={28} />
@@ -191,10 +197,16 @@ export function JournalScreen() {
       </View>
 
       <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
-        <Stat icon="🧭" value={n.checkIns} label={n.checkIns === 1 ? 'check-in' : 'check-ins'} />
-        <Stat icon="🔥" value={n.streak} label={n.streak === 1 ? 'day in a row' : 'days in a row'} />
-        <Stat icon="✏️" value={n.words} label={n.words === 1 ? 'word written' : 'words written'} />
+        <Stat icon="📅" value={n.days} label={n.days === 1 ? 'Day journaled' : 'Days journaled'} />
+        <Stat icon="💬" value={n.feelings} label={n.feelings === 1 ? 'Feeling named' : 'Feelings named'} />
+        <Stat icon="📖" value={n.entries} label={n.entries === 1 ? 'Entry' : 'Entries'} />
       </View>
+      {st.settings.showStreak ? (
+        <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
+          <Stat icon="🌱" value={n.streak} label="Days in a row (rest days OK)" />
+          <Stat icon="✏️" value={n.words} label={n.words === 1 ? 'Word written' : 'Words written'} />
+        </View>
+      ) : null}
 
       <T display bold style={{ marginTop: 20 }} accessibilityRole="header">Last 14 days</T>
       <DayCards byDay={byDay} />

@@ -38,7 +38,8 @@ function describe(v: Speech.Voice): { label: string; detail: string } {
   // Android voice names look like "en-us-x-tpf-local": show the code and whether it needs the internet.
   const android = /^[a-z]{2,3}-[a-z]{2,4}-x-[a-z0-9]+-(local|network)$/i.exec(v.name || '');
   if (android) {
-    const code = (v.name.split('-x-')[1] || '').split('-')[0].toUpperCase();
+    // Kept lower case: no ALL CAPS anywhere (FEATURES_DO_NEXT §3).
+    const code = (v.name.split('-x-')[1] || '').split('-')[0];
     return { label: 'Voice ' + code, detail: [lang, android[1] === 'network' ? 'online' : 'on this phone', ...tags].join(' · ') };
   }
   return { label: v.name || v.identifier, detail: [lang, ...tags].join(' · ') };

@@ -53,7 +53,8 @@ function BotBubble({ last, info, children }: { last: boolean; info?: boolean; ch
 function Celebration({ text }: { text: string }) {
   const t = useTheme();
   const n = Math.max(1, emojiList(text).length);
-  const size = Math.round(Math.max(64, Math.min(96, ((t.contentW - t.avatarBot - 8) / n) * 0.82)));
+  // Emoji grow with the phone's text size, so the 64-96 px target is divided by it to still fit the width.
+  const size = Math.round(Math.max(64, Math.min(96, ((t.contentW - t.avatarBot - 8) / n) * 0.82)) / t.k);
   const y = useRef(new Animated.Value(reduceMotion ? 0 : 18)).current;
   useEffect(() => { if (!reduceMotion) Animated.spring(y, { toValue: 0, friction: 4, tension: 120, useNativeDriver: true }).start(); }, [y]);
   return (
@@ -66,7 +67,8 @@ function Celebration({ text }: { text: string }) {
 function BotRow({ text, info, last }: { text: string; info?: boolean; last: boolean }) {
   const t = useTheme();
   const emojiOnly = !stripEmoji(text);
-  if (emojiOnly && !t.icons) return null;
+  // Celebration rows are left out in words-only mode and under Reduce Motion.
+  if (emojiOnly && (!t.icons || reduceMotion)) return null;
   return (
     <PopIn style={s.row}>
       <Ava e="🤖" show={last} size={t.avatarBot} />
@@ -107,7 +109,7 @@ function MeRow({ item, last }: { item: Extract<ChatItem, { type: 'me' }>; last: 
   const st = useLexi();
   const emoji = item.emoji && t.icons ? item.emoji : null;
   // One answer at 88 px, several a little smaller, so they still fit the width.
-  const size = emoji ? (emoji.length === 1 ? 88 : emoji.length === 2 ? 68 : emoji.length === 3 ? 56 : 46) : 0;
+  const size = emoji ? Math.round((emoji.length === 1 ? 88 : emoji.length === 2 ? 68 : emoji.length === 3 ? 56 : 46) / Math.min(t.k, 1.6)) : 0;
   return (
     <PopIn style={[s.row, { flexDirection: 'row-reverse' }]}>
       <Ava e={st.settings.avatar} show={last} size={t.avatarMe} />
@@ -149,10 +151,12 @@ function Typing({ last }: { last: boolean }) {
     <View style={s.row}>
       <Ava e="🤖" show={last} size={t.avatarBot} />
       <View accessibilityLabel="Lexi is typing" style={[s.bubble, t.shadow, {
-        flexDirection: 'row', gap: 8, paddingHorizontal: 18, paddingVertical: 18, backgroundColor: t.c.bot,
+        flexDirection: 'row', gap: 8, paddingHorizontal: 18, paddingVertical: reduceMotion ? 10 : 18, backgroundColor: t.c.bot,
         borderBottomLeftRadius: last && t.icons ? 6 : R.m, borderWidth: t.c.botLine ? 1 : 0, borderColor: t.c.botLine || 'transparent',
       }]}>
-        {vals.map((v, i) => <Animated.View key={i} style={[s.dot, { backgroundColor: t.c.botInk, transform: [{ translateY: v }] }]} />)}
+        {reduceMotion
+          ? <T em={0.85} color={t.c.botInk}>Lexi is thinking…</T>
+          : vals.map((v, i) => <Animated.View key={i} style={[s.dot, { backgroundColor: t.c.botInk, transform: [{ translateY: v }] }]} />)}
       </View>
     </View>
   );
