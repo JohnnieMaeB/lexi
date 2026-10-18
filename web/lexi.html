@@ -85,14 +85,41 @@ button,input,textarea,select{font:inherit;color:inherit}
 button{-webkit-tap-highlight-color:transparent}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 
-.app{height:100%;display:flex;justify-content:center;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:var(--fs);line-height:var(--lh);letter-spacing:.012em;word-spacing:.08em}
+.app{height:100%;display:flex;justify-content:center;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:var(--fs);line-height:var(--lh);letter-spacing:var(--ls,.012em);word-spacing:var(--ws,.08em)}
 .phone{width:100%;max-width:560px;height:100%;min-height:0;display:flex;flex-direction:column}
 
 /* top bar (wireframe: 48px accent strip) */
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;padding:4px 18px;background:var(--bar);color:var(--on-bar)}
 .brand{display:flex;align-items:center;gap:.35em;font:700 1.12em/1.1 var(--font-display);letter-spacing:.01em}
 .brand .ico{font-size:28px}
-.topbar .date{font-size:.78em;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;opacity:.9}
+.help-btn{display:inline-flex;align-items:center;gap:.3em;min-height:42px;padding:0 14px;border:0;border-radius:999px;background:var(--tab-on);color:var(--tab-on-ink);font-weight:700;font-size:.9em;cursor:pointer;box-shadow:0 3px 10px var(--shadow)}
+.help-btn .ico{font-size:1.3em;line-height:1}
+.ai-note{display:flex;align-items:center;gap:.45em;padding:4px 18px;background:var(--surface);color:var(--ink-soft);border-bottom:2px solid var(--line);font-size:min(.78em,15px);font-weight:700;line-height:1.35;letter-spacing:.012em;word-spacing:.08em}
+.ai-note .ico{font-size:1.4em;line-height:1}
+.ai-note .txt{flex:1;min-width:0}
+.crisis{display:flex;flex-direction:column;gap:10px}
+.crisis .emerg{display:flex;align-items:center;gap:.5em;padding:10px 14px;border-radius:var(--r-m);background:var(--danger);color:var(--on-danger);font-weight:700}
+.crisis .emerg .num{font:700 1.5em/1.1 var(--font-display);user-select:all}
+.crisis .line{display:flex;flex-direction:column;gap:2px;padding:10px 14px;border-radius:var(--r-m);background:var(--surface-2)}
+.crisis .line b{font-family:var(--font-display)}
+.crisis .line .how{font-size:.85em;color:var(--ink-soft)}
+.crisis .line .num{font:700 1.45em/1.2 var(--font-display);user-select:all;font-variant-numeric:tabular-nums}
+.crisis .acts{display:flex;flex-wrap:wrap;gap:8px}
+.crisis .acts a{display:inline-flex;align-items:center;gap:.3em;min-height:44px;padding:0 14px;border-radius:999px;background:var(--accent);color:var(--on-accent);font-weight:700;text-decoration:none}
+.fixes{display:flex;flex-direction:column;gap:8px}
+.fix{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--r-s);background:rgba(255,255,255,.4)}
+.fix .words{flex:1 1 10em;min-width:0;font-size:1.05em}
+.fix .from{opacity:.7}
+.fix .to{font-weight:700}
+.fix .hint{display:block;font-size:.78em;opacity:.85}
+.fix .btn{min-height:44px;padding:.2em .9em}
+.fix .btn[aria-pressed="true"]{background:var(--bot-ink);color:var(--bot)}
+select{min-height:48px;padding:.3em .8em;border:2px solid var(--line);border-radius:var(--r-s);background:var(--surface-2);color:var(--ink);font:inherit}
+.orig{margin:0;padding:.6em .9em;border-radius:var(--r-m);background:var(--surface-2);white-space:pre-wrap}
+.help-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.help-list li{font-size:.95em;line-height:var(--lh)}
+.help-list li .ico{font-size:1.35em;line-height:1;vertical-align:-.15em;margin-right:.15em}
+#help-body .set p{font-size:.95em;color:var(--ink)}
 
 /* rails (wireframe: 14px accent strips) + Ember's butterfly engraving */
 .rails{position:relative;flex:1;min-height:0;display:flex;border-inline:14px solid var(--rail);background:var(--bg)}
@@ -108,6 +135,7 @@ button{-webkit-tap-highlight-color:transparent}
 .row.bot:has(+ .row.bot) > .ava,.row.me:has(+ .row.me) > .ava{visibility:hidden}
 .bubble{position:relative;padding:.7em 1em;border-radius:var(--r-m);background:var(--bot);color:var(--bot-ink);box-shadow:0 6px 18px var(--shadow);overflow-wrap:anywhere}
 .row.bot .bubble{width:min(70%,21em)}
+.app[data-wide="1"] .row.bot .bubble{width:min(86%,26em)}
 .row.bot:not(:has(+ .row.bot)) .bubble{border-bottom-left-radius:6px}
 .row.me .bubble{max-width:74%;background:var(--me);color:var(--me-ink)}
 .row.me:not(:has(+ .row.me)) .bubble{border-bottom-right-radius:6px}
@@ -282,7 +310,7 @@ h2.title{margin:0;font:700 1.55em/1.2 var(--font-display);text-wrap:balance}
 .todos{list-style:none;margin:4px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
 .todos label{display:flex;align-items:center;gap:.7em;cursor:pointer}
 .todos input{width:26px;height:26px;flex:0 0 26px;accent-color:var(--accent)}
-.todos .done span{text-decoration:line-through;opacity:.6}
+.todos .done span{opacity:.6}
 .entry .text{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
 .reflection{margin:0;padding:.65em .95em;border-radius:var(--r-m);background:var(--bot);color:var(--bot-ink);white-space:pre-wrap}
 .confirm{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px;border-radius:var(--r-m);background:var(--surface-2)}
@@ -343,6 +371,9 @@ h2.title{margin:0;font:700 1.55em/1.2 var(--font-display);text-wrap:balance}
   .dots i,.row.in,.party span{animation:none}
   .tile,.btn,.action,.yn button{transition:none}
 }
+@media (prefers-contrast: more){
+  .app{--ink-soft:var(--ink);--line:var(--ink)}
+}
 @media (max-width:380px){
   .rails,.sheet-body{border-inline-width:10px}
   .view{padding-inline:10px}
@@ -355,8 +386,9 @@ h2.title{margin:0;font:700 1.55em/1.2 var(--font-display);text-wrap:balance}
   <div class="phone">
     <header class="topbar">
       <div class="brand"><span class="ico" aria-hidden="true">🤖</span><span>Lexi</span></div>
-      <div class="date" id="today"></div>
+      <button type="button" class="help-btn" data-help><span class="ico" aria-hidden="true">🆘</span><span>Help</span></button>
     </header>
+    <div class="ai-note" id="ai-note"><span class="ico" aria-hidden="true">🤖</span><span class="txt">Lexi is an AI, not a person or a therapist.</span></div>
     <div class="rails">
       <main class="view chat" id="view-home" role="log" aria-live="polite" aria-label="Chat with Lexi"></main>
       <section class="view" id="view-journal" aria-label="My journal" hidden></section>
@@ -382,7 +414,10 @@ h2.title{margin:0;font:700 1.55em/1.2 var(--font-display);text-wrap:balance}
     <div class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
       <header class="sheet-head">
         <h2 id="sheet-title"><span class="ico" aria-hidden="true">✏️</span><span>Write on my own</span></h2>
-        <button type="button" class="sheet-close" id="fw-close"><span class="ico" aria-hidden="true">✖️</span><span>Close</span></button>
+        <span style="display:flex;gap:8px">
+          <button type="button" class="help-btn" data-help><span class="ico" aria-hidden="true">🆘</span><span>Help</span></button>
+          <button type="button" class="sheet-close" id="fw-close"><span class="ico" aria-hidden="true">✖️</span><span>Close</span></button>
+        </span>
       </header>
       <div class="sheet-body">
         <details class="fw-mood" id="fw-mood-wrap">
@@ -407,6 +442,16 @@ h2.title{margin:0;font:700 1.55em/1.2 var(--font-display);text-wrap:balance}
     </div>
   </div>
 
+  <div class="sheet" id="help" hidden style="z-index:25">
+    <div class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="help-title">
+      <header class="sheet-head">
+        <h2 id="help-title"><span class="ico" aria-hidden="true">🆘</span><span>Help</span></h2>
+        <button type="button" class="sheet-close" id="help-close"><span class="ico" aria-hidden="true">✖️</span><span>Close</span></button>
+      </header>
+      <div class="sheet-body" id="help-body"></div>
+    </div>
+  </div>
+
   <div class="emoji-pop" id="emoji-pop" role="dialog" aria-label="Pick an emoji" hidden>
     <div class="emoji-tabs" id="emoji-tabs" role="tablist"></div>
     <div class="emoji-grid" id="emoji-grid"></div>
@@ -422,7 +467,9 @@ h2.title{margin:0;font:700 1.55em/1.2 var(--font-display);text-wrap:balance}
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const reduceMotion = (() => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return false; } })();
+// Follow the phone's Reduce motion setting live: no typing dots, pop-ins or celebrations when it is on.
+let reduceMotion = false;
+try { const mq = matchMedia('(prefers-reduced-motion: reduce)'); reduceMotion = mq.matches; mq.addEventListener('change', e => { reduceMotion = e.matches; }); } catch {}
 const LS = {
   get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
@@ -482,13 +529,15 @@ const EMOJI_SETS = [
 const YES_NO = [{ v: true, e: '👍🏽', label: 'Yes' }, { v: false, e: '👎🏽', label: 'No' }];
 
 /* ---------- settings ---------- */
-const DEFAULTS = { icons: true, font: 'verdana', size: 'm', spacing: 'wide', look: 'auto', tone: '\u{1F3FD}', avatar: '👧🏽', autoread: false, lexiVoice: 'natural', voice: '', rate: 1, pitch: 1 };
+const DEFAULTS = { icons: true, font: 'verdana', size: 'm', spacing: 'wide', letters: 'normal', look: 'auto', tone: '\u{1F3FD}', avatar: '👧🏽', autoread: false, lexiVoice: 'natural', voice: '', rate: 1, pitch: 1, country: '', showStreak: false };
 const FONTS = {
   verdana: ['Verdana', 'Verdana,"Atkinson Hyperlegible","DejaVu Sans",Tahoma,sans-serif'],
   lexend: ['Lexend', '"Lexend",Verdana,sans-serif'],
   atkinson: ['Atkinson Hyperlegible', '"Atkinson Hyperlegible",Verdana,sans-serif']
 };
-const SIZES = { s: ['Small', '16px'], m: ['Medium', '18px'], l: ['Large', '20px'], xl: ['Extra large', '23px'] };
+const SIZES = { s: ['Small', '16px'], m: ['Medium', '18px'], l: ['Large', '20px'], xl: ['Extra large', '24px'], xxl: ['Huge', '28px'] };
+// Letter spacing always grows word spacing with it: letter spacing alone slows reading (Galliussi 2020).
+const LETTERS = { normal: ['Normal', '.012em', '.08em'], roomy: ['Roomy', '.06em', '.16em'], xroomy: ['Extra roomy', '.12em', '.32em'] };
 const SPACING = { normal: ['Normal', '1.5'], wide: ['Wide', '1.7'], xwide: ['Extra wide', '2'] };
 // [name, background, bars + rails, bot bubble, user bubble]: the wireframe screens
 const LOOKS = {
@@ -525,6 +574,118 @@ function applySettings() {
   app.style.setProperty('--fs', (SIZES[S.size] || SIZES.m)[1]);
   app.style.setProperty('--lh', (SPACING[S.spacing] || SPACING.wide)[1]);
   app.style.setProperty('--font', (FONTS[S.font] || FONTS.verdana)[1]);
+  const L = LETTERS[S.letters] || LETTERS.normal;
+  app.style.setProperty('--ls', L[1]); app.style.setProperty('--ws', L[2]);
+  app.dataset.wide = (S.letters && S.letters !== 'normal') || S.size === 'xl' || S.size === 'xxl' ? '1' : '0';
+}
+
+/* ---------- help lines by country (docs/FEATURES_DO_NEXT.md §7) ---------- */
+const CRISIS = {
+  US: { name: 'United States', emergency: '911', lines: [
+    { name: '988 Suicide & Crisis Lifeline', how: 'Call or text', num: '988', tel: '988', sms: '988' },
+    { name: 'Crisis Text Line', how: 'Text HOME to', num: '741741', sms: '741741' }] },
+  CA: { name: 'Canada', emergency: '911', lines: [
+    { name: '9-8-8 Suicide Crisis Helpline', how: 'Call or text', num: '988', tel: '988', sms: '988' }] },
+  GB: { name: 'United Kingdom', emergency: '999', lines: [
+    { name: 'Samaritans', how: 'Call, free, any time', num: '116 123', tel: '116123' },
+    { name: 'Shout', how: 'Text SHOUT to', num: '85258', sms: '85258' }] },
+  IE: { name: 'Ireland', emergency: '112 or 999', lines: [
+    { name: 'Samaritans', how: 'Call, free, any time', num: '116 123', tel: '116123' },
+    { name: 'Text About It', how: 'Text HELLO to', num: '50808', sms: '50808' }] },
+  AU: { name: 'Australia', emergency: '000', lines: [
+    { name: 'Lifeline', how: 'Call', num: '13 11 14', tel: '131114' },
+    { name: 'Lifeline text', how: 'Text', num: '0477 13 11 14', sms: '0477131114' }] },
+  NZ: { name: 'New Zealand', emergency: '111', lines: [
+    { name: 'Need to talk?', how: 'Call or text', num: '1737', tel: '1737', sms: '1737' },
+    { name: 'Lifeline', how: 'Call', num: '0800 543 354', tel: '0800543354' }] },
+  OTHER: { name: 'Another country', emergency: 'your local emergency number', lines: [
+    { name: 'Find a helpline', how: 'A free list of helplines in many countries', num: 'findahelpline.com', web: 'https://findahelpline.com' }] }
+};
+function detectCountry() {
+  const langs = [].concat(navigator.languages || [], navigator.language || []);
+  for (const l of langs) { const r = String(l).split(/[-_]/)[1]; if (r && CRISIS[r.toUpperCase()]) return r.toUpperCase(); }
+  return 'OTHER';
+}
+const country = () => (CRISIS[profile.settings.country] ? profile.settings.country : detectCountry());
+
+/* ---------- safety + reply style (shared logic: docs/FEATURES_DO_NEXT.md §8–10) ---------- */
+const RISK_PHRASES = ['kill myself','killing myself','kill my self','suicide','suicidal','end my life','end it all','take my life','want to die','wanna die','wish i was dead','wish i were dead','better off dead','better off without me','hang myself','self harm','hurt myself','hurting myself','harm myself','cut myself','cutting myself','dont want to live','no reason to live','unalive myself'];
+const CHECK_PHRASES = ['want to disappear','cant go on','give up on everything','no point in anything','hopeless','worthless','hate my life','dead inside','overdose','nobody would care','cant do this anymore','dont want to be here'];
+const RISK_TOKENS = ['kms','kys','unalive','sewerslide'];
+const RISK_EMOJI = /[\u{1F52A}\u{1FA78}\u{26B0}\u{1FAA6}\u{1FAA2}]/u; // 🔪 🩸 ⚰ 🪦 🪢
+function soundKey(s) {
+  return String(s).toLowerCase()
+    .replace(/\bd[yi]e\s+(my|your|his|her|their|the|it|this|that|a)\b/g, 'colour $1') // "dye my hair" is not "die"
+    .replace(/[’']/g, '').replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/ph/g, 'f').replace(/ck/g, 'k').replace(/c(?=[eiy])/g, 's').replace(/c/g, 'k')
+    .replace(/z/g, 's').replace(/y/g, 'i').replace(/wh/g, 'w').replace(/kn/g, 'n')
+    .replace(/([a-z])\1+/g, '$1').replace(/\s+/g, ' ').trim();
+}
+function lev(a, b, max) {
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i]; let best = i;
+    for (let j = 1; j <= b.length; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      if (cur[j] < best) best = cur[j];
+    }
+    if (best > max) return max + 1;
+    prev = cur;
+  }
+  return prev[b.length];
+}
+// phrase match: starts at a word start with the same first letter; exact prefix, or ~1 typo per 6 letters ending on a word end
+function fuzzyHas(hay, starts, phrase) {
+  const p = soundKey(phrase).replace(/ /g, '');
+  const max = p.length >= 10 ? 2 : p.length >= 6 ? 1 : 0;
+  const ends = new Set(starts.slice(1)); ends.add(hay.length);
+  for (const i of starts) {
+    if (hay[i] !== p[0]) continue;
+    if (hay.startsWith(p, i)) return true;
+    for (let len = p.length - max; max && len <= p.length + max; len++) {
+      if (ends.has(i + len) && lev(hay.slice(i, i + len), p, max) <= max) return true;
+    }
+  }
+  return false;
+}
+function riskCheck(text) {
+  const raw = String(text || '');
+  const key = soundKey(raw);
+  const words = key ? key.split(' ') : [];
+  if (words.some(w => RISK_TOKENS.includes(w))) return 'risk';
+  let hay = ''; const starts = [];
+  words.forEach(w => { starts.push(hay.length); hay += w; });
+  if (RISK_PHRASES.some(p => fuzzyHas(hay, starts, p))) return 'risk';
+  if (CHECK_PHRASES.some(p => fuzzyHas(hay, starts, p))) return 'check';
+  if (RISK_EMOJI.test(raw) && words.length <= 4) return 'check';
+  return 'none';
+}
+const LEVEL = { none: 0, check: 1, risk: 2 };
+const maxLevel = (a, b) => (LEVEL[a] >= LEVEL[b] ? a : b);
+const BANNED = ['hang in there','silver lining','bright side','everything happens for a reason','cheer up','be happy','stay positive','just be positive','good vibes','could be worse','piece of cake','every cloud','it is what it is','chin up','under the weather','beat yourself up','tough it out','man up','snap out of it'];
+function styleCheck(text, { icons = true } = {}) {
+  let tag = 'ok';
+  const lines = cleanLines(text).map(l => l.replace(/^\[(ok|check|risk)\]\s*/i, (_, t) => { tag = t.toLowerCase(); return ''; })).filter(Boolean);
+  let sentences = [];
+  lines.forEach(l => (l.match(/[^.!?…]+(?:[.!?…]+["')\]]*)?/g) || [l]).map(s => s.trim()).filter(Boolean).forEach(s => {
+    if (!stripEmoji(s) && sentences.length) sentences[sentences.length - 1] += ' ' + s; else sentences.push(s);
+  }));
+  const kept = sentences.filter(s => !BANNED.some(b => s.toLowerCase().includes(b)));
+  if (kept.length) sentences = kept;
+  const out = []; let count = 0;
+  for (const s of sentences) {
+    const w = stripEmoji(s).split(/\s+/).filter(Boolean).length;
+    if (out.length === 3) break;
+    if (count + w > 50) { if (!out.length) out.push(stripEmoji(s).split(/\s+/).slice(0, 50).join(' ') + '…'); break; }
+    out.push(s); count += w;
+  }
+  const lines2 = out.map(s => {
+    const emo = [...new Set(s.match(EMOJI_RE) || [])].slice(0, 2);
+    const body = stripEmoji(s);
+    return icons && emo.length ? body + ' ' + emo.join(' ') : body;
+  }).filter(Boolean);
+  return { tag, lines: lines2 };
 }
 
 /* ---------- storage: private per-person journal in the artifact db, device storage as fallback ---------- */
@@ -637,7 +798,7 @@ function updateAIUi() { $('#fw-tidy').hidden = !(sampleFn && sampleOk); $('#fw-r
 /* ---------- voice ----------
    Lexi's own voice: her fixed lines, recorded with Piper TTS and the public-domain LJ Speech voice (web/voice/*.mp3).
    Everything else is read by the most natural voice the device has, sentence by sentence. */
-const CLIPS = {"Hi! I'm Lexi, the journaling chatbot. I'm here to make journaling easy and fun.":"voice/v01.mp3","I speak English, but I'm better at emoji.":"voice/v02.mp3","This means information.":"voice/v03.mp3","My developer created me to help dyslexic people journal.":"voice/v04.mp3","Text blocks will never be too large, and I'll rely a lot on icons and emojis.":"voice/v05.mp3","If icons don't work for your brain, you can turn them off in settings.":"voice/v06.mp3","This is your journal. Everything you save goes there.":"voice/v07.mp3","Would you like to start?":"voice/v08.mp3","No problem. I'll be right here.":"voice/v09.mp3","Would you like help?":"voice/v10.mp3","You can choose to journal with me by selecting the guided experience.":"voice/v11.mp3","If you're feeling frisky and want to tackle it on your own, I'll be waiting to answer any questions you may have.":"voice/v12.mp3","Welcome back!":"voice/v13.mp3","You've already saved something today.":"voice/v14.mp3","What would you like to do?":"voice/v15.mp3","Let's check in.":"voice/v16.mp3","How do you feel? Pick as many as you like.":"voice/v17.mp3","That's okay. We can keep going.":"voice/v18.mp3","Mixed days are normal. Thanks for being honest.":"voice/v19.mp3","Content is a good place to be.":"voice/v20.mp3","Thanks for telling me. That sounds like a lot.":"voice/v21.mp3","I hear you. Low days are real. You don't have to fix it right now.":"voice/v22.mp3","What do you want to talk about today?":"voice/v23.mp3","How is your body today?":"voice/v24.mp3","How did you eat and drink?":"voice/v25.mp3","How do you see yourself today?":"voice/v26.mp3","How are things with people?":"voice/v27.mp3","How do you feel about money?":"voice/v28.mp3","What is weighing on you?":"voice/v29.mp3","What do you need to do?":"voice/v30.mp3","What did you enjoy?":"voice/v31.mp3","One thing you are thankful for?":"voice/v32.mp3","Nothing to save this time. That's okay.":"voice/v33.mp3","Saved to your journal.":"voice/v34.mp3","Want a short reflection on today?":"voice/v35.mp3","Saved. I'm here if you have questions.":"voice/v36.mp3","I'm really glad you told me.":"voice/v37.mp3","Please reach out to someone you trust or your local emergency number now.":"voice/v38.mp3","In the US you can call or text 988.":"voice/v39.mp3","To delete an entry, open Journal.":"voice/v40.mp3","Then tap on that entry.":"voice/v41.mp3","You can pick my voice in Settings.":"voice/v42.mp3","There is a speed slider too.":"voice/v43.mp3","You can turn icons on or off in Settings.":"voice/v44.mp3","Colors, fonts, text size and spacing are in Settings.":"voice/v45.mp3","Tap Guided check-in and I'll go step by step with you.":"voice/v46.mp3","Or tap to write on your own.":"voice/v47.mp3","I can't chat freely right now.":"voice/v48.mp3","You can still do a check-in or write on your own.":"voice/v49.mp3","I can't use my chat brain here. Check-ins and writing still work.":"voice/v50.mp3","I need a short break. Try again in a little while.":"voice/v51.mp3","I can't help with that one.":"voice/v52.mp3","Please sign in again, then try once more.":"voice/v53.mp3","Something went wrong on my side. Try again?":"voice/v54.mp3","That got cut short. Ask me for less at a time.":"voice/v55.mp3","Hi! I'm Lexi. I'm here to make journaling easy and fun.":"voice/v56.mp3","This is how I sound now.":"voice/v57.mp3","Hi! I'm Lexi. I'll read with you.":"voice/v58.mp3"};
+const CLIPS = {"Hi! I'm Lexi, the journaling chatbot. I'm here to make journaling easy and fun.":"voice/v01.mp3","I speak English, but I'm better at emoji.":"voice/v02.mp3","This means information.":"voice/v03.mp3","My developer created me to help dyslexic people journal.":"voice/v04.mp3","Text blocks will never be too large, and I'll rely a lot on icons and emojis.":"voice/v05.mp3","If icons don't work for your brain, you can turn them off in settings.":"voice/v06.mp3","This is your journal. Everything you save goes there.":"voice/v07.mp3","Would you like to start?":"voice/v08.mp3","No problem. I'll be right here.":"voice/v09.mp3","Would you like help?":"voice/v10.mp3","You can choose to journal with me by selecting the guided experience.":"voice/v11.mp3","If you're feeling frisky and want to tackle it on your own, I'll be waiting to answer any questions you may have.":"voice/v12.mp3","Welcome back!":"voice/v13.mp3","You've already saved something today.":"voice/v14.mp3","What would you like to do?":"voice/v15.mp3","Let's check in.":"voice/v16.mp3","How do you feel? Pick as many as you like.":"voice/v17.mp3","That's okay. We can keep going.":"voice/v18.mp3","Mixed days are normal. Thanks for being honest.":"voice/v19.mp3","Content is a good place to be.":"voice/v20.mp3","Thanks for telling me. That sounds like a lot.":"voice/v21.mp3","I hear you. Low days are real. You don't have to fix it right now.":"voice/v22.mp3","What do you want to talk about today?":"voice/v23.mp3","How is your body today?":"voice/v24.mp3","How did you eat and drink?":"voice/v25.mp3","How do you see yourself today?":"voice/v26.mp3","How are things with people?":"voice/v27.mp3","How do you feel about money?":"voice/v28.mp3","What is weighing on you?":"voice/v29.mp3","What do you need to do?":"voice/v30.mp3","What did you enjoy?":"voice/v31.mp3","One thing you are thankful for?":"voice/v32.mp3","Nothing to save this time. That's okay.":"voice/v33.mp3","Saved to your journal.":"voice/v34.mp3","Want a short reflection on today?":"voice/v35.mp3","Saved. I'm here if you have questions.":"voice/v36.mp3","I'm really glad you told me.":"voice/v37.mp3","Please reach out to someone you trust or your local emergency number now.":"voice/v38.mp3","In the US you can call or text 988.":"voice/v39.mp3","To delete an entry, open Journal.":"voice/v40.mp3","Then tap on that entry.":"voice/v41.mp3","You can pick my voice in Settings.":"voice/v42.mp3","There is a speed slider too.":"voice/v43.mp3","You can turn icons on or off in Settings.":"voice/v44.mp3","Colors, fonts, text size and spacing are in Settings.":"voice/v45.mp3","Tap Guided check-in and I'll go step by step with you.":"voice/v46.mp3","Or tap to write on your own.":"voice/v47.mp3","I can't chat freely right now.":"voice/v48.mp3","You can still do a check-in or write on your own.":"voice/v49.mp3","I can't use my chat brain here. Check-ins and writing still work.":"voice/v50.mp3","I need a short break. Try again in a little while.":"voice/v51.mp3","I can't help with that one.":"voice/v52.mp3","Please sign in again, then try once more.":"voice/v53.mp3","Something went wrong on my side. Try again?":"voice/v54.mp3","That got cut short. Ask me for less at a time.":"voice/v55.mp3","Hi! I'm Lexi. I'm here to make journaling easy and fun.":"voice/v56.mp3","This is how I sound now.":"voice/v57.mp3","Hi! I'm Lexi. I'll read with you.":"voice/v58.mp3","Lexi is an AI, not a person or a therapist.":"voice/v59.mp3","Your safety matters most right now.":"voice/v60.mp3","Please talk to someone now. You can call or text these lines.":"voice/v61.mp3","Are you safe right now?":"voice/v62.mp3","Thank you for telling me. I'm here if you want to talk.":"voice/v63.mp3","Tap Help at the top any time.":"voice/v64.mp3","Please call your local emergency number now.":"voice/v65.mp3","That sounds really hard.":"voice/v66.mp3","Okay. I'm glad. I'm here if you want to talk.":"voice/v67.mp3","If you might hurt yourself, or you are in danger, call your local emergency number now.":"voice/v68.mp3","Check in: tap Guided check-in and pick emoji.":"voice/v69.mp3","Write: tap Write on my own. Spelling doesn't matter.":"voice/v70.mp3","Listen: tap the speaker on any message.":"voice/v71.mp3","Journal: see your days and your entries.":"voice/v72.mp3","Settings: change text size, spacing, colors and voice.":"voice/v73.mp3","Lexi looks for words about wanting to die or hurting yourself, even when they are spelled in a different way or written with emoji. If it finds them, it shows you help lines. When Lexi's chat brain is on, Claude checks too. Lexi can make mistakes, so if you need help, please use the help lines.":"voice/v74.mp3","Your journal is private. Only you can see it.":"voice/v75.mp3","It is saved to your Claude account, so it is there on your other devices.":"voice/v76.mp3","It is saved on this phone only.":"voice/v77.mp3","When you chat with me, tidy your spelling, or ask for a reflection, your words go to Claude, an AI made by Anthropic, to make a reply.":"voice/v78.mp3","When you chat with me, tidy your spelling, or ask for a reflection, your words go to Claude, an AI made by Anthropic, using your API key.":"voice/v79.mp3","If you write about hurting yourself, I show you help lines. I can't call anyone, and nobody is told.":"voice/v80.mp3","You can delete one entry, or everything, in Settings.":"voice/v81.mp3"};
 let voices = [];
 function loadVoices() { if (!canSpeak) return; try { voices = speechSynthesis.getVoices() || []; } catch { voices = []; } }
 const NOVELTY = /compact|espeak|robot|novelty|bad news|good news|bahh|bells|boing|bubbles|cellos|jester|organ|trinoids|whisper|wobble|zarvox|albert|fred|junior|ralph|kathy|superstar|deranged|hysterical/;
@@ -793,6 +954,7 @@ function addAnswer(items) {
   return r;
 }
 function celebrate(e, n) {
+  if (reduceMotion) return;
   const r = el('div', 'row party'); r.setAttribute('aria-hidden', 'true');
   for (let i = 0; i < n; i++) r.append(el('span', '', tone(e)));
   chat.append(r); scrollDown();
@@ -807,7 +969,8 @@ function showTyping() {
   const r = makeRow('bot'); r.classList.add('typing');
   const b = el('div', 'bubble dots'); b.setAttribute('aria-label', 'Lexi is typing');
   b.innerHTML = '<i></i><i></i><i></i>';
-  r.append(b); chat.append(r); scrollDown();
+  r.append(b); chat.append(r);
+  if (reduceMotion) r.hidden = true; else scrollDown();
   return r;
 }
 const delayFor = t => reduceMotion ? 150 : Math.min(1300, 380 + [...String(t)].length * 14);
@@ -1073,7 +1236,10 @@ async function startGuided(fromIntro) {
     if (!moods.length && !topics.length) { await say("Nothing to save this time. That's okay. 🏡"); await sayQueue; offerActions(); return; }
     const entry = { kind: 'guided', createdAt: Date.now(), day: dayKey(), moods, topics, text: '' };
     const ref = await Store.add(entry);
+    const notes = topics.map(t => [t.note, ...(t.todos || []).map(x => x.t)].filter(Boolean).join('\n')).filter(Boolean).join('\n');
+    const level = notes ? maxLevel(riskCheck(notes), await aiRisk(notes)) : 'none';
     await say('Saved to your journal. 📖 ✔️');
+    if (level !== 'none') { await safetyFlow(level); await sayQueue; offerActions(); return; }
     await sayQueue; celebrate('🎉', 3);
     if (sampleFn && sampleOk) {
       const want = await ask('Want a short reflection on today?');
@@ -1103,13 +1269,16 @@ async function reflect(entry, ref) {
   try {
     const { text } = await sampleFn(
       'Write a short reflection for a dyslexic person about their journal check-in below.\n' +
-      'Rules: 2 or 3 very short sentences, each on its own line. Simple, common words. 1 or 2 emoji. Talk to them as "you". ' +
+      'Rules: 2 or 3 very short sentences, each on its own line. Simple, common words. Talk to them as "you". ' +
+      (profile.settings.icons ? '1 or 2 emoji. ' : 'Do not use emoji. ') +
       'Name what they shared without judging it. No toxic positivity: never say "be happy", "cheer up" or "look on the bright side". ' +
-      'No advice unless the entry asks for it. No lists, no markdown.\n\nCheck-in:\n' + entrySummary(entry)
+      'Accept the feeling. Never agree with harsh words they use about themselves. Do not flatter. You are an AI, not a person or a therapist; do not use therapy words. ' +
+      'No idioms or sayings. No advice unless the entry asks for it. No lists, no markdown.\n\nCheck-in:\n' + entrySummary(entry)
     );
     t.remove();
-    cleanLines(text).forEach(l => addBot(l));
-    if (ref) Store.update(ref.id, ref.src, { reflection: cleanLines(text).join('\n') });
+    const { lines } = styleCheck(text, { icons: profile.settings.icons });
+    lines.forEach(l => addBot(l));
+    if (ref) Store.update(ref.id, ref.src, { reflection: lines.join('\n') });
   } catch (e) {
     t.remove();
     const m = sampleErr(e); if (m) addBot(m, { info: true });
@@ -1129,9 +1298,14 @@ function lexiRules() {
     'How you write:',
     '- Reply in 1 to 3 very short lines. Each line is one short sentence on its own line.',
     '- Use simple, common words. No lists, no markdown, no headings.',
-    '- Use 1 or 2 emoji per reply to carry meaning. The user reads emoji easily.',
+    profile.settings.icons ? '- Use 1 or 2 emoji per reply to carry meaning. The user reads emoji easily.' : '- Do not use emoji.',
     '- No toxic positivity. Never say "be happy", "cheer up", "look on the bright side" or "everything happens for a reason". Accept feelings as they are. Content is the goal, not happy.',
-    '- You are not a therapist and you do not diagnose. If the user mentions hurting themselves or being in danger, say you care and tell them to contact someone they trust or their local emergency number now (in the US, call or text 988). Keep it short.',
+    '- Accept the feeling. Never agree with harsh words the user says about themselves (like "I\'m stupid" or "I\'m useless"). Gently disagree with the label, not the feeling. Example: "Reading is hard for you. That doesn\'t make you stupid."',
+    '- Don\'t flatter or just agree. Be honest and kind.',
+    '- You are an AI. Never say you are a person or a therapist. Don\'t use therapy words like therapy, diagnosis, treatment or disorder.',
+    '- When things sound heavy, suggest a real person: a friend, family, a doctor or a helpline. The app shows help lines for the user\'s country, so don\'t list phone numbers yourself.',
+    '- No idioms or sayings (like "hang in there" or "silver lining").',
+    '- Start your reply with exactly one tag on its own line: [ok], [check] if the user might be unsafe or very hopeless, or [risk] if they talk about wanting to die or hurt themselves.',
     'What the app can do (use this to answer questions about the app):',
     '- 🧭 Guided check-in on the 🏡 Home tab: pick mood emoji in three groups (Content, Stressed, Low self-esteem), then topics: physical health, diet, self-esteem, relationships, financial health, stressors, to dos, hobbies and passions, gratitude. There is no "Happy" option on purpose. ➕ My own adds custom words and emoji.',
     '- ✏️ Write on my own: free writing with an emoji button, ✨ Tidy spelling and 🔊 Read it back.',
@@ -1144,7 +1318,6 @@ function lexiRules() {
 }
 function fallbackReply(t) {
   const s = t.toLowerCase();
-  if (/suicid|kill myself|hurt myself|self.?harm|end it all|want to die/.test(s)) return ["I'm really glad you told me. 💛", 'Please reach out to someone you trust or your local emergency number now.', 'In the US you can call or text 988.'];
   if (/delete|remove|erase/.test(s)) return ['To delete an entry, open 📖 Journal.', 'Then tap 🗑️ on that entry.'];
   if (/voice|robot|speak|read/.test(s)) return ['You can pick my voice in ⚙️ Settings. 🔊', 'There is a speed slider too.'];
   if (/icon|emoji/.test(s)) return ['You can turn icons on or off in ⚙️ Settings. 🧠'];
@@ -1159,8 +1332,69 @@ function setSending(on) {
   b.setAttribute('aria-label', on ? 'Stop' : 'Send');
   b.innerHTML = on ? '<span class="ico" aria-hidden="true">⏹️</span><span class="only-text">Stop</span>' : '<span class="ico" aria-hidden="true">➤</span><span class="only-text">Send</span>';
 }
+/* ---------- safety: help lines + the safety flow (docs/FEATURES_DO_NEXT.md §6–8) ---------- */
+function crisisCard({ change = true } = {}) {
+  const C = CRISIS[country()];
+  const card = el('div', 'card crisis');
+  const head = el('h3', 'card-title'); rich(head, '🛟 Help lines · ' + C.name); card.append(head);
+  const em = el('div', 'emerg');
+  em.append(icoSpan('🚨'), el('span', '', 'Emergency:'), el('span', 'num', C.emergency));
+  card.append(em);
+  C.lines.forEach(L => {
+    const row = el('div', 'line');
+    row.append(el('b', '', L.name), el('span', 'how', L.how), el('span', 'num', L.num));
+    const acts = el('div', 'acts');
+    if (L.tel) { const a = el('a'); a.href = 'tel:' + L.tel; a.append(icoSpan('📞'), el('span', '', 'Call')); acts.append(a); }
+    if (L.sms) { const a = el('a'); a.href = 'sms:' + L.sms; a.append(icoSpan('💬'), el('span', '', 'Text')); acts.append(a); }
+    if (L.web) { const a = el('a'); a.href = L.web; a.target = '_blank'; a.rel = 'noopener'; a.append(icoSpan('🌍'), el('span', '', 'Open')); acts.append(a); }
+    if (acts.children.length) row.append(acts);
+    card.append(row);
+  });
+  if (change) { const b = button('chip', 'Change country', '🌍'); b.onclick = () => openHelp(); card.append(b); }
+  return card;
+}
+async function aiRisk(text) {
+  if (!sampleFn || !sampleOk) return 'none';
+  if (stripEmoji(text).split(/\s+/).filter(Boolean).length < 3) return 'none';
+  try {
+    const r = await sampleFn.json(
+      'You check journal text for self-harm or suicide risk. The writer is dyslexic, so expect misspellings, sound-alike spellings and emoji. ' +
+      'Reply with only JSON: {"level":"none"|"check"|"risk"}. "risk" = says they want to die, kill or hurt themselves, or has a plan. ' +
+      '"check" = sounds hopeless, wants to disappear, or gives unclear dark hints. Otherwise "none".\n\nText:\n' + String(text).slice(0, 4000),
+      { modelTier: 'quick' }
+    );
+    return r && LEVEL[r.level] != null ? r.level : 'none';
+  } catch (e) { if (e && ['not_granted', 'sampling_disabled', 'not_declared', 'capability_disabled', 'capability_removed'].includes(e.code)) sampleErr(e); return 'none'; }
+}
+let safetyActive = false;
+async function safetyFlow(level) {
+  if (safetyActive || level === 'none') return;
+  safetyActive = true;
+  try {
+    showView('home');
+    if (level === 'risk') await riskSteps(true);
+    else {
+      await say('That sounds really hard. 💛');
+      const safe = await ask('Are you safe right now?');
+      if (safe) await say("Okay. I'm glad. I'm here if you want to talk.");
+      else await riskSteps(false);
+    }
+  } finally { safetyActive = false; }
+}
+async function riskSteps(withOpening) {
+  if (withOpening) await say("I'm really glad you told me. 💛");
+  await say('Your safety matters most right now.');
+  await sayQueue; addCard(crisisCard());
+  await say('Please talk to someone now. You can call or text these lines.');
+  const safe = await ask('Are you safe right now?');
+  if (safe) { await say("Thank you for telling me. I'm here if you want to talk."); await say('Tap Help at the top any time. 🆘'); }
+  else { await say('Please call your local emergency number now. 🆘'); await sayQueue; addCard(crisisCard()); }
+}
+
 async function sendChat(text) {
   addMe(text);
+  const local = riskCheck(text);
+  if (local !== 'none') { await safetyFlow(local); return; }
   if (!sampleFn || !sampleOk) {
     const r = fallbackReply(text);
     if (r) await sayMany(r);
@@ -1174,8 +1408,7 @@ async function sendChat(text) {
   const ctl = new AbortController(); chatCtl = ctl; setSending(true);
   const typing = showTyping();
   let started = false, rows = [];
-  const draw = txt => {
-    const lines = cleanLines(txt);
+  const drawLines = lines => {
     lines.forEach((l, i) => {
       if (rows[i] && rows[i].dataset.line === l) return;
       const nr = botRow(l).r; nr.dataset.line = l;
@@ -1184,14 +1417,19 @@ async function sendChat(text) {
     });
     rows.splice(lines.length).forEach(x => x.remove());
   };
+  // while streaming: raw lines with the safety tag hidden; when done: the style-checked lines
+  const draw = txt => drawLines(cleanLines(txt).map(l => l.replace(/^\[(ok|check|risk)\]\s*/i, '')).filter(l => l && !/^\[[a-z]*\]?$/i.test(l)));
+  let level = 'none';
   try {
     const res = await sampleFn([{ role: 'user', content: lexiRules() }, ...turns], {
       cache: false, modelTier: 'quick', signal: ctl.signal,
       onText: ({ text: t }) => { if (!started) { started = true; typing.hidden = true; } draw(t); scrollDown(); }
     });
-    if (!started) draw(res.text);
+    const checked = styleCheck(res.text, { icons: profile.settings.icons });
+    level = LEVEL[checked.tag] != null ? checked.tag : 'none';
+    drawLines(checked.lines);
     typing.remove();
-    turns.push({ role: 'assistant', content: res.text });
+    turns.push({ role: 'assistant', content: '[' + checked.tag + ']\n' + checked.lines.join('\n') });
     if (profile.settings.autoread) rows.forEach(r => { const b = $('.bubble', r); speak($('.txt', r).dataset.raw, { el: b, queue: true }); });
     if (res.truncated) addBot('That got cut short. Ask me for less at a time. ✂️', { info: true });
   } catch (e) {
@@ -1202,6 +1440,7 @@ async function sendChat(text) {
     if (chatCtl === ctl) { chatCtl = null; setSending(false); }
     scrollDown();
   }
+  if (level !== 'none') await safetyFlow(level);
 }
 
 /* ---------- onboarding (Chat Bot Plan) ---------- */
@@ -1279,18 +1518,19 @@ document.addEventListener('pointerdown', e => {
 
 /* ---------- free-write sheet ---------- */
 const sheet = $('#sheet'), fwText = $('#fw-text'), fwOut = $('#fw-tidy-out');
-let fwMood = new Map(), draftTimer = null, lastFocus = null;
+let fwMood = new Map(), draftTimer = null, lastFocus = null, fwOriginal = null;
 function openSheet() {
   lastFocus = document.activeElement;
-  fwMood = new Map();
+  fwMood = new Map(); fwOriginal = null;
   $('#fw-mood').replaceChildren(moodPicker(fwMood));
   $('#fw-mood-wrap').open = false;
   fwText.value = LS.get('lexi.draft', '') || '';
+  fwText.readOnly = false;
   fwOut.hidden = true; updateAIUi();
   sheet.hidden = false;
   setTimeout(() => fwText.focus(), 30);
 }
-function closeSheet() { sheet.hidden = true; pop.hidden = true; if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true }); }
+function closeSheet() { sheet.hidden = true; pop.hidden = true; fwText.readOnly = false; if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true }); }
 fwText.addEventListener('input', () => { clearTimeout(draftTimer); draftTimer = setTimeout(() => LS.set('lexi.draft', fwText.value), 400); });
 $('#fw-close').onclick = closeSheet;
 $('#fw-cancel').onclick = closeSheet;
@@ -1301,36 +1541,80 @@ $('#fw-save').onclick = async () => {
   if (!text && !moods.length) { toast('Write something or pick a mood first. ✏️'); return; }
   $('#fw-save').disabled = true;
   try {
-    await Store.add({ kind: 'free', createdAt: Date.now(), day: dayKey(), moods, topics: [], text });
-    clearTimeout(draftTimer); LS.del('lexi.draft'); fwText.value = '';
+    const entry = { kind: 'free', createdAt: Date.now(), day: dayKey(), moods, topics: [], text };
+    if (fwOriginal && fwOriginal.trim() !== text) entry.original = fwOriginal.trim();
+    await Store.add(entry);
+    const level = text ? maxLevel(riskCheck(text), await aiRisk(text)) : 'none';
+    clearTimeout(draftTimer); LS.del('lexi.draft'); fwText.value = ''; fwOriginal = null;
     closeSheet(); toast('Saved to your journal. 📖');
+    if (level !== 'none') { await safetyFlow(level); return; }
     if (!$('#view-home').hidden) { await say("Saved. 📖 I'm here if you have questions."); await sayQueue; celebrate('🎉', 3); }
   } finally { $('#fw-save').disabled = false; }
 };
+// Tidy word by word (docs/FEATURES_DO_NEXT.md §12): each fix is the writer's choice, and the original is always kept.
+const escRe = s => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+function applyFixes(orig, fixes) {
+  let out = '', cur = 0;
+  for (const f of fixes) {
+    const re = new RegExp('(^|[^\\p{L}\\p{N}])(' + escRe(f.from) + ')(?=$|[^\\p{L}\\p{N}])', 'u');
+    const m = re.exec(orig.slice(cur)); if (!m) continue;
+    const at = cur + m.index + m[1].length;
+    out += orig.slice(cur, at) + (f.on ? f.to : f.from);
+    cur = at + f.from.length;
+  }
+  return out + orig.slice(cur);
+}
+function renderTidy(state) {
+  const sync = () => { fwText.value = applyFixes(state.original, state.fixes); fwText.dispatchEvent(new Event('input')); };
+  const list = el('div', 'fixes');
+  state.fixes.forEach(f => {
+    const row = el('div', 'fix');
+    const words = el('div', 'words');
+    words.append(el('span', 'from', f.from), document.createTextNode(' → '), el('span', 'to', f.to));
+    if (f.hint) words.append(el('span', 'hint', f.hint));
+    const say1 = speakBtn(f.to + (f.hint ? '. ' + f.hint : ''), row);
+    const use = button('btn', f.on ? 'Used' : 'Use', f.on ? '✔️' : '');
+    use.setAttribute('aria-pressed', String(!!f.on));
+    use.onclick = () => { f.on = !f.on; sync(); renderTidy(state); };
+    row.append(words); if (say1) row.append(say1); row.append(use);
+    list.append(row);
+  });
+  const all = button('btn', 'Use all', '✔️');
+  all.onclick = () => { state.fixes.forEach(f => { f.on = true; }); sync(); renderTidy(state); };
+  const undo = button('btn', 'Undo all', '↩️');
+  undo.onclick = () => { state.fixes.forEach(f => { f.on = false; }); sync(); renderTidy(state); };
+  const done = button('btn primary', 'Done', '👍🏽');
+  done.onclick = () => { fwText.readOnly = false; fwOut.hidden = true; const n = state.fixes.filter(f => f.on).length; if (n) toast(n + (n === 1 ? ' fix used. ✨' : ' fixes used. ✨')); };
+  const btns = el('div', 'row-btns'); btns.append(undo, all, done);
+  fwOut.replaceChildren(rich(el('strong'), "✨ Lexi's spelling help · your words stay yours"), list, btns);
+}
 $('#fw-tidy').onclick = async () => {
-  const text = fwText.value.trim();
-  if (!text) { toast('Write something first. ✏️'); return; }
+  const text = fwText.value;
+  if (!text.trim()) { toast('Write something first. ✏️'); return; }
   if (!sampleFn || !sampleOk) return;
   const btn = $('#fw-tidy'); btn.disabled = true;
-  fwOut.hidden = false; fwOut.replaceChildren(rich(el('p'), '✨ Tidying your spelling…'));
+  fwOut.hidden = false; fwOut.replaceChildren(rich(el('p'), '✨ Looking at your spelling…'));
   try {
-    const { text: fixed } = await sampleFn(
-      'Fix only the spelling mistakes and obvious typos in the journal text below. Keep the writer\'s own words, tone, slang, emoji, capital letters and line breaks. ' +
-      'Do not add, remove or reword ideas. Reply with only the corrected text and nothing else.\n\nText:\n' + text,
+    const r = await sampleFn.json(
+      'Find spelling mistakes and sound-alike word mix-ups (like there/their or here/hear) in the journal text. Do not change style, grammar, slang, emoji or capital letters. ' +
+      'Reply with only JSON: {"fixes":[{"from":"the wrong word exactly as written","to":"the fixed word","kind":"spelling" or "sound-alike","hint":"sound-alike only: 2 to 4 simple words about the meaning"}]}. ' +
+      'At most 20 fixes. If there are none, reply {"fixes":[]}.\n\nText:\n' + text.slice(0, 8000),
       { modelTier: 'quick' }
     );
-    const clean = fixed.trim();
-    const p = el('p'); p.textContent = clean;
-    const use = button('btn primary', 'Use this', '✔️');
-    const keep = button('btn', 'Keep mine', '✖️');
-    use.onclick = () => { fwText.value = clean; fwText.dispatchEvent(new Event('input')); fwOut.hidden = true; toast('Spelling tidied. ✨'); };
-    keep.onclick = () => { fwOut.hidden = true; };
-    const btns = el('div', 'row-btns');
-    const sb = speakBtn(clean, fwOut); if (sb) btns.append(sb);
-    btns.append(keep, use);
-    fwOut.replaceChildren(rich(el('strong'), "✨ Lexi's tidy version"), p, btns);
+    const fixes = (r && Array.isArray(r.fixes) ? r.fixes : [])
+      .filter(f => f && typeof f.from === 'string' && typeof f.to === 'string' && f.from && f.from !== f.to)
+      .slice(0, 20)
+      .map(f => ({ from: f.from, to: f.to, hint: f.kind === 'sound-alike' && typeof f.hint === 'string' ? f.hint : '', on: false }));
+    // keep the fixes in reading order so they apply left to right
+    let cur = 0;
+    fixes.forEach(f => { const i = text.indexOf(f.from, cur); f.at = i < 0 ? Infinity : i; if (i >= 0) cur = i + f.from.length; });
+    fixes.sort((a, b) => a.at - b.at);
+    if (!fixes.length) { fwOut.replaceChildren(rich(el('p'), '✨ No spelling fixes needed. 👍🏽')); return; }
+    if (fwOriginal == null) fwOriginal = text;
+    fwText.readOnly = true;
+    renderTidy({ original: text, fixes });
   } catch (e) {
-    const m = sampleErr(e);
+    const m = e && e.code === 'invalid_json' ? 'I got muddled. Try again? 🔁' : sampleErr(e);
     if (m) fwOut.replaceChildren(rich(el('p'), m)); else fwOut.hidden = true;
   } finally { btn.disabled = false; }
 };
@@ -1340,6 +1624,7 @@ function showView(v) {
   ['home', 'journal', 'settings'].forEach(n => { $('#view-' + n).hidden = n !== v; });
   $$('.tab').forEach(t => { if (t.dataset.view === v) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current'); });
   form.hidden = v !== 'home';
+  $('#ai-note').hidden = v !== 'home';
   pop.hidden = true;
   if (v === 'journal') renderJournal();
   if (v === 'settings') renderSettings();
@@ -1350,6 +1635,7 @@ $$('.tab').forEach(t => { t.onclick = () => showView(t.dataset.view); });
 /* ---------- journal ---------- */
 const jv = $('#view-journal');
 let confirmId = null;
+const openOriginals = new Set();
 function fmtDay(k) {
   const y = new Date(); y.setDate(y.getDate() - 1);
   if (k === dayKey()) return 'Today';
@@ -1371,13 +1657,22 @@ function topEmoji(moods) {
   let best = '', c = 0; n.forEach((v, k) => { if (v > c) { best = k; c = v; } });
   return best;
 }
+// Days journaled and feelings named, not streaks: broken streaks push people away, more so when they blame themselves.
+// The optional streak forgives one rest day in a row.
 function stats(all, byDay) {
-  let streak = 0; const d = new Date();
+  let streak = 0, misses = 0; const d = new Date();
   if (!byDay.has(dayKey(d))) d.setDate(d.getDate() - 1);
-  while (byDay.has(dayKey(d))) { streak++; d.setDate(d.getDate() - 1); }
-  let words = 0;
-  all.forEach(e => { words += countWords(e.text); (e.topics || []).forEach(t => { words += countWords(t.note); (t.todos || []).forEach(x => { words += countWords(x.t); }); }); });
-  return { entries: all.length, streak, words };
+  for (let n = 0; n < 1000; n++) {
+    if (byDay.has(dayKey(d))) { streak++; misses = 0; } else if (++misses > 1) break;
+    d.setDate(d.getDate() - 1);
+  }
+  let words = 0, feelings = 0;
+  all.forEach(e => {
+    feelings += (e.moods || []).length;
+    words += countWords(e.text);
+    (e.topics || []).forEach(t => { words += countWords(t.note); (t.todos || []).forEach(x => { words += countWords(x.t); }); });
+  });
+  return { entries: all.length, days: byDay.size, feelings, streak, words };
 }
 function entryHtml(en) {
   const time = new Date(en.createdAt || Date.now()).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
@@ -1402,6 +1697,11 @@ function entryHtml(en) {
     h += '</dl>';
   }
   if (en.text) h += '<p class="text">' + renderRich(en.text) + '</p>';
+  if (en.original) {
+    const open = openOriginals.has(en.id);
+    h += '<div><button type="button" class="chip" data-act="orig" data-key="' + key + '" aria-expanded="' + open + '">' + renderRich('📝') + ' ' + (open ? 'Hide my original words' : 'See my original words') + '</button></div>';
+    if (open) h += '<p class="orig">' + renderRich(en.original) + '</p>';
+  }
   if (en.reflection) h += '<p class="reflection">' + renderRich('🤖 ' + en.reflection) + '</p>';
   return h + '</article>';
 }
@@ -1414,10 +1714,13 @@ function renderJournal() {
   const where = Store.mode === 'cloud' ? '🔒 Private to you, saved to your account.' : '💾 Saved on this device only.';
   const st = stats(all, byDay);
   let h = head + '<p class="muted">' + renderRich(where) + '</p></div></div>';
+  const stat = (i, n, label) => '<div class="stat">' + renderRich(i) + '<b>' + n + '</b><span>' + label + '</span></div>';
   h += '<div class="stats">' +
-    '<div class="stat">' + renderRich('📝') + '<b>' + st.entries + '</b><span>' + (st.entries === 1 ? 'Entry' : 'Entries') + '</span></div>' +
-    '<div class="stat">' + renderRich('🔥') + '<b>' + st.streak + '</b><span>' + (st.streak === 1 ? 'Day in a row' : 'Days in a row') + '</span></div>' +
-    '<div class="stat">' + renderRich('✍️') + '<b>' + st.words + '</b><span>Words written</span></div></div>';
+    stat('📅', st.days, st.days === 1 ? 'Day journaled' : 'Days journaled') +
+    stat('💬', st.feelings, st.feelings === 1 ? 'Feeling named' : 'Feelings named') +
+    stat('📝', st.entries, st.entries === 1 ? 'Entry' : 'Entries') +
+    (profile.settings.showStreak ? stat('🔥', st.streak, 'Days in a row (rest days OK)') + stat('✍️', st.words, 'Words written') : '') +
+    '</div>';
   h += '<h3 class="sec-title">Last 14 days</h3><div class="days" id="days" role="list" aria-label="Mood over the last 14 days">';
   for (let i = 13; i >= 0; i--) {
     const d = new Date(); d.setDate(d.getDate() - i);
@@ -1426,7 +1729,7 @@ function renderJournal() {
     const em = topEmoji(moods);
     const bar = bandBar(moodShares(moods));
     const label = d.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }) + ': ' + (es.length ? (moods.length ? moods.map(m => m.label).join(', ') : es.length + ' entry') : 'no entry');
-    h += '<div class="day' + (i === 0 ? ' today' : '') + '" role="listitem" aria-label="' + esc(label) + '"><span class="wd">' + esc(d.toLocaleDateString(undefined, { weekday: 'short' }).toUpperCase()) + '</span><span class="dn">' + d.getDate() + '</span>' +
+    h += '<div class="day' + (i === 0 ? ' today' : '') + '" role="listitem" aria-label="' + esc(label) + '"><span class="wd">' + esc(d.toLocaleDateString(undefined, { weekday: 'short' })) + '</span><span class="dn">' + d.getDate() + '</span>' +
       (em ? '<span class="de">' + renderRich(em) + '</span>' : '<span class="de none">' + (es.length ? renderRich('✏️') : '·') + '</span>') +
       '<i class="bar"' + (bar ? ' style="background:' + bar + '"' : '') + '></i></div>';
   }
@@ -1446,6 +1749,7 @@ jv.addEventListener('click', e => {
   if (act === 'read') { const { en } = findEntry(b.dataset.key); if (en) speak(entrySummary(en) + (en.reflection ? '\n' + en.reflection : ''), { el: b.closest('.entry') }); return; }
   if (act === 'del') { confirmId = findEntry(b.dataset.key).id; renderJournal(); const y = $('[data-act="del-no"]', jv); if (y) y.focus(); return; }
   if (act === 'del-no') { confirmId = null; renderJournal(); return; }
+  if (act === 'orig') { const { id } = findEntry(b.dataset.key); if (openOriginals.has(id)) openOriginals.delete(id); else openOriginals.add(id); renderJournal(); return; }
   if (act === 'del-yes') { const { id, src } = findEntry(b.dataset.key); confirmId = null; Store.remove(id, src); toast('Entry deleted. 🗑️'); }
 });
 jv.addEventListener('change', e => {
@@ -1525,6 +1829,8 @@ function renderSettings() {
   h += voiceSection();
   h += '<section class="set"><h3>' + renderRich('🔤') + ' Font</h3><div class="chips">' + Object.entries(FONTS).map(([k, [n, stack]]) => seg('font', k, esc(n), ' style="font-family:' + esc(stack) + '"')).join('') + '</div></section>';
   h += '<section class="set"><h3>' + renderRich('🔠') + ' Text size</h3><div class="chips">' + Object.entries(SIZES).map(([k, [n, px]]) => seg('size', k, '<span style="font-size:' + px + '">Aa</span> ' + esc(n))).join('') + '</div></section>';
+  h += '<section class="set"><h3>' + renderRich('↔️') + ' Letter spacing</h3><p>More space between letters and words can make reading easier. Chat bubbles get wider to fit.</p><div class="chips">' +
+    Object.entries(LETTERS).map(([k, [n, ls, ws]]) => seg('letters', k, '<span style="letter-spacing:' + ls + ';word-spacing:' + ws + '">' + esc(n) + '</span>')).join('') + '</div></section>';
   h += '<section class="set"><h3>' + renderRich('↕️') + ' Line spacing</h3><p>Wider gaps between lines can make reading easier.</p><div class="chips">' + Object.entries(SPACING).map(([k, [n]]) => seg('spacing', k, esc(n))).join('') + '</div></section>';
   h += '<section class="set"><h3>' + renderRich('✋🏽') + ' Skin tone</h3><div class="chips">' + TONES.map(([t, n]) => seg('tone', t, '<span style="font-size:1.6em;line-height:1" aria-hidden="true">✋' + t + '</span> ' + esc(n))).join('') + '</div></section>';
   h += '<section class="set"><h3>' + renderRich(S.avatar) + ' My avatar</h3><div class="chips">' + AVATARS.map(a => seg('avatar', a, '<span style="font-size:1.9em;line-height:1">' + esc(tone(a)) + '</span>', ' aria-label="Avatar ' + esc(a) + '"')).join('') + '</div></section>';
@@ -1534,6 +1840,10 @@ function renderSettings() {
   h += '<section class="set"><h3>' + renderRich('🏷️') + ' My own words</h3>' + (customs.length
     ? '<p>Words and emoji you added. Tap ✖️ to remove one.</p><ul class="customs">' + customs.map(([g, i, m]) => '<li data-band="' + esc(m.band || '') + '">' + renderRich(m.e) + ' ' + esc(m.label) + '<button type="button" data-act="rm-custom" data-g="' + esc(g) + '" data-i="' + i + '" aria-label="Remove ' + esc(m.label) + '">✖️</button></li>').join('') + '</ul>'
     : '<p>Add your own feeling words with ➕ My own during a check-in.</p>') + '</section>';
+  h += '<section class="set"><h3>' + renderRich('📊') + ' Journal numbers</h3><p>Your journal shows days journaled and feelings named. You can also show a streak (rest days are OK) and a word count.</p><div class="chips">' +
+    seg('showStreak', false, 'Keep it simple') + seg('showStreak', true, 'Show streak and word count') + '</div></section>';
+  h += '<section class="set"><h3>' + renderRich('🔒') + ' Your privacy</h3><ul class="help-list">' + privacyLines().map(l => '<li>' + renderRich(l) + '</li>').join('') + '</ul>' +
+    '<div class="chips"><button type="button" class="chip" data-act="read-privacy">' + renderRich('🔊') + ' Read this</button><button type="button" class="chip" data-help>' + renderRich('🆘') + ' Help and safety</button></div></section>';
   h += '<section class="set"><h3>' + renderRich('💾') + ' Your journal</h3><p>' + (Store.mode === 'cloud' ? 'Private to you and saved to your account.' : Store.mode === 'local' ? 'Saved on this device only.' : 'Connecting…') + '</p><div class="chips">' +
     '<button type="button" class="chip" data-act="replay">' + renderRich('🔁') + ' Replay Lexi\'s intro</button>' +
     '<button type="button" class="chip" data-act="wipe">' + renderRich('🗑️') + ' Delete all entries</button></div>' +
@@ -1544,10 +1854,12 @@ function renderSettings() {
 }
 sv.addEventListener('click', async e => {
   const b = e.target.closest('button'); if (!b) return;
+  if ('help' in b.dataset) { openHelp(); return; }
+  if (b.dataset.act === 'read-privacy') { privacyLines().forEach((l, i) => speak(l, { queue: i > 0 })); return; }
   if (b.dataset.set) {
     const k = b.dataset.set; let v = b.dataset.val;
     if (v === 'true') v = true; else if (v === 'false') v = false;
-    profile.settings[k] = v; applySettings(); saveProfile();
+    profile.settings[k] = v; applySettings(); saveProfile(); autosize();
     if (k === 'tone' || k === 'avatar') retone();
     renderSettings(); if (!jv.hidden) renderJournal();
     const again = $('[data-set="' + k + '"][aria-pressed="true"]', sv); if (again) again.focus({ preventScroll: true });
@@ -1589,8 +1901,58 @@ function retone() {
   $$('.me-ava').forEach(n => rich(n, profile.settings.avatar));
 }
 
+/* ---------- help sheet: help lines, how to, how Lexi keeps you safe, privacy (docs/FEATURES_DO_NEXT.md §6, §13) ---------- */
+const HELP_NOW = 'If you might hurt yourself, or you are in danger, call your local emergency number now.';
+const HELP_TIPS = ['🧭 Check in: tap Guided check-in and pick emoji.', "✏️ Write: tap Write on my own. Spelling doesn't matter.", '🔊 Listen: tap the speaker on any message.', '📖 Journal: see your days and your entries.', '⚙️ Settings: change text size, spacing, colors and voice.'];
+const SAFETY_TEXT = "Lexi looks for words about wanting to die or hurting yourself, even when they are spelled in a different way or written with emoji. If it finds them, it shows you help lines. When Lexi's chat brain is on, Claude checks too. Lexi can make mistakes, so if you need help, please use the help lines.";
+function privacyLines() {
+  return [
+    '🔒 Your journal is private. Only you can see it.',
+    Store.mode === 'local' ? '💾 It is saved on this device only.' : '💾 It is saved to your Claude account, so it is there on your other devices.',
+    '🤖 When you chat with me, tidy your spelling, or ask for a reflection, your words go to Claude, an AI made by Anthropic, to make a reply.',
+    "🛟 If you write about hurting yourself, I show you help lines. I can't call anyone, and nobody is told.",
+    '🗑️ You can delete one entry, or everything, in Settings.'
+  ];
+}
+const helpSheet = $('#help');
+let helpFocus = null;
+function helpSection(title, kids, texts) {
+  const s = el('section', 'set');
+  const h = el('h3'); rich(h, title); s.append(h, ...kids);
+  if (texts && texts.some(canRead)) { const b = button('chip', 'Read this', '🔊'); b.onclick = () => texts.forEach((t, i) => speak(t, { queue: i > 0 })); s.append(b); }
+  return s;
+}
+function listOf(lines) { const ul = el('ul', 'help-list'); lines.forEach(l => { const li = el('li'); rich(li, l); ul.append(li); }); return ul; }
+function renderHelp() {
+  const sel = el('select'); sel.id = 'help-country';
+  Object.entries(CRISIS).forEach(([k, v]) => { const o = el('option', '', v.name); o.value = k; o.selected = k === country(); sel.append(o); });
+  sel.onchange = () => { profile.settings.country = sel.value; saveProfile(); renderHelp(); $('#help-country').focus(); };
+  const lab = el('label', 'card-title', 'Your country'); lab.htmlFor = 'help-country';
+  const pick = el('div', 'adder-line'); pick.append(lab, sel);
+  const now = el('p'); now.style.cssText = 'font-size:1em;color:var(--ink);font-weight:700'; rich(now, HELP_NOW);
+  $('#help-body').replaceChildren(
+    helpSection('🛟 Need help now?', [now, crisisCard({ change: false }), pick], [HELP_NOW]),
+    helpSection('🧭 How to use Lexi', [listOf(HELP_TIPS)], HELP_TIPS),
+    helpSection('🛡️ How Lexi keeps you safe', [rich(el('p'), SAFETY_TEXT)], [SAFETY_TEXT]),
+    helpSection('🔒 Your privacy', [listOf(privacyLines())], privacyLines())
+  );
+}
+function openHelp() {
+  helpFocus = document.activeElement; pop.hidden = true;
+  renderHelp(); helpSheet.hidden = false;
+  setTimeout(() => $('#help-close').focus(), 30);
+}
+function closeHelp() { helpSheet.hidden = true; stopSpeaking(); if (helpFocus && helpFocus.focus) helpFocus.focus({ preventScroll: true }); }
+$('#help-close').onclick = closeHelp;
+document.addEventListener('click', e => { const b = e.target.closest('[data-help]'); if (b && !sv.contains(b)) openHelp(); });
+
 /* ---------- composer ---------- */
-function autosize() { msg.style.height = 'auto'; msg.style.height = Math.min(msg.scrollHeight + 2, 160) + 'px'; form.classList.toggle('has-text', !!msg.value.trim()); }
+function autosize() {
+  msg.style.height = 'auto';
+  const h = msg.scrollHeight + 2, max = Math.round(parseFloat(getComputedStyle(msg).lineHeight) * 4.5) || 160;
+  msg.style.height = Math.min(h, max) + 'px'; msg.style.overflowY = h > max ? 'auto' : 'hidden';
+  form.classList.toggle('has-text', !!msg.value.trim());
+}
 msg.addEventListener('input', autosize);
 msg.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); form.requestSubmit(); } });
 form.addEventListener('submit', e => {
@@ -1604,12 +1966,13 @@ $('#msg-emoji').onclick = () => { if (!pop.hidden && emojiTarget === msg) { pop.
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   if (!pop.hidden) { pop.hidden = true; return; }
+  if (!helpSheet.hidden) { closeHelp(); return; }
   if (!sheet.hidden) closeSheet();
 });
 
 /* ---------- boot ---------- */
-$('#today').textContent = new Date().toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
-applySettings(); updateAIUi(); renderSettings(); renderJournal();
+{ const an = $('#ai-note'); const sb = speakBtn('🤖 Lexi is an AI, not a person or a therapist.', an); if (sb) an.append(sb); }
+applySettings(); updateAIUi(); renderSettings(); renderJournal(); autosize();
 Store.subs.add(() => { if (!sv.hidden) renderSettings(); });
 initStore(); initSample();
 if (location.hash === '#journal') showView('journal'); else if (location.hash === '#settings') showView('settings');
