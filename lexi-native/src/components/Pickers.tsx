@@ -19,7 +19,7 @@ export function toggled(sel: Selected, m: Pick): Selected {
 function TileGrid({ items, selected, onToggle, disabled }: { items: Pick[]; selected: Selected; onToggle: (m: Pick) => void; disabled?: boolean }) {
   const t = useTheme();
   const [w, setW] = useState(0);
-  const gap = 10, min = Math.max(92, Math.round(t.fs * 4.6));
+  const gap = 10, min = Math.round(Math.max(92, t.fs * 4.6) * Math.min(t.k, 1.6));
   const cols = w ? Math.max(1, Math.floor((w + gap) / (min + gap))) : 0;
   const tileW = cols ? Math.floor((w - gap * (cols - 1)) / cols) : min;
   return (

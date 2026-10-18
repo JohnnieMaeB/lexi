@@ -8,6 +8,7 @@ import { useField } from '../fields';
 import { showView, type TopicAnswer, type Todo } from '../store';
 import { R, useTheme } from '../theme';
 import { Btn, Card, Chip, Choice, Ico, Row, T } from '../ui';
+import { CrisisLines } from './Help';
 import { Box, NoteLine } from './Inputs';
 import { MoodPicker, TopicOpts, type Selected } from './Pickers';
 
@@ -138,6 +139,7 @@ function TopicAnswerCard({ item }: { item: CardItem }) {
 export function CardView({ item }: { item: CardItem }) {
   switch (item.card) {
     case 'question': return null; // drawn as a bot bubble by ChatLog
+    case 'crisis': return <Card><CrisisLines emergencyOnly={!!(item.props as { emergencyOnly?: boolean }).emergencyOnly} /></Card>;
     case 'choices': return <ChoicesCard item={item} />;
     case 'legend': return <LegendCard />;
     case 'mood': return <MoodCard item={item} />;

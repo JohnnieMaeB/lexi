@@ -37,6 +37,13 @@ export async function claude(opts: { system?: string; messages: Msg[]; effort: '
   return { text, content: res.content, truncated: res.stop_reason === 'max_tokens' };
 }
 
+/** The JSON object in a reply that was asked to be "only JSON" (tolerates stray text or code fences). */
+export function parseJsonReply(text: string): unknown {
+  const a = text.indexOf('{'), b = text.lastIndexOf('}');
+  if (a < 0 || b <= a) return null;
+  try { return JSON.parse(text.slice(a, b + 1)); } catch { return null; }
+}
+
 /** Friendly words for anything that went wrong. null = the person cancelled, say nothing. */
 export function aiErrorText(e: unknown): string | null {
   if (e instanceof Anthropic.APIUserAbortError) return null;

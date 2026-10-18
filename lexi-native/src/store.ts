@@ -5,13 +5,16 @@ import { useSyncExternalStore } from 'react';
 import * as SQLite from 'expo-sqlite';
 import Storage from 'expo-sqlite/kv-store';
 import * as SecureStore from 'expo-secure-store';
-import { DEFAULTS, PITCH_RANGE, RATE_RANGE, type Pick, type Settings } from './content';
+import { DEFAULTS, LETTERS, PITCH_RANGE, RATE_RANGE, SIZES, type Pick, type Settings } from './content';
+import { COUNTRY_KEYS, defaultCountry } from './safety';
 
 export type Todo = { t: string; done: boolean };
 export type TopicAnswer = { key: string; picks: Pick[]; note: string; todos: Todo[] };
 export type Entry = {
   id: string; kind: 'guided' | 'free'; createdAt: number; day: string;
   moods: Pick[]; topics: TopicAnswer[]; text: string; reflection?: string;
+  /** The words as first written, kept when ✨ Tidy changed them (FEATURES_DO_NEXT §12). */
+  original?: string;
 };
 export type NewEntry = Omit<Entry, 'id'>;
 export type Custom = Record<string, Pick[]>;
@@ -27,6 +30,7 @@ type State = {
   aiOk: boolean;        // false after the key is rejected, until a new key is saved
   view: View;
   sheetOpen: boolean;
+  helpOpen: boolean;    // the 🆘 Help sheet
   sending: boolean;     // a chat reply is in flight (send button becomes Stop)
   toast: { msg: string; n: number } | null;
 };
@@ -50,9 +54,13 @@ function loadSettings(): Settings {
     s.theme = mode === 'dark' ? 'ember' : mode === 'light' ? a : a === 'orange' ? 'auto' : a;
   }
   if (!THEME_KEYS.includes(s.theme)) s.theme = 'auto';
+  if (!(s.size in SIZES)) s.size = 'm';
+  if (!(s.letters in LETTERS)) s.letters = 'normal';
+  // The country for crisis lines starts from the phone's region (en-GB → GB) the first time.
+  if (!rest.country || !COUNTRY_KEYS.includes(s.country)) s.country = defaultCountry();
   s.rate = clamp(Number(s.rate) || DEFAULTS.rate, RATE_RANGE);
   s.pitch = clamp(Number(s.pitch) || DEFAULTS.pitch, PITCH_RANGE);
-  if (accent || mode) writeKv(KEYS.settings, s);
+  if (accent || mode || !rest.country) writeKv(KEYS.settings, s);
   return s;
 }
 const THEME_KEYS: Settings['theme'][] = ['auto', 'orange', 'purple', 'mint', 'night', 'ember'];
@@ -68,6 +76,7 @@ export const state: State = {
   aiOk: true,
   view: 'home',
   sheetOpen: false,
+  helpOpen: false,
   sending: false,
   toast: null,
 };
@@ -118,6 +127,7 @@ export function toast(msg: string) {
 }
 export function showView(v: View) { state.view = v; emit(); }
 export function setSheet(open: boolean) { state.sheetOpen = open; emit(); }
+export function setHelp(open: boolean) { state.helpOpen = open; emit(); }
 export function setSending(on: boolean) { state.sending = on; emit(); }
 
 /* ---------- journal entries (SQLite) ---------- */

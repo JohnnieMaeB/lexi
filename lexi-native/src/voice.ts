@@ -4,7 +4,8 @@
 import { useSyncExternalStore } from 'react';
 import { requireOptionalNativeModule } from 'expo';
 import type { ExpoSpeechRecognitionErrorEvent, ExpoSpeechRecognitionResultEvent } from 'expo-speech-recognition';
-import { toast } from './store';
+import { BANDS, TOPICS } from './content';
+import { state, toast } from './store';
 import { stopSpeaking } from './speech';
 
 type SRModule = typeof import('expo-speech-recognition').ExpoSpeechRecognitionModule;
@@ -18,6 +19,27 @@ export type VoiceTarget = { id: string; getText: () => string; setText: (t: stri
 let active: VoiceTarget | null = null;
 let base = '', committed = '', interim = '';
 let ending = false;
+// Better dictation (FEATURES_DO_NEXT §14): on-device when the phone supports it, with one quiet retry without it.
+let onDeviceSession = false, gotResult = false, retryWithoutOnDevice = false;
+
+/** Feeling and topic words plus the person's own words, so the recognizer expects them (max 100). */
+function vocabulary(): string[] {
+  const words = new Set<string>();
+  BANDS.forEach(b => b.items.forEach(([, l]) => words.add(l)));
+  TOPICS.forEach(tp => { words.add(tp.name); (tp.opts || []).forEach(([, l]) => words.add(l)); });
+  Object.values(state.custom).forEach(list => (list || []).forEach(m => m.label && words.add(m.label)));
+  return [...words].filter(w => w.length > 1).slice(0, 100);
+}
+function startSession(sr: SRModule, onDevice: boolean) {
+  onDeviceSession = onDevice; gotResult = false;
+  sr.start({
+    lang: 'en-US', interimResults: true, continuous: !!active?.continuous, addsPunctuation: true, iosTaskHint: 'dictation',
+    requiresOnDeviceRecognition: onDevice, contextualStrings: vocabulary(),
+  });
+}
+function supportsOnDevice(sr: SRModule): boolean {
+  try { return !!sr.supportsOnDeviceRecognition(); } catch { return false; }
+}
 let endWaiters: (() => void)[] = [];
 let version = 0;
 const listeners = new Set<() => void>();
@@ -41,6 +63,7 @@ function wire(sr: SRModule) {
   wired = true;
   sr.addListener('result', (ev: ExpoSpeechRecognitionResultEvent) => {
     const t = (ev.results[0]?.transcript || '').trim();
+    if (t) gotResult = true;
     // iOS sends one growing transcript; Android sends a final result per segment, then starts a new one.
     if (ev.isFinal) { committed = join(committed, t); interim = ''; } else interim = t;
     write();
@@ -55,9 +78,19 @@ function wire(sr: SRModule) {
       'service-not-allowed': "Voice typing isn't turned on for this phone. 🎙",
       'busy': 'Voice typing is busy. Try again in a moment. 🎙',
     };
+    // On-device models can be missing or fail to start: try again once with the phone's normal recognizer.
+    if (onDeviceSession && !gotResult && active && !ending && ev.error !== 'aborted' && ev.error !== 'not-allowed' && ev.error !== 'no-speech' && ev.error !== 'speech-timeout') {
+      retryWithoutOnDevice = true;
+      return;
+    }
     if (ev.error !== 'aborted') toast(m[ev.error] || 'Voice typing stopped. Try again. 🎙');
   });
   sr.addListener('end', () => {
+    if (retryWithoutOnDevice && active) {
+      retryWithoutOnDevice = false;
+      try { startSession(sr, false); return; } catch (e) { console.warn('voice retry', e); }
+    }
+    retryWithoutOnDevice = false;
     interim = ''; active = null; ending = false;
     endWaiters.splice(0).forEach(f => f());
     emit();
@@ -82,7 +115,7 @@ export async function toggleVoice(target: VoiceTarget) {
     stopSpeaking(); // don't let the recognizer hear Lexi reading aloud
     base = target.getText(); committed = ''; interim = '';
     active = target; emit();
-    SR.start({ lang: 'en-US', interimResults: true, continuous: !!target.continuous, addsPunctuation: true, iosTaskHint: 'dictation' });
+    startSession(SR, supportsOnDevice(SR));
   } catch (e) {
     console.warn('voice', e);
     active = null; emit();

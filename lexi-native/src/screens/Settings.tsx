@@ -3,7 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { MODEL } from '../ai';
-import { AVATARS, FONTS, PITCH_RANGE, RATE_RANGE, SIZES, SPACING, THEME_NAMES, TONES, TOPICS, type Settings, type ThemeKey } from '../content';
+import { AVATARS, FONTS, LETTERS, PITCH_RANGE, RATE_RANGE, SIZES, SPACING, THEME_NAMES, TONES, TOPICS, type Settings, type ThemeKey } from '../content';
+import { PrivacyLines } from '../components/Help';
 import { useField } from '../fields';
 import { intro } from '../script';
 import { DEVICE_LINE, NATURAL_LINE, SPEED_LINE, TEST_LINE, bestVoice, currentVoice, speak, stopSpeaking, useVoices, type RankedVoice } from '../speech';
@@ -276,12 +277,16 @@ export function SettingsScreen() {
         <Row gap={8}>{(Object.keys(FONTS) as Settings['font'][]).map(k => <Seg key={k} k="font" v={k} label={FONTS[k]} labelStyle={t.fontPreview(k)} />)}</Row>
       </Section>
 
-      <Section icon="🔠" title="Text size">
+      <Section icon="🔠" title="Text size" note="Your phone's own text size makes everything bigger too.">
         <Row gap={8}>{(Object.keys(SIZES) as Settings['size'][]).map(k => <Seg key={k} k="size" v={k} label={SIZES[k][0]} />)}</Row>
       </Section>
 
       <Section icon="↕️" title="Line spacing" note="Wider gaps between lines can make reading easier.">
         <Row gap={8}>{(Object.keys(SPACING) as Settings['spacing'][]).map(k => <Seg key={k} k="spacing" v={k} label={SPACING[k][0]} />)}</Row>
+      </Section>
+
+      <Section icon="↔️" title="Letter spacing" note="More space between letters and words can make reading easier.">
+        <Row gap={8}>{(Object.keys(LETTERS) as Settings['letters'][]).map(k => <Seg key={k} k="letters" v={k} label={LETTERS[k][0]} labelStyle={{ letterSpacing: t.fs * LETTERS[k][1] }} />)}</Row>
       </Section>
 
       <VoiceSection />
@@ -324,6 +329,14 @@ export function SettingsScreen() {
       </Section>
 
       <ChatBrain />
+
+      <Section icon="🔒" title="Your privacy">
+        <PrivacyLines />
+      </Section>
+
+      <Section icon="📊" title="Journal numbers" note="The journal always shows days journaled, feelings named and entries. You can also show a streak, where rest days are OK, and a word count.">
+        <Row gap={8}><Seg k="showStreak" v={false} label="Hide them" /><Seg k="showStreak" v={true} label="Show streak and word count" /></Row>
+      </Section>
 
       <Section icon="💾" title="Your journal" note="Saved on this device only.">
         <Row gap={8}>
