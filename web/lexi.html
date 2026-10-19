@@ -56,6 +56,17 @@
   color-scheme:light;
 }
 .app[data-look="purple"]{ --bar:#8100E3; --on-bar:#FFFFFF; --rail:#8100E3; }
+/* Cream: the warm background family that read fastest in Rello & Bigham 2017 */
+.app[data-look="cream"]{
+  --bg:#F5E4CC; --surface:#FFFAF2; --surface-2:#F3E1C8; --ink:#020000; --ink-soft:#4A3F35; --line:#E0CAAE;
+  --bar:#E38100; --on-bar:#1E1000; --rail:#E38100; --pill:#FFFFFF; --pill-ink:#020000;
+  --accent:#8100E3; --on-accent:#FFFFFF; --bot:#79EAB9; --bot-ink:#020000; --me:#FFFFFF; --me-ink:#020000;
+  --yes:#8100E3; --yes-ink:#FFFFFF; --no-bg:#FFFFFF; --no-line:#8100E3; --no-ink:#020000;
+  --b-content:#E38100; --b-content-ink:#1E1000; --b-stressed:#79EAB9; --b-stressed-ink:#06281A; --b-low:#8100E3; --b-low-ink:#FFFFFF;
+  --tab-on:#FFFFFF; --tab-on-ink:#020000; --shadow:rgba(60,35,0,.12); --scrim:rgba(0,0,0,.45);
+  --deco:#000000; --deco-o:0; --deco-img:none;
+  color-scheme:light;
+}
 .app[data-look="mint"]{ --bar:#79EAB9; --on-bar:#06281A; --rail:#79EAB9; --bot:#FFDCC1; --bot-ink:#2E1500; }
 .app[data-look="night"]{
   --bg:#020000; --surface:#141414; --surface-2:#1F1F1F; --ink:#F4F4F4; --ink-soft:#B8B8B8; --line:#2E2E2E;
@@ -116,6 +127,27 @@ button{-webkit-tap-highlight-color:transparent}
 .fix .btn[aria-pressed="true"]{background:var(--bot-ink);color:var(--bot)}
 select{min-height:48px;padding:.3em .8em;border:2px solid var(--line);border-radius:var(--r-s);background:var(--surface-2);color:var(--ink);font:inherit}
 .orig{margin:0;padding:.6em .9em;border-radius:var(--r-m);background:var(--surface-2);white-space:pre-wrap}
+.w{border-radius:6px;transition:background-color .08s}
+.w.hl{background:var(--hl);color:#020000;box-shadow:0 0 0 2px var(--hl)}
+.w.tapped{background:var(--hl);color:#020000;box-shadow:0 0 0 2px var(--hl)}
+.app[data-tapword="1"] .bubble .w,.app[data-tapword="1"] .entry .text .w{cursor:pointer}
+.next-row{justify-content:flex-start;padding-left:56px}
+.next-pill{display:inline-flex;align-items:center;gap:.35em;min-height:46px;padding:0 1.2em;border:2px solid var(--accent);border-radius:999px;background:var(--surface);color:var(--ink);font-weight:700;cursor:pointer;box-shadow:0 4px 12px var(--shadow)}
+.next-pill .ico{font-size:1.1em}
+.steps{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;font:700 .82em/1.3 var(--font-display);color:var(--ink-soft)}
+.steps .dots2{display:flex;gap:6px}
+.steps .dots2 i{display:block;width:12px;height:12px;border-radius:50%;border:2px solid var(--accent);background:transparent}
+.steps .dots2 i.done{background:var(--accent)}
+.steps .dots2 i.now{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 35%,transparent)}
+.recap{display:flex;flex-direction:column;gap:10px}
+.recap .item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:var(--r-m);background:var(--surface-2)}
+.recap .item .what{flex:1;min-width:0}
+.recap .item b{display:block;font-family:var(--font-display)}
+.qs-row{display:flex;flex-direction:column;gap:6px}
+.qs-row h4{margin:0;font:600 .9em var(--font-display)}
+.qs-preview{align-self:flex-start}
+.starters{display:flex;flex-wrap:wrap;gap:8px}
+.alt{display:block;font-size:.85em}
 .help-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
 .help-list li{font-size:.95em;line-height:var(--lh)}
 .help-list li .ico{font-size:1.35em;line-height:1;vertical-align:-.15em;margin-right:.15em}
@@ -426,6 +458,7 @@ h2.title{margin:0;font:700 1.55em/1.2 var(--font-display);text-wrap:balance}
         </details>
         <div class="paper">
           <label for="fw-text">Your words</label>
+          <div class="starters" id="fw-starters" aria-label="Sentence starters"></div>
           <textarea id="fw-text" rows="8" placeholder="Write anything. Spelling doesn't matter here."></textarea>
           <div class="tools">
             <button type="button" class="chip" id="fw-emoji" data-emoji-btn><span class="ico" aria-hidden="true">🙂</span><span>Emoji</span></button>
@@ -490,7 +523,16 @@ function button(cls, label, icon, wordsOnly) {
   return b;
 }
 function renderRich(text) { return esc(tone(text)).replace(EMOJI_RE, m => '<span class="ico">' + m + '</span>'); }
-function rich(node, text) { node.dataset.raw = text; node.innerHTML = renderRich(text); return node; }
+// Words wrapped one by one, so Lexi can light up the word she is saying and you can tap a word to hear it.
+function renderWords(text) {
+  return String(text).split(/(\s+)/).map(tok => !tok.trim() ? tok : !stripEmoji(tok) ? renderRich(tok) : '<span class="w">' + renderRich(tok) + '</span>').join('');
+}
+function rich(node, text, words) {
+  node.dataset.raw = text;
+  if (words) node.dataset.words = '1';
+  node.innerHTML = words ? renderWords(text) : renderRich(text);
+  return node;
+}
 function stripEmoji(t) { return String(t).replace(EMOJI_RE, '').replace(/[\u{1F3FB}-\u{1F3FF}‍️]/gu, '').replace(/\s{2,}/g, ' ').trim(); }
 function firstEmoji(s) { const m = String(s).match(EMOJI_RE); return m ? m[0] : ''; }
 function dayKey(d = new Date()) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
@@ -529,7 +571,9 @@ const EMOJI_SETS = [
 const YES_NO = [{ v: true, e: '👍🏽', label: 'Yes' }, { v: false, e: '👎🏽', label: 'No' }];
 
 /* ---------- settings ---------- */
-const DEFAULTS = { icons: true, font: 'verdana', size: 'm', spacing: 'wide', letters: 'normal', look: 'auto', tone: '\u{1F3FD}', avatar: '👧🏽', autoread: false, lexiVoice: 'natural', voice: '', rate: 1, pitch: 1, country: '', showStreak: false };
+const DEFAULTS = { icons: true, font: 'verdana', size: 'm', spacing: 'wide', letters: 'normal', look: 'auto', tone: '\u{1F3FD}', avatar: '👧🏽', autoread: false, lexiVoice: 'natural', voice: '', rate: 1, pitch: 1, country: '', showStreak: false, highlight: 'yellow', tapWord: true, pace: 'auto' };
+const HIGHLIGHTS = { yellow: ['Yellow', '#FFE36E'], mint: ['Mint', '#79EAB9'], off: ['Off', 'transparent'] };
+const PACES = { auto: ['Lexi decides', '💬'], tap: ['I tap for next', '👆'], fast: ['All at once', '⏩'] };
 const FONTS = {
   verdana: ['Verdana', 'Verdana,"Atkinson Hyperlegible","DejaVu Sans",Tahoma,sans-serif'],
   lexend: ['Lexend', '"Lexend",Verdana,sans-serif'],
@@ -545,6 +589,7 @@ const LOOKS = {
   orange: ['Orange', '#E6E6E6', '#E38100', '#79EAB9', '#FFFFFF'],
   purple: ['Purple', '#E6E6E6', '#8100E3', '#79EAB9', '#FFFFFF'],
   mint: ['Mint', '#E6E6E6', '#79EAB9', '#FFDCC1', '#FFFFFF'],
+  cream: ['Cream', '#F5E4CC', '#E38100', '#79EAB9', '#FFFFFF'],
   night: ['Night', '#020000', '#020000', '#1A1A1A', '#262626'],
   ember: ['Ember', '#201B17', '#201B17', '#FFB877', '#51443A']
 };
@@ -577,6 +622,8 @@ function applySettings() {
   const L = LETTERS[S.letters] || LETTERS.normal;
   app.style.setProperty('--ls', L[1]); app.style.setProperty('--ws', L[2]);
   app.dataset.wide = (S.letters && S.letters !== 'normal') || S.size === 'xl' || S.size === 'xxl' ? '1' : '0';
+  app.style.setProperty('--hl', (HIGHLIGHTS[S.highlight] || HIGHLIGHTS.yellow)[1]);
+  app.dataset.tapword = S.tapWord ? '1' : '0';
 }
 
 /* ---------- help lines by country (docs/FEATURES_DO_NEXT.md §7) ---------- */
@@ -798,7 +845,7 @@ function updateAIUi() { $('#fw-tidy').hidden = !(sampleFn && sampleOk); $('#fw-r
 /* ---------- voice ----------
    Lexi's own voice: her fixed lines, recorded with Piper TTS and the public-domain LJ Speech voice (web/voice/*.mp3).
    Everything else is read by the most natural voice the device has, sentence by sentence. */
-const CLIPS = {"Hi! I'm Lexi, the journaling chatbot. I'm here to make journaling easy and fun.":"voice/v01.mp3","I speak English, but I'm better at emoji.":"voice/v02.mp3","This means information.":"voice/v03.mp3","My developer created me to help dyslexic people journal.":"voice/v04.mp3","Text blocks will never be too large, and I'll rely a lot on icons and emojis.":"voice/v05.mp3","If icons don't work for your brain, you can turn them off in settings.":"voice/v06.mp3","This is your journal. Everything you save goes there.":"voice/v07.mp3","Would you like to start?":"voice/v08.mp3","No problem. I'll be right here.":"voice/v09.mp3","Would you like help?":"voice/v10.mp3","You can choose to journal with me by selecting the guided experience.":"voice/v11.mp3","If you're feeling frisky and want to tackle it on your own, I'll be waiting to answer any questions you may have.":"voice/v12.mp3","Welcome back!":"voice/v13.mp3","You've already saved something today.":"voice/v14.mp3","What would you like to do?":"voice/v15.mp3","Let's check in.":"voice/v16.mp3","How do you feel? Pick as many as you like.":"voice/v17.mp3","That's okay. We can keep going.":"voice/v18.mp3","Mixed days are normal. Thanks for being honest.":"voice/v19.mp3","Content is a good place to be.":"voice/v20.mp3","Thanks for telling me. That sounds like a lot.":"voice/v21.mp3","I hear you. Low days are real. You don't have to fix it right now.":"voice/v22.mp3","What do you want to talk about today?":"voice/v23.mp3","How is your body today?":"voice/v24.mp3","How did you eat and drink?":"voice/v25.mp3","How do you see yourself today?":"voice/v26.mp3","How are things with people?":"voice/v27.mp3","How do you feel about money?":"voice/v28.mp3","What is weighing on you?":"voice/v29.mp3","What do you need to do?":"voice/v30.mp3","What did you enjoy?":"voice/v31.mp3","One thing you are thankful for?":"voice/v32.mp3","Nothing to save this time. That's okay.":"voice/v33.mp3","Saved to your journal.":"voice/v34.mp3","Want a short reflection on today?":"voice/v35.mp3","Saved. I'm here if you have questions.":"voice/v36.mp3","I'm really glad you told me.":"voice/v37.mp3","Please reach out to someone you trust or your local emergency number now.":"voice/v38.mp3","In the US you can call or text 988.":"voice/v39.mp3","To delete an entry, open Journal.":"voice/v40.mp3","Then tap on that entry.":"voice/v41.mp3","You can pick my voice in Settings.":"voice/v42.mp3","There is a speed slider too.":"voice/v43.mp3","You can turn icons on or off in Settings.":"voice/v44.mp3","Colors, fonts, text size and spacing are in Settings.":"voice/v45.mp3","Tap Guided check-in and I'll go step by step with you.":"voice/v46.mp3","Or tap to write on your own.":"voice/v47.mp3","I can't chat freely right now.":"voice/v48.mp3","You can still do a check-in or write on your own.":"voice/v49.mp3","I can't use my chat brain here. Check-ins and writing still work.":"voice/v50.mp3","I need a short break. Try again in a little while.":"voice/v51.mp3","I can't help with that one.":"voice/v52.mp3","Please sign in again, then try once more.":"voice/v53.mp3","Something went wrong on my side. Try again?":"voice/v54.mp3","That got cut short. Ask me for less at a time.":"voice/v55.mp3","Hi! I'm Lexi. I'm here to make journaling easy and fun.":"voice/v56.mp3","This is how I sound now.":"voice/v57.mp3","Hi! I'm Lexi. I'll read with you.":"voice/v58.mp3","Lexi is an AI, not a person or a therapist.":"voice/v59.mp3","Your safety matters most right now.":"voice/v60.mp3","Please talk to someone now. You can call or text these lines.":"voice/v61.mp3","Are you safe right now?":"voice/v62.mp3","Thank you for telling me. I'm here if you want to talk.":"voice/v63.mp3","Tap Help at the top any time.":"voice/v64.mp3","Please call your local emergency number now.":"voice/v65.mp3","That sounds really hard.":"voice/v66.mp3","Okay. I'm glad. I'm here if you want to talk.":"voice/v67.mp3","If you might hurt yourself, or you are in danger, call your local emergency number now.":"voice/v68.mp3","Check in: tap Guided check-in and pick emoji.":"voice/v69.mp3","Write: tap Write on my own. Spelling doesn't matter.":"voice/v70.mp3","Listen: tap the speaker on any message.":"voice/v71.mp3","Journal: see your days and your entries.":"voice/v72.mp3","Settings: change text size, spacing, colors and voice.":"voice/v73.mp3","Lexi looks for words about wanting to die or hurting yourself, even when they are spelled in a different way or written with emoji. If it finds them, it shows you help lines. When Lexi's chat brain is on, Claude checks too. Lexi can make mistakes, so if you need help, please use the help lines.":"voice/v74.mp3","Your journal is private. Only you can see it.":"voice/v75.mp3","It is saved to your Claude account, so it is there on your other devices.":"voice/v76.mp3","It is saved on this phone only.":"voice/v77.mp3","When you chat with me, tidy your spelling, or ask for a reflection, your words go to Claude, an AI made by Anthropic, to make a reply.":"voice/v78.mp3","When you chat with me, tidy your spelling, or ask for a reflection, your words go to Claude, an AI made by Anthropic, using your API key.":"voice/v79.mp3","If you write about hurting yourself, I show you help lines. I can't call anyone, and nobody is told.":"voice/v80.mp3","You can delete one entry, or everything, in Settings.":"voice/v81.mp3"};
+const CLIPS = {"Hi! I'm Lexi, the journaling chatbot. I'm here to make journaling easy and fun.":["voice/v01.mp3",[80,579,791,1567,1708,2414,3331,3556,3856,4006,4381,5132,5507,5732,6407]],"I speak English, but I'm better at emoji.":["voice/v02.mp3",[80,197,546,1246,1479,1654,2004,2120,2878]],"This means information.":["voice/v03.mp3",[80,247,582,1531]],"My developer created me to help dyslexic people journal.":["voice/v04.mp3",[80,255,781,1423,1657,1774,2066,2650,3059,3818]],"Text blocks will never be too large, and I'll rely a lot on icons and emojis.":["voice/v05.mp3",[80,488,896,1099,1439,1643,1915,2663,2866,3070,3478,3546,3818,4022,4497,4701,5653]],"If icons don't work for your brain, you can turn them off in settings.":["voice/v06.mp3",[80,221,715,1138,1490,1702,1913,2689,2900,3112,3464,3746,3958,4099,4945]],"This is your journal. Everything you save goes there.":["voice/v07.mp3",[80,256,373,549,1311,1892,2086,2409,2668,3250]],"Would you like to start?":["voice/v08.mp3",[80,263,446,750,872,1543]],"No problem. I'll be right here.":["voice/v09.mp3",[80,304,1032,1238,1443,1786,2402]],"Would you like help?":["voice/v10.mp3",[80,236,392,652,1171]],"You can choose to journal with me by selecting the guided experience.":["voice/v11.mp3",[80,275,470,861,991,1511,1706,1966,2162,2747,2877,3333,4503]],"If you're feeling frisky and want to tackle it on your own, I'll be waiting to answer any questions you may have.":["voice/v12.mp3",[80,215,621,1095,1501,1704,1975,2111,2517,2652,2787,3058,3600,3870,4006,4480,4615,5021,5224,5833,6036,6239,6849]],"Welcome back!":["voice/v13.mp3",[80,486,1009]],"You've already saved something today.":["voice/v14.mp3",[80,346,877,1276,1741,2472]],"What would you like to do?":["voice/v15.mp3",[80,300,464,629,904,1014,1508]],"Let's check in.":["voice/v16.mp3",[80,364,648,1102]],"How do you feel? Pick as many as you like.":["voice/v17.mp3",[80,290,500,658,1183,1448,1580,1978,2110,2309,2971]],"That's okay. We can keep going.":["voice/v18.mp3",[80,359,1125,1305,1486,1787,2448]],"Mixed days are normal. Thanks for being honest.":["voice/v19.mp3",[80,400,667,774,1415,1784,1969,2399,3075]],"Content is a good place to be.":["voice/v20.mp3",[80,605,737,802,1065,1459,1590,2181]],"Thanks for telling me. That sounds like a lot.":["voice/v21.mp3",[80,469,663,1052,1636,1834,2295,2625,2691,3284]],"I hear you. Low days are real. You don't have to fix it right now.":["voice/v22.mp3",[80,201,443,928,1177,1490,1615,2239,2455,2887,3103,3247,3607,3751,4111,4759]],"What do you want to talk about today?":["voice/v23.mp3",[80,313,547,722,1013,1130,1422,1772,2414]],"How is your body today?":["voice/v24.mp3",[80,362,504,715,1068,1845]],"How did you eat and drink?":["voice/v25.mp3",[80,295,509,670,885,1046,1636]],"How do you see yourself today?":["voice/v26.mp3",[80,334,588,779,1033,1541,2239]],"How are things with people?":["voice/v27.mp3",[80,328,452,763,949,1694]],"How do you feel about money?":["voice/v28.mp3",[80,314,547,723,1015,1365,1949]],"What is weighing on you?":["voice/v29.mp3",[80,322,443,807,989,1473]],"What do you need to do?":["voice/v30.mp3",[80,285,489,643,899,1001,1462]],"What did you enjoy?":["voice/v31.mp3",[80,308,536,707,1392]],"One thing you are thankful for?":["voice/v32.mp3",[80,347,615,815,949,1484,2019]],"Nothing to save this time. That's okay.":["voice/v33.mp3",[80,468,598,922,1116,1763,2027,2750]],"Saved to your journal.":["voice/v34.mp3",[80,463,591,782,1613]],"Want a short reflection on today?":["voice/v35.mp3",[80,400,464,784,1424,1616,2321]],"Saved. I'm here if you have questions.":["voice/v36.mp3",[80,788,994,1268,1405,1610,1816,2843]],"I'm really glad you told me.":["voice/v37.mp3",[80,267,642,954,1141,1515,2077]],"Please reach out to someone you trust or your local emergency number now.":["voice/v38.mp3",[80,441,802,1042,1163,1584,1764,2125,2245,2426,2847,3508,3869,4411]],"In the US you can call or text 988.":["voice/v39.mp3",[80,320,679,919,1278,1638,2117,2357,2836,3795]],"To delete an entry, open Journal.":["voice/v40.mp3",[80,192,585,697,1313,1650,2379]],"Then tap on that entry.":["voice/v41.mp3",[80,312,544,719,893,1531]],"You can pick my voice in Settings.":["voice/v42.mp3",[80,305,531,831,1056,1432,1582,2483]],"There is a speed slider too.":["voice/v43.mp3",[80,359,498,568,986,1473,2100]],"You can turn icons on or off in Settings.":["voice/v44.mp3",[80,299,518,884,1395,1614,1833,2053,2199,3075]],"Colors, fonts, text size and spacing are in Settings.":["voice/v45.mp3",[80,821,1562,1967,2303,2506,3045,3247,3381,4190]],"Tap Guided check-in and I'll go step by step with you.":["voice/v46.mp3",[80,347,814,1282,1482,1682,1949,2283,2483,2817,3017,3551]],"Or tap to write on your own.":["voice/v47.mp3",[80,207,460,586,902,1092,1345,1914]],"I can't chat freely right now.":["voice/v48.mp3",[80,212,610,941,1405,1736,2332]],"You can still do a check-in or write on your own.":["voice/v49.mp3",[80,259,439,738,977,1037,1456,1575,1874,2054,2293,2832]],"I can't use my chat brain here. Check-ins and writing still work.":["voice/v50.mp3",[80,215,619,956,1158,1495,1900,2506,3084,3277,3726,4047,4689]],"I need a short break. Try again in a little while.":["voice/v51.mp3",[80,213,544,610,942,1671,2029,2387,2531,2602,3032,3749]],"I can't help with that one.":["voice/v52.mp3",[80,145,468,727,986,1245,1763]],"Please sign in again, then try once more.":["voice/v53.mp3",[80,504,857,999,1705,1988,2341,2695,3331]],"Something went wrong on my side. Try again?":["voice/v54.mp3",[80,604,904,1204,1428,1653,2402,2669,3203]],"That got cut short. Ask me for less at a time.":["voice/v55.mp3",[80,349,551,753,1427,1668,1828,2069,2390,2551,2631,3354]],"Hi! I'm Lexi. I'm here to make journaling easy and fun.":["voice/v56.mp3",[80,591,767,1415,1613,1877,2009,2339,2999,3329,3526,4120]],"This is how I sound now.":["voice/v57.mp3",[80,312,466,775,930,1393,2089]],"Hi! I'm Lexi. I'll read with you.":["voice/v58.mp3",[80,556,735,1392,1584,1905,2098,2611]],"Lexi is an AI, not a person or a therapist.":["voice/v59.mp3",[80,457,646,834,1494,1777,1871,2437,2625,2719,4039]],"Your safety matters most right now.":["voice/v60.mp3",[80,295,796,1226,1655,2013,2657]],"Please talk to someone now. You can call or text these lines.":["voice/v61.mp3",[80,443,745,866,1289,1833,2042,2251,2599,2739,3157,3435,4202]],"Are you safe right now?":["voice/v62.mp3",[80,219,428,777,1125,1752]],"Thank you for telling me. I'm here if you want to talk.":["voice/v63.mp3",[80,364,534,704,1044,1554,1756,2025,2160,2362,2698,2832,3505]],"Tap Help at the top any time.":["voice/v64.mp3",[80,368,727,871,1015,1302,1590,2309]],"Please call your local emergency number now.":["voice/v65.mp3",[80,468,792,986,1439,2151,2539,3122]],"That sounds really hard.":["voice/v66.mp3",[80,280,745,1145,1810]],"Okay. I'm glad. I'm here if you want to talk.":["voice/v67.mp3",[80,951,1157,1845,2043,2307,2439,2637,2968,3100,3760]],"If you might hurt yourself, or you are in danger, call your local emergency number now.":["voice/v68.mp3",[80,212,410,740,1070,1928,2060,2258,2456,2588,3446,3776,3974,4436,5162,5558,6152]],"Check in: tap Guided check-in and pick emoji.":["voice/v69.mp3",[80,425,977,1253,1735,2218,2425,2701,3598]],"Write: tap Write on my own. Spelling doesn't matter.":["voice/v70.mp3",[80,790,1074,1429,1643,1856,2495,2911,3328,3923]],"Listen: tap the speaker on any message.":["voice/v71.mp3",[80,838,1113,1251,1802,2008,2284,3110]],"Journal: see your days and your entries.":["voice/v72.mp3",[80,1023,1314,1531,1894,2112,2402,3273]],"Settings: change text size, spacing, colors and voice.":["voice/v73.mp3",[80,824,1320,1691,2311,3117,3489,3675,4294]],"Lexi looks for words about wanting to die or hurting yourself, even when they are spelled in a different way or written with emoji. If it finds them, it shows you help lines. When Lexi's chat brain is on, Claude checks too. Lexi can make mistakes, so if you need help, please use the help lines.":["voice/v74.mp3",[80,470,794,989,1378,1768,2222,2352,2612,2742,3196,4040,4430,4624,4819,4949,5338,5468,5533,6053,6312,6442,6832,7026,7870,8008,8145,8625,9243,9381,9724,9930,10273,11028,11275,11708,12017,12387,12511,13005,13376,13746,14302,14694,14890,15217,16132,16394,16524,16721,17047,17701,18093,18420,18551,18877,19596]],"Your journal is private. Only you can see it.":["voice/v75.mp3",[80,278,807,939,1798,2158,2338,2518,2818,3238]],"It is saved to your Claude account, so it is there on your other devices.":["voice/v76.mp3",[80,212,345,742,874,1073,1470,2264,2529,2661,2793,3058,3256,3521,3786,4712]],"It is saved on this phone only.":["voice/v77.mp3",[80,197,314,664,839,1015,1307,1949]],"When you chat with me, tidy your spelling, or ask for a reflection, your words go to Claude, an AI made by Anthropic, to make a reply.":["voice/v78.mp3",[80,382,608,910,1212,1740,2042,2344,3325,3476,3702,3929,4004,5136,5438,5815,5966,6117,6947,7098,7249,7551,7702,8758,8909,9211,9287,10041]],"When you chat with me, tidy your spelling, or ask for a reflection, your words go to Claude, an AI made by Anthropic, using your API key.":["voice/v79.mp3",[80,394,629,943,1256,1806,2119,2433,3453,3609,3845,4080,4158,5335,5649,6041,6198,6355,7217,7374,7531,7845,8002,9100,9492,9806,10041,10668]],"If you write about hurting yourself, I show you help lines. I can't call anyone, and nobody is told.":["voice/v80.mp3",[80,219,426,773,1188,1673,2574,2713,2990,3198,3544,4306,4435,4823,5147,5987,6181,6763,6892,7603]],"You can delete one entry, or everything, in Settings.":["voice/v81.mp3",[80,264,448,878,1124,1799,1983,2843,2966,3702]],"Let's set me up so I'm easy for you to read.":["voice/v82.mp3",[80,376,614,910,1088,1325,1503,1799,1977,2155,2274,2866]],"This is how my messages will look.":["voice/v83.mp3",[80,301,448,742,962,1624,1845,2506]],"You can change these any time in Settings.":["voice/v84.mp3",[80,269,457,960,1212,1463,1777,1903,2657]],"Want to name it more exactly? You can skip this.":["voice/v85.mp3",[80,384,506,810,932,1236,2089,2282,2475,2797,3377]],"You have a check-in you didn't finish.":["voice/v86.mp3",[80,242,404,458,835,997,1321,1914]],"Want to finish it?":["voice/v87.mp3",[80,417,551,955,1427]],"Here is your check-in. Tap Change to fix anything.":["voice/v88.mp3",[80,373,490,666,1427,1672,2163,2285,2592,3389]],"Today I felt…":["voice/v89.mp3",[80,594,766,1195]],"Something good was…":["voice/v90.mp3",[80,823,1248,1566]],"Something hard was…":["voice/v91.mp3",[80,779,1278,1578]],"I'm thankful for…":["voice/v92.mp3",[80,371,1147,1438]],"Tomorrow I want to…":["voice/v93.mp3",[80,813,996,1454,1729]],"My body feels…":["voice/v94.mp3",[80,351,803,1345]],"Can't hear anything? Check that your sound is on and silent mode is off.":["voice/v95.mp3",[80,420,703,1438,1773,1974,2175,2577,2711,2912,3113,3649,3984,4118,4654]],"Your device only has basic voices, so they may sound robotic. My own voice still reads my regular lines.":["voice/v96.mp3",[80,283,756,1162,1365,1839,2650,2921,3124,3394,3800,4747,4972,5271,5645,6019,6468,6693,7291,8114]],"Relieved":["voice/v97.mp3",[80,811]],"Satisfied":["voice/v98.mp3",[80,962]],"Peaceful":["voice/v99.mp3",[80,684]],"Confident":["voice/v100.mp3",[80,962]],"Excited":["voice/v101.mp3",[80,904]],"Anxious":["voice/v102.mp3",[80,800]],"Rushed":["voice/v103.mp3",[80,672]],"Pressured":["voice/v104.mp3",[80,660]],"Confused":["voice/v105.mp3",[80,997]],"Worn out":["voice/v106.mp3",[80,557,939]],"Disappointed":["voice/v107.mp3",[80,997]],"Lonely":["voice/v108.mp3",[80,777]],"Embarrassed":["voice/v109.mp3",[80,986]],"Invisible":["voice/v110.mp3",[80,846]],"Ashamed":["voice/v111.mp3",[80,823]]};
 let voices = [];
 function loadVoices() { if (!canSpeak) return; try { voices = speechSynthesis.getVoices() || []; } catch { voices = []; } }
 const NOVELTY = /compact|espeak|robot|novelty|bad news|good news|bahh|bells|boing|bubbles|cellos|jester|organ|trinoids|whisper|wobble|zarvox|albert|fred|junior|ralph|kathy|superstar|deranged|hysterical/;
@@ -838,23 +885,37 @@ function speechText(t) { return stripEmoji(String(t).replace(/Stress\(ors\)/g, '
 const clipFor = t => (profile.settings.lexiVoice === 'device' ? null : CLIPS[speechText(t)] || null);
 const canRead = t => !!speechText(t) && (canSpeak || !!clipFor(t));
 let readingEl = null, speakGen = 0, speakChain = Promise.resolve(), curAudio = null;
+// word highlight while reading (docs/FEATURES_SOON.md §1)
+let hlRaf = 0, hlWord = null;
+function setHl(w) {
+  if (hlWord === w) return;
+  if (hlWord) hlWord.classList.remove('hl');
+  hlWord = w || null;
+  if (hlWord && profile.settings.highlight !== 'off') hlWord.classList.add('hl');
+}
+function clearHl() { cancelAnimationFrame(hlRaf); hlRaf = 0; setHl(null); }
 function stopSpeaking() {
   speakGen++;
   try { if (canSpeak) speechSynthesis.cancel(); } catch {}
   if (curAudio) { try { curAudio.pause(); } catch {} curAudio = null; }
   if (readingEl) { readingEl.classList.remove('reading'); readingEl = null; }
+  clearHl();
   speakChain = Promise.resolve();
 }
-function deviceSpeak(t, voice, start, end) {
+function deviceSpeak(t, voice, start, end, onWord) {
   if (!canSpeak) { end(); return; }
   try {
     const parts = (t.match(/[^.!?…]+[.!?…]*["')\]]*/g) || [t]).map(s => s.trim()).filter(Boolean);
     const v = voice || currentVoice(); const S = profile.settings;
+    let base = 0;
     parts.forEach((s, i) => {
       const u = new SpeechSynthesisUtterance(s);
       if (v) { u.voice = v; u.lang = v.lang; }
       u.rate = +S.rate || 1; u.pitch = +S.pitch || 1;
-      if (i === 0) u.onstart = start;
+      const starts = [...s.matchAll(/\S+/g)].map(m => m.index), b0 = base;
+      if (onWord) u.onboundary = e => { if (e.name && e.name !== 'word') return; let k = 0; while (k + 1 < starts.length && starts[k + 1] <= e.charIndex) k++; onWord(b0 + k); };
+      base += starts.length;
+      u.onstart = () => { if (i === 0) start(); if (onWord) onWord(b0); };
       if (i === parts.length - 1) u.onend = u.onerror = end;
       speechSynthesis.speak(u);
     });
@@ -869,16 +930,35 @@ function speak(text, { el: target = null, queue = false, voice = null } = {}) {
   const gen = speakGen;
   speakChain = speakChain.then(() => gen !== speakGen ? null : new Promise(done => {
     let finished = false;
+    const words = target ? $$('.w', target) : [];
+    const onWord = words.length ? i => setHl(words[Math.min(i, words.length - 1)]) : null;
     const start = () => { if (!target) return; if (readingEl) readingEl.classList.remove('reading'); readingEl = target; target.classList.add('reading'); };
-    const end = () => { if (finished) return; finished = true; if (target) { target.classList.remove('reading'); if (readingEl === target) readingEl = null; } done(); };
-    if (!clip) { deviceSpeak(t, voice, start, end); return; }
-    const a = new Audio(clip); curAudio = a;
+    const end = () => { if (finished) return; finished = true; clearHl(); if (target) { target.classList.remove('reading'); if (readingEl === target) readingEl = null; } done(); };
+    if (!clip) { deviceSpeak(t, voice, start, end, onWord); return; }
+    const [url, times] = clip;
+    const a = new Audio(url); curAudio = a;
     a.playbackRate = +profile.settings.rate || 1;
     a.onplay = start;
+    if (onWord && times) {
+      const tick = () => {
+        if (a.paused || a.ended || curAudio !== a) return;
+        const ms = a.currentTime * 1000; let i = 0;
+        while (i + 1 < times.length - 1 && times[i + 1] <= ms) i++;
+        onWord(i); hlRaf = requestAnimationFrame(tick);
+      };
+      a.onplaying = () => { cancelAnimationFrame(hlRaf); hlRaf = requestAnimationFrame(tick); };
+    }
     a.onended = () => { if (curAudio === a) curAudio = null; end(); };
-    a.onerror = () => { if (curAudio === a) curAudio = null; deviceSpeak(t, null, start, end); };
+    a.onerror = () => { if (curAudio === a) curAudio = null; deviceSpeak(t, null, start, end, onWord); };
     const p = a.play(); if (p && p.catch) p.catch(() => { if (curAudio === a) curAudio = null; end(); });
   }));
+}
+// tap a word to hear it (docs/FEATURES_SOON.md §2)
+function speakWord(w) {
+  const word = w.textContent.trim().replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '');
+  if (!word) return;
+  speak(word);
+  w.classList.add('tapped'); setTimeout(() => w.classList.remove('tapped'), 700);
 }
 if (canSpeak) {
   loadVoices();
@@ -917,7 +997,7 @@ function botBubble(text, { info = false } = {}) {
   const lead = info ? firstEmoji(text) : '';
   const body = lead && text.startsWith(lead) ? text.slice(lead.length).trim() : text;
   if (lead && text.startsWith(lead)) { const l = el('span', 'lead'); rich(l, lead); b.append(l); }
-  b.append(rich(el('span', 'txt'), body));
+  b.append(rich(el('span', 'txt'), body, true));
   const sb = speakBtn(body, b); if (sb) b.append(sb);
   return b;
 }
@@ -934,7 +1014,9 @@ function addBot(text, opts = {}) {
   if (profile.settings.autoread) speak(text, { el: b, queue: true });
   return r;
 }
+let lastBot = false; // was the last thing in the chat one of Lexi's lines? (for "tap for next")
 function addMe(text) {
+  lastBot = false;
   const r = makeRow('me');
   const b = el('div', 'bubble'); b.append(rich(el('span', 'txt'), text)); r.append(b);
   chat.append(r); scrollDown();
@@ -943,6 +1025,7 @@ function addMe(text) {
 // Emoji answers show as huge emoji with no bubble (Screen 11's 95px 👍🏽), with a small caption for reading support.
 function addAnswer(items) {
   if (!items.length) return;
+  lastBot = false;
   const r = makeRow('me');
   const a = el('div', 'answer');
   const emo = el('div', 'emo'); emo.setAttribute('aria-hidden', 'true');
@@ -960,6 +1043,7 @@ function celebrate(e, n) {
   chat.append(r); scrollDown();
 }
 function addCard(node) {
+  lastBot = false;
   const r = el('div', 'row card-row' + (reduceMotion ? '' : ' in'));
   node.style.flex = '1'; node.style.minWidth = '0';
   r.append(node); chat.append(r); scrollDown();
@@ -975,8 +1059,24 @@ function showTyping() {
 }
 const delayFor = t => reduceMotion ? 150 : Math.min(1300, 380 + [...String(t)].length * 14);
 let sayQueue = Promise.resolve();
+// Message pace (docs/FEATURES_SOON.md §7): Lexi decides, I tap for next, or all at once.
+function waitTap() {
+  return new Promise(res => {
+    const r = el('div', 'row next-row');
+    const b = button('next-pill', 'Next', '▸');
+    b.onclick = () => { r.remove(); res(); };
+    r.append(b); chat.append(r); scrollDown();
+    b.focus({ preventScroll: true });
+  });
+}
+async function beforeLine(text) {
+  const pace = profile.settings.pace;
+  if (pace === 'tap' && lastBot) await waitTap();
+  if (pace === 'fast') return;
+  const t = showTyping(); await sleep(delayFor(text)); t.remove();
+}
 function say(text, opts) {
-  sayQueue = sayQueue.then(async () => { const t = showTyping(); await sleep(delayFor(text)); t.remove(); addBot(text, opts); });
+  sayQueue = sayQueue.then(async () => { await beforeLine(text); addBot(text, opts); lastBot = true; });
   return sayQueue;
 }
 async function sayMany(lines) { for (const l of lines) await say(l); }
@@ -986,7 +1086,8 @@ function lock(node) { node.classList.add('done'); $$('button,input,textarea', no
 function ask(text, options = YES_NO) {
   let res; const answer = new Promise(r => { res = r; });
   sayQueue = sayQueue.then(async () => {
-    const t = showTyping(); await sleep(delayFor(text)); t.remove();
+    await beforeLine(text);
+    lastBot = false;
     const { r, b } = botRow(text);
     const yn = el('div', 'yn');
     options.forEach((o, i) => {
@@ -1025,7 +1126,7 @@ function tileBtn(item, selected, onChange) {
   b.onclick = () => {
     if (selected.has(k)) selected.delete(k); else selected.set(k, { e: item.e, label: item.label, ...(item.band ? { band: item.band } : {}) });
     b.setAttribute('aria-pressed', selected.has(k) ? 'true' : 'false');
-    onChange && onChange();
+    onChange && onChange(item, selected.has(k));
   };
   return b;
 }
@@ -1108,35 +1209,84 @@ function topicOpts(T, selected, onChange) {
   mount();
   return holder;
 }
-function moodCard() {
+// "Name it more" words (docs/FEATURES_SOON.md §12), five per band
+const NUANCE = {
+  content: [['😌', 'Relieved'], ['🙂', 'Satisfied'], ['🕊️', 'Peaceful'], ['😎', 'Confident'], ['🤩', 'Excited']],
+  stressed: [['😰', 'Anxious'], ['🏃🏽‍♀️', 'Rushed'], ['🗜️', 'Pressured'], ['😵‍💫', 'Confused'], ['😩', 'Worn out']],
+  low: [['😞', 'Disappointed'], ['😶', 'Lonely'], ['😳', 'Embarrassed'], ['🫥', 'Invisible'], ['😣', 'Ashamed']]
+};
+// Check-in steps (docs/FEATURES_SOON.md §6): "Step X of N", dots, Back, recap with Change
+function stepCard(head, title) {
+  const card = el('div', 'card');
+  const w = el('div', 'steps');
+  w.append(el('span', '', head.total ? 'Step ' + head.no + ' of ' + head.total : 'Step ' + head.no));
+  if (head.total) {
+    const d = el('span', 'dots2'); d.setAttribute('aria-hidden', 'true');
+    for (let i = 1; i <= head.total; i++) d.append(el('i', i < head.no ? 'done' : i === head.no ? 'now' : ''));
+    w.append(d);
+  }
+  card.append(w);
+  if (title) card.append(rich(el('h3', 'card-title'), title));
+  return card;
+}
+function stepButtons(card, { back, skip, nextBtn }) {
+  const btns = el('div', 'row-btns');
+  if (back) { const b = button('btn', 'Back', '⬅️'); b.style.marginRight = 'auto'; b.onclick = back; btns.append(b); }
+  if (skip) btns.append(skip);
+  btns.append(nextBtn);
+  card.append(btns);
+}
+const mapOf = list => new Map((list || []).map(m => [itemKey(m), m]));
+function moodCard({ prefill = [], head }) {
   return new Promise(res => {
-    const selected = new Map();
-    const card = el('div', 'card');
-    const done = button('btn primary', 'Done', '✔️'); done.disabled = true;
+    const selected = mapOf(prefill);
+    const card = stepCard(head, 'How do you feel? Pick as many as you like.');
+    const done = button('btn primary', 'Done', '✔️'); done.disabled = selected.size === 0;
     const skip = button('btn', 'Skip', '⏭️');
     card.append(moodPicker(selected, () => { done.disabled = selected.size === 0; }));
-    const btns = el('div', 'row-btns'); btns.append(skip, done); card.append(btns);
-    done.onclick = () => { lock(card); res([...selected.values()]); };
-    skip.onclick = () => { lock(card); res([]); };
+    stepButtons(card, { skip, nextBtn: done });
+    done.onclick = () => { lock(card); res({ value: [...selected.values()] }); };
+    skip.onclick = () => { lock(card); res({ value: [] }); };
     addCard(card);
   });
 }
-function topicCard() {
+function nuanceCard({ bands, prefill = [], head }) {
   return new Promise(res => {
-    const selected = new Map();
-    const card = el('div', 'card');
-    const go = button('btn primary', "Let's go", '➜'); go.disabled = true;
+    const selected = mapOf(prefill);
+    const card = stepCard(head, 'Want to name it more exactly? You can skip this.');
+    const wrap = el('div', 'bands');
+    BANDS.filter(b => bands.includes(b.key)).forEach(b => {
+      const sec = el('section', 'band'); sec.dataset.band = b.key;
+      sec.append(el('h3', 'band-name', b.name));
+      const grid = el('div', 'tiles');
+      NUANCE[b.key].forEach(([e, label]) => grid.append(tileBtn({ e, label, band: b.key }, selected, (it, on) => { if (on) speak(it.label); })));
+      sec.append(grid); wrap.append(sec);
+    });
+    card.append(wrap);
+    const done = button('btn primary', 'Done', '✔️');
+    const skip = button('btn', 'Skip', '⏭️');
+    stepButtons(card, { back: () => { lock(card); res({ back: true }); }, skip, nextBtn: done });
+    done.onclick = () => { lock(card); res({ value: [...selected.values()] }); };
+    skip.onclick = () => { lock(card); res({ value: [] }); };
+    addCard(card);
+  });
+}
+function topicCard({ prefill = [], head }) {
+  return new Promise(res => {
+    const selected = mapOf(TOPICS.filter(t => prefill.includes(t.key)).map(t => ({ e: t.icon, label: t.name })));
+    const card = stepCard(head, 'What do you want to talk about today?');
+    const go = button('btn primary', "Let's go", '➜'); go.disabled = selected.size === 0;
     const none = button('btn', 'Just my mood today');
     const grid = el('div', 'tiles');
-    TOPICS.forEach(t => grid.append(tileBtn({ e: t.icon, label: t.name, key: t.key }, selected, () => { go.disabled = selected.size === 0; })));
-    const btns = el('div', 'row-btns'); btns.append(none, go);
-    card.append(grid, btns);
+    TOPICS.forEach(t => grid.append(tileBtn({ e: t.icon, label: t.name }, selected, () => { go.disabled = selected.size === 0; })));
+    card.append(grid);
+    stepButtons(card, { back: () => { lock(card); res({ back: true }); }, skip: none, nextBtn: go });
     go.onclick = () => {
       lock(card);
       const picked = new Set([...selected.values()].map(v => v.label));
-      res(TOPICS.filter(t => picked.has(t.name)).map(t => t.key));
+      res({ value: TOPICS.filter(t => picked.has(t.name)).map(t => t.key) });
     };
-    none.onclick = () => { lock(card); res([]); };
+    none.onclick = () => { lock(card); res({ value: [] }); };
     addCard(card);
   });
 }
@@ -1148,12 +1298,13 @@ function noteField(placeholder) {
   line.append(ta, eb);
   return { line, ta };
 }
-function topicAnswerCard(T) {
+function topicAnswerCard(T, { prefill = null, head }) {
   return new Promise(res => {
-    const card = el('div', 'card');
-    const ans = { key: T.key, picks: [], note: '', todos: [] };
+    const card = stepCard(head, T.icon + ' ' + T.q);
+    const ans = { key: T.key, picks: [], note: '', todos: prefill && prefill.todos ? prefill.todos.map(t => ({ ...t })) : [] };
     const next = button('btn primary', 'Next', '➜');
     const skip = button('btn', 'Skip', '⏭️');
+    const back = () => { lock(card); res({ back: true }); };
     if (T.todo) {
       const list = el('ul', 'todo-edit');
       const line = el('div', 'note-line');
@@ -1171,19 +1322,46 @@ function topicAnswerCard(T) {
       add.onclick = addItem;
       inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); addItem(); } };
       line.append(inp, add);
+      draw();
       card.append(list, line);
-      next.onclick = () => { addItem(); lock(card); res(ans.todos.length ? ans : null); };
+      next.onclick = () => { addItem(); lock(card); res({ value: ans.todos.length ? ans : null }); };
     } else {
-      const selected = new Map();
+      const selected = mapOf(prefill && prefill.picks);
       const { line, ta } = noteField('A few words (you can skip this)');
+      if (prefill && prefill.note) ta.value = prefill.note;
       card.append(topicOpts(T, selected), line);
       next.onclick = () => {
         ans.picks = [...selected.values()]; ans.note = ta.value.trim();
-        lock(card); res(ans.picks.length || ans.note ? ans : null);
+        lock(card); res({ value: ans.picks.length || ans.note ? ans : null });
       };
     }
-    skip.onclick = () => { lock(card); res(null); };
-    const btns = el('div', 'row-btns'); btns.append(skip, next); card.append(btns);
+    skip.onclick = () => { lock(card); res({ value: null }); };
+    stepButtons(card, { back, skip, nextBtn: next });
+    addCard(card);
+  });
+}
+function answerWords(a) {
+  if (!a) return 'Skipped';
+  return [a.picks && a.picks.length ? a.picks.map(p => p.e + ' ' + p.label).join(' · ') : '', a.todos && a.todos.length ? a.todos.map(t => '☐ ' + t.t).join(' · ') : '', a.note || ''].filter(Boolean).join(' — ') || 'Skipped';
+}
+function recapCard(st, head) {
+  return new Promise(res => {
+    const card = stepCard(head, 'Here is your check-in. Tap Change to fix anything.');
+    const list = el('div', 'recap');
+    const item = (icon, title, words, step) => {
+      const row = el('div', 'item');
+      const what = el('div', 'what'); what.append(rich(el('b'), icon + ' ' + title), rich(el('span'), words));
+      const ch = button('btn', 'Change', '✏️'); ch.onclick = () => { lock(card); res({ change: step }); };
+      row.append(what, ch); list.append(row);
+    };
+    item('🌡️', 'Feelings', st.moods.length ? st.moods.map(m => m.e + ' ' + m.label).join(' · ') : 'Skipped', 'mood');
+    if (st.moods.length) item('🔎', 'Named more exactly', st.nuance.length ? st.nuance.map(m => m.e + ' ' + m.label).join(' · ') : 'Skipped', 'nuance');
+    item('🗂️', 'Topics', st.keys.length ? st.keys.map(k => TOPIC_BY[k].icon + ' ' + TOPIC_BY[k].name).join(' · ') : 'Just my mood today', 'topics');
+    st.keys.forEach(k => item(TOPIC_BY[k].icon, TOPIC_BY[k].name, answerWords(st.answers[k]), 't:' + k));
+    card.append(list);
+    const save = button('btn primary', 'Save to journal', '✔️');
+    stepButtons(card, { back: () => { lock(card); res({ back: true }); }, nextBtn: save });
+    save.onclick = () => { lock(card); res({ save: true }); };
     addCard(card);
   });
 }
@@ -1207,34 +1385,72 @@ function reactionFor(moods) {
   return "I hear you. Low days are real. You don't have to fix it right now. 🤝";
 }
 
-/* ---------- guided check-in ---------- */
+/* ---------- guided check-in: numbered steps, Back, recap, autosaved draft ---------- */
+const DRAFT_KEY = 'lexi.checkin';
 let guidedActive = false;
-async function startGuided(fromIntro) {
+const STEP_Q = { mood: 'How do you feel? Pick as many as you like.', nuance: 'Want to name it more exactly? You can skip this.', topics: 'What do you want to talk about today?', recap: 'Here is your check-in. Tap Change to fix anything.' };
+async function startGuided(fromIntro, resume) {
   showView('home');
   if (guidedActive) { toast('Your check-in is already open below. 👇'); scrollDown(); return; }
   guidedActive = true;
   try {
-    if (!fromIntro) await say("Let's check in. 🧭");
-    await say('How do you feel? Pick as many as you like.');
-    await sayQueue;
-    const moods = await moodCard();
-    addAnswer(moods.length ? moods : [{ e: '⏭️', label: 'Skip' }]);
-    await say(reactionFor(moods));
-    await say('What do you want to talk about today?');
-    await sayQueue;
-    const keys = await topicCard();
-    addAnswer(keys.length ? keys.map(k => ({ e: TOPIC_BY[k].icon, label: TOPIC_BY[k].name })) : [{ e: '🌡️', label: 'Just my mood today' }]);
-    const topics = [];
-    for (const k of keys) {
-      const T = TOPIC_BY[k];
-      await say(T.icon + ' ' + T.q);
-      await sayQueue;
-      const a = await topicAnswerCard(T);
-      showAnswer(a);
-      if (a) topics.push(a);
+    const st = resume || { moods: [], nuance: [], keys: [], answers: {}, at: 'mood', asked: {}, chosen: false };
+    if (resume) st.asked = { react: 1 };
+    if (!fromIntro && !resume) await say("Let's check in. 🧭");
+    const order = () => ['mood', ...(st.moods.length ? ['nuance'] : []), 'topics', ...st.keys.map(k => 't:' + k), 'recap'];
+    const head = id => ({
+      no: id === 'mood' || id === 'nuance' ? 1 : id === 'topics' ? 2 : id === 'recap' ? 3 + st.keys.length : 3 + st.keys.indexOf(id.slice(2)),
+      total: st.chosen ? 3 + st.keys.length : 0
+    });
+    let id = st.at, toRecap = false;
+    const nextAfter = cur => {
+      const o = order(), i = o.indexOf(cur);
+      if (toRecap) return o.slice(i + 1).find(s => s.startsWith('t:') && !(s.slice(2) in st.answers)) || 'recap';
+      return o[i + 1] || 'recap';
+    };
+    const before = cur => { const o = order(); return o[Math.max(0, o.indexOf(cur) - 1)]; };
+    for (;;) {
+      st.at = id; LS.set(DRAFT_KEY, st);
+      if (!st.asked[id]) {
+        st.asked[id] = 1;
+        const T = id.startsWith('t:') ? TOPIC_BY[id.slice(2)] : null;
+        await say(T ? T.icon + ' ' + T.q : STEP_Q[id]);
+        await sayQueue;
+      }
+      let r;
+      if (id === 'mood') {
+        r = await moodCard({ prefill: st.moods, head: head(id) });
+        st.moods = r.value;
+        st.nuance = st.nuance.filter(n => st.moods.some(m => m.band === n.band));
+        addAnswer(st.moods.length ? st.moods : [{ e: '⏭️', label: 'Skip' }]);
+        if (!st.asked.react) { st.asked.react = 1; await say(reactionFor(st.moods)); }
+        if (toRecap) st.asked.nuance = 1;
+      } else if (id === 'nuance') {
+        r = await nuanceCard({ bands: [...new Set(st.moods.map(m => m.band))], prefill: st.nuance, head: head(id) });
+        if (!r.back) { st.nuance = r.value; if (st.nuance.length) addAnswer(st.nuance); }
+      } else if (id === 'topics') {
+        r = await topicCard({ prefill: st.keys, head: head(id) });
+        if (!r.back) {
+          st.keys = r.value; st.chosen = true;
+          Object.keys(st.answers).forEach(k => { if (!st.keys.includes(k)) delete st.answers[k]; });
+          addAnswer(st.keys.length ? st.keys.map(k => ({ e: TOPIC_BY[k].icon, label: TOPIC_BY[k].name })) : [{ e: '🌡️', label: 'Just my mood today' }]);
+        }
+      } else if (id.startsWith('t:')) {
+        const k = id.slice(2);
+        r = await topicAnswerCard(TOPIC_BY[k], { prefill: st.answers[k], head: head(id) });
+        if (!r.back) { st.answers[k] = r.value; showAnswer(r.value); }
+      } else {
+        r = await recapCard(st, head(id));
+        if (r.change) { toRecap = true; id = r.change; st.asked[id] = 1; continue; }
+        if (r.save) break;
+      }
+      id = r.back ? before(id) : nextAfter(id);
     }
+    LS.del(DRAFT_KEY);
+    const topics = st.keys.map(k => st.answers[k]).filter(Boolean);
+    const { moods, nuance } = st;
     if (!moods.length && !topics.length) { await say("Nothing to save this time. That's okay. 🏡"); await sayQueue; offerActions(); return; }
-    const entry = { kind: 'guided', createdAt: Date.now(), day: dayKey(), moods, topics, text: '' };
+    const entry = { kind: 'guided', createdAt: Date.now(), day: dayKey(), moods, nuance, topics, text: '' };
     const ref = await Store.add(entry);
     const notes = topics.map(t => [t.note, ...(t.todos || []).map(x => x.t)].filter(Boolean).join('\n')).filter(Boolean).join('\n');
     const level = notes ? maxLevel(riskCheck(notes), await aiRisk(notes)) : 'none';
@@ -1251,6 +1467,7 @@ async function startGuided(fromIntro) {
 function entrySummary(en) {
   const parts = [];
   if (en.moods && en.moods.length) parts.push('Mood: ' + en.moods.map(m => m.label + (m.band && BAND_BY[m.band] ? ' (' + BAND_BY[m.band].name + ')' : '')).join(', '));
+  if (en.nuance && en.nuance.length) parts.push('More exactly: ' + en.nuance.map(m => m.label).join(', '));
   (en.topics || []).forEach(tp => {
     const T = TOPIC_BY[tp.key]; const bits = [];
     if (tp.picks && tp.picks.length) bits.push(tp.picks.map(p => p.label).join(', '));
@@ -1310,7 +1527,7 @@ function lexiRules() {
     '- 🧭 Guided check-in on the 🏡 Home tab: pick mood emoji in three groups (Content, Stressed, Low self-esteem), then topics: physical health, diet, self-esteem, relationships, financial health, stressors, to dos, hobbies and passions, gratitude. There is no "Happy" option on purpose. ➕ My own adds custom words and emoji.',
     '- ✏️ Write on my own: free writing with an emoji button, ✨ Tidy spelling and 🔊 Read it back.',
     '- 📖 Journal tab: stats, the last 14 days as day cards, entries by day, tick off to dos, 🔊 read entries aloud, 🗑 delete entries.',
-    '- ⚙️ Settings tab: Look (Orange, Purple, Mint, Night, Ember, or match the device), icons on or off, font (Verdana, Lexend, Atkinson Hyperlegible), text size, line spacing, Lexi\'s voice (her own natural recorded voice or a device voice, plus speed and pitch), read Lexi out loud, skin tone, avatar, replay the intro.',
+    '- ⚙️ Settings tab: Look (Orange, Purple, Mint, Night, Ember, or match the device), icons on or off, font (Verdana, Lexend, Atkinson Hyperlegible), text size, letter spacing, line spacing, reading help (highlight the word being read, tap a word to hear it, message pace), Lexi\'s voice (her own natural recorded voice or a device voice, plus speed and pitch), read Lexi out loud, quick start, share the journal as a PDF, delete everything, skin tone, avatar, replay the intro.',
     'The user\'s recent journal entries are below. Mention them only when the user asks about their journal or feelings.',
     journalContext(),
     'The conversation follows.'
@@ -1443,10 +1660,53 @@ async function sendChat(text) {
   if (level !== 'none') await safetyFlow(level);
 }
 
+/* ---------- quick start (docs/FEATURES_SOON.md §9): set Lexi up with a live preview ---------- */
+function quickStartCard() {
+  return new Promise(res => {
+    const card = el('div', 'card');
+    card.append(rich(el('h3', 'card-title'), '⚡ Quick start'));
+    const prev = el('div', 'row bot qs-preview');
+    const pb = botBubble('This is how my messages will look.');
+    pb.style.width = 'auto'; prev.append(pb); card.append(prev);
+    const rowOf = (title, key, opts) => {
+      const r = el('div', 'qs-row'); r.append(el('h4', '', title));
+      const chips = el('div', 'chips');
+      const draw = () => chips.replaceChildren(...opts.map(([v, label]) => {
+        const c = el('button', 'chip'); c.type = 'button'; c.textContent = label;
+        c.setAttribute('aria-pressed', String(String(profile.settings[key]) === String(v)));
+        c.onclick = () => {
+          profile.settings[key] = v; applySettings(); saveProfile(); autosize(); draw();
+          if (key === 'autoread' && v) speak('This is how my messages will look.', { el: pb });
+        };
+        return c;
+      }));
+      draw(); r.append(chips); return r;
+    };
+    card.append(
+      rowOf('Text size', 'size', Object.entries(SIZES).map(([k, [n]]) => [k, n])),
+      rowOf('Letter spacing', 'letters', Object.entries(LETTERS).map(([k, [n]]) => [k, n])),
+      rowOf('Icons and emoji', 'icons', [[true, 'Icons on'], [false, 'Words only']]),
+      rowOf('Read messages out loud', 'autoread', [[true, 'On'], [false, 'Off']]),
+      rowOf('Message pace', 'pace', [['auto', 'Lexi decides'], ['tap', 'I tap for next']])
+    );
+    const done = button('btn primary', 'Done', '✔️');
+    const btns = el('div', 'row-btns'); btns.append(done); card.append(btns);
+    done.onclick = () => { lock(card); renderSettings(); res(); };
+    addCard(card);
+  });
+}
+async function runQuickStart() {
+  await say("Let's set me up so I'm easy for you to read.");
+  await sayQueue;
+  await quickStartCard();
+  await say('You can change these any time in Settings. ⚙️');
+}
+
 /* ---------- onboarding (Chat Bot Plan) ---------- */
 async function intro() {
   await say("Hi! I'm Lexi, the journaling chatbot. 🤖 I'm here to make journaling easy and fun.");
   await say("I speak English, but I'm better at emoji. 😉");
+  await runQuickStart();
   await say('ℹ️ This means information.', { info: true });
   await say('ℹ️ My developer created me to help dyslexic people journal.', { info: true });
   await say("ℹ️ Text blocks will never be too large, and I'll rely a lot on icons and emojis.", { info: true });
@@ -1471,6 +1731,12 @@ async function intro() {
 async function welcomeBack() {
   const today = Store.all().filter(e => e.day === dayKey()).length;
   await say('Welcome back! 🏡');
+  const draft = LS.get(DRAFT_KEY, null);
+  if (draft && draft.at) {
+    await say("You have a check-in you didn't finish.");
+    if (await ask('Want to finish it?')) { startGuided(false, draft); return; }
+    LS.del(DRAFT_KEY);
+  }
   if (today) await say("You've already saved something today. ✔️");
   await say('What would you like to do?');
   await sayQueue; offerActions();
@@ -1524,6 +1790,11 @@ function openSheet() {
   fwMood = new Map(); fwOriginal = null;
   $('#fw-mood').replaceChildren(moodPicker(fwMood));
   $('#fw-mood-wrap').open = false;
+  $('#fw-starters').replaceChildren(...STARTERS.map(s => {
+    const c = el('button', 'chip'); c.type = 'button'; c.textContent = s;
+    c.onclick = () => insertStarter(s);
+    return c;
+  }));
   fwText.value = LS.get('lexi.draft', '') || '';
   fwText.readOnly = false;
   fwOut.hidden = true; updateAIUi();
@@ -1531,6 +1802,18 @@ function openSheet() {
   setTimeout(() => fwText.focus(), 30);
 }
 function closeSheet() { sheet.hidden = true; pop.hidden = true; fwText.readOnly = false; if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true }); }
+// Sentence starters (docs/FEATURES_SOON.md §11)
+const STARTERS = ['Today I felt…', 'Something good was…', 'Something hard was…', "I'm thankful for…", 'Tomorrow I want to…', 'My body feels…'];
+function insertStarter(s) {
+  if (fwText.readOnly) return;
+  const v = fwText.value, at = fwText.selectionStart ?? v.length;
+  const before = v.slice(0, at), lead = before && !/\n\s*$/.test(before) ? '\n' : '';
+  const ins = lead + s + ' ';
+  fwText.value = before + ins + v.slice(fwText.selectionEnd ?? at);
+  const p = at + ins.length; try { fwText.focus(); fwText.setSelectionRange(p, p); } catch {}
+  fwText.dispatchEvent(new Event('input'));
+  speak(s);
+}
 fwText.addEventListener('input', () => { clearTimeout(draftTimer); draftTimer = setTimeout(() => LS.set('lexi.draft', fwText.value), 400); });
 $('#fw-close').onclick = closeSheet;
 $('#fw-cancel').onclick = closeSheet;
@@ -1570,9 +1853,21 @@ function renderTidy(state) {
   state.fixes.forEach(f => {
     const row = el('div', 'fix');
     const words = el('div', 'words');
-    words.append(el('span', 'from', f.from), document.createTextNode(' → '), el('span', 'to', f.to));
-    if (f.hint) words.append(el('span', 'hint', f.hint));
-    const say1 = speakBtn(f.to + (f.hint ? '. ' + f.hint : ''), row);
+    let say1 = null;
+    if (f.sound) {
+      // Sound-alike check (docs/FEATURES_SOON.md §10): both words, each with its meaning, emoji and a speaker
+      const line = (w, emo, hint, cls) => {
+        const l = el('span', 'alt ' + cls);
+        if (emo) l.append(icoSpan(emo), document.createTextNode(' '));
+        l.append(el('b', '', w)); if (hint) l.append(document.createTextNode(' · ' + hint));
+        const sb = speakBtn(w + (hint ? '. ' + hint : ''), l); if (sb) l.append(sb);
+        return l;
+      };
+      words.append(line(f.from, f.wrongEmoji, f.wrongHint, 'from'), line(f.to, f.emoji, f.hint, 'to'));
+    } else {
+      words.append(el('span', 'from', f.from), document.createTextNode(' → '), el('span', 'to', f.to));
+      say1 = speakBtn(f.to, row);
+    }
     const use = button('btn', f.on ? 'Used' : 'Use', f.on ? '✔️' : '');
     use.setAttribute('aria-pressed', String(!!f.on));
     use.onclick = () => { f.on = !f.on; sync(); renderTidy(state); };
@@ -1597,14 +1892,20 @@ $('#fw-tidy').onclick = async () => {
   try {
     const r = await sampleFn.json(
       'Find spelling mistakes and sound-alike word mix-ups (like there/their or here/hear) in the journal text. Do not change style, grammar, slang, emoji or capital letters. ' +
-      'Reply with only JSON: {"fixes":[{"from":"the wrong word exactly as written","to":"the fixed word","kind":"spelling" or "sound-alike","hint":"sound-alike only: 2 to 4 simple words about the meaning"}]}. ' +
+      'Reply with only JSON: {"fixes":[{"from":"the wrong word exactly as written","to":"the fixed word","kind":"spelling" or "sound-alike",' +
+      '"hint":"sound-alike only: 2 to 4 simple words about the meaning of the fixed word","emoji":"sound-alike only: one emoji for that meaning",' +
+      '"wrongHint":"sound-alike only: 2 to 4 simple words about the meaning of the word as written","wrongEmoji":"sound-alike only: one emoji for that meaning"}]}. ' +
       'At most 20 fixes. If there are none, reply {"fixes":[]}.\n\nText:\n' + text.slice(0, 8000),
       { modelTier: 'quick' }
     );
+    const str = v => (typeof v === 'string' ? v.slice(0, 60) : '');
     const fixes = (r && Array.isArray(r.fixes) ? r.fixes : [])
       .filter(f => f && typeof f.from === 'string' && typeof f.to === 'string' && f.from && f.from !== f.to)
       .slice(0, 20)
-      .map(f => ({ from: f.from, to: f.to, hint: f.kind === 'sound-alike' && typeof f.hint === 'string' ? f.hint : '', on: false }));
+      .map(f => {
+        const sound = f.kind === 'sound-alike';
+        return { from: f.from, to: f.to, sound, hint: sound ? str(f.hint) : '', emoji: sound ? firstEmoji(str(f.emoji)) : '', wrongHint: sound ? str(f.wrongHint) : '', wrongEmoji: sound ? firstEmoji(str(f.wrongEmoji)) : '', on: false };
+      });
     // keep the fixes in reading order so they apply left to right
     let cur = 0;
     fixes.forEach(f => { const i = text.indexOf(f.from, cur); f.at = i < 0 ? Infinity : i; if (i >= 0) cur = i + f.from.length; });
@@ -1668,7 +1969,7 @@ function stats(all, byDay) {
   }
   let words = 0, feelings = 0;
   all.forEach(e => {
-    feelings += (e.moods || []).length;
+    feelings += (e.moods || []).length + (e.nuance || []).length;
     words += countWords(e.text);
     (e.topics || []).forEach(t => { words += countWords(t.note); (t.todos || []).forEach(x => { words += countWords(x.t); }); });
   });
@@ -1683,7 +1984,8 @@ function entryHtml(en) {
   if (canSpeak) h += '<button type="button" data-act="read" data-key="' + key + '" aria-label="Read this entry aloud"><span class="ico" aria-hidden="true">🔊</span><span class="only-text">Read</span></button>';
   h += '<button type="button" data-act="del" data-key="' + key + '" aria-label="Delete this entry"><span class="ico" aria-hidden="true">🗑️</span><span class="only-text">Delete</span></button></div>';
   if (confirmId === en.id) h += '<div class="confirm"><p>Delete this entry? This can\'t be undone.</p><button type="button" class="btn" data-act="del-no">Keep it</button><button type="button" class="btn danger" data-act="del-yes" data-key="' + key + '">Delete</button></div>';
-  if (en.moods && en.moods.length) h += '<div class="mchips">' + en.moods.map(m => '<span class="mchip" data-band="' + esc(m.band || '') + '">' + renderRich(m.e) + '<span>' + esc(m.label) + '</span></span>').join('') + '</div>';
+  const feel = [...(en.moods || []), ...(en.nuance || [])];
+  if (feel.length) h += '<div class="mchips">' + feel.map(m => '<span class="mchip" data-band="' + esc(m.band || '') + '">' + renderRich(m.e) + '<span>' + esc(m.label) + '</span></span>').join('') + '</div>';
   if (en.topics && en.topics.length) {
     h += '<dl class="tlist">';
     en.topics.forEach((tp, ti) => {
@@ -1696,7 +1998,7 @@ function entryHtml(en) {
     });
     h += '</dl>';
   }
-  if (en.text) h += '<p class="text">' + renderRich(en.text) + '</p>';
+  if (en.text) h += '<p class="text">' + renderWords(en.text) + '</p>';
   if (en.original) {
     const open = openOriginals.has(en.id);
     h += '<div><button type="button" class="chip" data-act="orig" data-key="' + key + '" aria-expanded="' + open + '">' + renderRich('📝') + ' ' + (open ? 'Hide my original words' : 'See my original words') + '</button></div>';
@@ -1742,6 +2044,8 @@ function renderJournal() {
 }
 function findEntry(key) { const [id, src] = key.split('|'); return { en: Store.all().find(e => e.id === id && e._src === src), id, src }; }
 jv.addEventListener('click', e => {
+  const w = e.target.closest('.entry .text .w');
+  if (w && profile.settings.tapWord) { speakWord(w); return; }
   const b = e.target.closest('[data-act]'); if (!b) return;
   const act = b.dataset.act;
   if (act === 'checkin') return startGuided();
@@ -1792,10 +2096,14 @@ function voiceSection() {
   h += '<p>' + (natural
     ? 'Lexi\'s own voice is recorded, so it sounds human. It reads Lexi\'s regular lines. Your writing and Lexi\'s chat replies use the device voice below.'
     : 'Every message is read by the device voice below.') + '</p>';
+  // Voice help (docs/FEATURES_SOON.md §14): say so when the device only has basic voices
+  const basicOnly = canSpeak && ranked.length > 0 && !ranked.some(v => voiceInfo(v).tags.some(t => ['Natural', 'Premium', 'Enhanced', 'Google'].includes(t)));
   if (!canSpeak) h += '<p>This browser can\'t read other text out loud, so only Lexi\'s own lines can be heard.</p>';
   else if (!ranked.length) h += '<p>Your device hasn\'t shared any voices yet. Try again in a moment.</p>';
   else {
-    h += '<h3 style="font-size:.92em">' + renderRich('📱') + ' Device voice</h3><p>Pick the one that sounds best to you. ▶ plays a sample.</p><div class="voices" role="radiogroup" aria-label="Device voices">';
+    h += '<h3 style="font-size:.92em">' + renderRich('📱') + ' Device voice</h3>';
+    if (basicOnly) h += '<div class="confirm"><p style="color:var(--ink)">' + renderRich('ℹ️') + ' Your device only has basic voices, so they may sound robotic. My own voice still reads my regular lines.</p><button type="button" class="speak" data-act="say-basic" aria-label="Read aloud">' + renderRich('🔊') + '<span class="only-text">Read</span></button></div>';
+    h += '<p>Pick the one that sounds best to you. ▶ plays a sample.</p><div class="voices" role="radiogroup" aria-label="Device voices">';
     const list = showAllVoices ? ranked : ranked.filter(v => voiceScore(v) > -20).slice(0, 6);
     list.forEach(v => {
       const info = voiceInfo(v);
@@ -1806,11 +2114,12 @@ function voiceSection() {
     h += '</div>';
     if (ranked.length > 6) h += '<div class="chips"><button type="button" class="chip" data-act="allvoices">' + (showAllVoices ? 'Show the best voices only' : 'Show all ' + ranked.length + ' voices') + '</button></div>';
   }
-  h += '<div class="slider"><label for="set-rate">Speed</label><input type="range" id="set-rate" min="0.6" max="1.4" step="0.05" value="' + (+S.rate || 1) + '"><output id="out-rate">' + (+S.rate || 1).toFixed(2) + '×</output></div>';
+  h += '<div class="slider"><label for="set-rate">Speed</label><input type="range" id="set-rate" min="0.5" max="2" step="0.05" value="' + (+S.rate || 1) + '"><output id="out-rate">' + (+S.rate || 1).toFixed(2) + '×</output></div>';
   if (canSpeak) h += '<div class="slider"><label for="set-pitch">Pitch</label><input type="range" id="set-pitch" min="0.8" max="1.2" step="0.05" value="' + (+S.pitch || 1) + '"><output id="out-pitch">' + (+S.pitch || 1).toFixed(2) + '</output></div>';
   h += '<div class="row-btns" style="justify-content:flex-start"><button type="button" class="btn primary" data-act="testvoice">' + renderRich('🔊') + '<span>Test Lexi\'s voice</span></button></div>';
+  h += '<p>Can\'t hear anything? Check that your sound is on and silent mode is off.</p>';
   h += '<div class="chips">' + seg('autoread', true, 'Read every message out loud') + seg('autoread', false, 'Only when I tap 🔊') + '</div>';
-  h += '<details class="tips"><summary>Device voice sounds robotic?</summary><ul>' +
+  h += '<details class="tips"' + (basicOnly ? ' open' : '') + '><summary>Device voice sounds robotic?</summary><ul>' +
     '<li>Your device decides which voices exist. Voices marked <b>Natural</b>, <b>Premium</b>, <b>Enhanced</b> or <b>Google</b> sound the most human.</li>' +
     '<li>On Windows, open Lexi in Microsoft Edge to get its Natural voices.</li>' +
     '<li>On iPhone or iPad: Settings › Accessibility › Spoken Content › Voices, then download an Enhanced or Premium English voice.</li>' +
@@ -1831,6 +2140,11 @@ function renderSettings() {
   h += '<section class="set"><h3>' + renderRich('🔠') + ' Text size</h3><div class="chips">' + Object.entries(SIZES).map(([k, [n, px]]) => seg('size', k, '<span style="font-size:' + px + '">Aa</span> ' + esc(n))).join('') + '</div></section>';
   h += '<section class="set"><h3>' + renderRich('↔️') + ' Letter spacing</h3><p>More space between letters and words can make reading easier. Chat bubbles get wider to fit.</p><div class="chips">' +
     Object.entries(LETTERS).map(([k, [n, ls, ws]]) => seg('letters', k, '<span style="letter-spacing:' + ls + ';word-spacing:' + ws + '">' + esc(n) + '</span>')).join('') + '</div></section>';
+  h += '<section class="set"><h3>' + renderRich('📖') + ' Reading help</h3>' +
+    '<p>When Lexi reads to you, the word she is saying lights up.</p><div class="chips">' +
+    Object.entries(HIGHLIGHTS).map(([k, [n, c]]) => seg('highlight', k, (k === 'off' ? '' : '<span style="display:inline-block;width:1em;height:1em;border-radius:4px;background:' + c + '"></span> ') + esc(n))).join('') + '</div>' +
+    '<p>Tap any word in Lexi\'s messages or your journal to hear just that word.</p><div class="chips">' + seg('tapWord', true, '👆 Tap a word to hear it') + seg('tapWord', false, 'Off') + '</div>' +
+    '<p>How Lexi\'s messages show up.</p><div class="chips">' + Object.entries(PACES).map(([k, [n, i]]) => seg('pace', k, renderRich(i) + ' ' + esc(n))).join('') + '</div></section>';
   h += '<section class="set"><h3>' + renderRich('↕️') + ' Line spacing</h3><p>Wider gaps between lines can make reading easier.</p><div class="chips">' + Object.entries(SPACING).map(([k, [n]]) => seg('spacing', k, esc(n))).join('') + '</div></section>';
   h += '<section class="set"><h3>' + renderRich('✋🏽') + ' Skin tone</h3><div class="chips">' + TONES.map(([t, n]) => seg('tone', t, '<span style="font-size:1.6em;line-height:1" aria-hidden="true">✋' + t + '</span> ' + esc(n))).join('') + '</div></section>';
   h += '<section class="set"><h3>' + renderRich(S.avatar) + ' My avatar</h3><div class="chips">' + AVATARS.map(a => seg('avatar', a, '<span style="font-size:1.9em;line-height:1">' + esc(tone(a)) + '</span>', ' aria-label="Avatar ' + esc(a) + '"')).join('') + '</div></section>';
@@ -1846,8 +2160,13 @@ function renderSettings() {
     '<div class="chips"><button type="button" class="chip" data-act="read-privacy">' + renderRich('🔊') + ' Read this</button><button type="button" class="chip" data-help>' + renderRich('🆘') + ' Help and safety</button></div></section>';
   h += '<section class="set"><h3>' + renderRich('💾') + ' Your journal</h3><p>' + (Store.mode === 'cloud' ? 'Private to you and saved to your account.' : Store.mode === 'local' ? 'Saved on this device only.' : 'Connecting…') + '</p><div class="chips">' +
     '<button type="button" class="chip" data-act="replay">' + renderRich('🔁') + ' Replay Lexi\'s intro</button>' +
-    '<button type="button" class="chip" data-act="wipe">' + renderRich('🗑️') + ' Delete all entries</button></div>' +
-    (wipeAsk ? '<div class="confirm"><p>Delete all ' + Store.all().length + ' entries? This can\'t be undone.</p><button type="button" class="btn" data-act="wipe-no">Keep them</button><button type="button" class="btn danger" data-act="wipe-yes">Delete all</button></div>' : '') + '</section>';
+    '<button type="button" class="chip" data-act="quickstart">' + renderRich('▶️') + ' Run quick start</button></div></section>';
+  h += '<section class="set"><h3>' + renderRich('📤') + ' Share my journal</h3><p>Make a PDF of your journal to keep, or to share with someone you trust, like a doctor.</p><div class="chips">' +
+    '<button type="button" class="chip" data-act="pdf30">' + renderRich('📄') + ' PDF: last 30 days</button>' +
+    '<button type="button" class="chip" data-act="pdfall">' + renderRich('📄') + ' PDF: everything</button></div></section>';
+  h += '<section class="set"><h3>' + renderRich('🗑️') + ' Delete everything</h3><p>This removes your entries, settings and your own words.</p><div class="chips">' +
+    '<button type="button" class="chip" data-act="wipe">' + renderRich('🗑️') + ' Delete everything</button></div>' +
+    (wipeAsk ? '<div class="confirm"><p>Delete everything? Your entries, settings and words will be gone. This can\'t be undone.</p><button type="button" class="btn" data-act="wipe-no">Keep it</button><button type="button" class="btn danger" data-act="wipe-yes">Delete everything</button></div>' : '') + '</section>';
   const top = sv.scrollTop;
   sv.innerHTML = h;
   sv.scrollTop = top;
@@ -1879,14 +2198,64 @@ sv.addEventListener('click', async e => {
   if (act === 'testvoice') { speak("Hi! I'm Lexi, the journaling chatbot. I'm here to make journaling easy and fun."); return; }
   if (act === 'rm-custom') { const g = b.dataset.g, i = +b.dataset.i; (profile.custom[g] || []).splice(i, 1); saveProfile(); renderSettings(); return; }
   if (act === 'replay') { showView('home'); intro(); return; }
+  if (act === 'quickstart') { showView('home'); runQuickStart(); return; }
+  if (act === 'say-basic') { speak('Your device only has basic voices, so they may sound robotic. My own voice still reads my regular lines.', { el: b.closest('.confirm') }); return; }
+  if (act === 'pdf30' || act === 'pdfall') { b.disabled = true; try { await exportPdf(act === 'pdf30' ? 30 : 0); } finally { b.disabled = false; } return; }
   if (act === 'wipe') { wipeAsk = true; renderSettings(); return; }
   if (act === 'wipe-no') { wipeAsk = false; renderSettings(); return; }
-  if (act === 'wipe-yes') {
-    wipeAsk = false; renderSettings();
-    for (const en of Store.all()) await Store.remove(en.id, en._src);
-    toast('All entries deleted. 🗑️');
-  }
+  if (act === 'wipe-yes') { wipeAsk = false; await deleteEverything(); }
 });
+// Export (docs/FEATURES_SOON.md §8): a plain PDF made in the page, saved through the downloads capability
+async function loadJsPDF() {
+  if (window.jspdf && window.jspdf.jsPDF) return window.jspdf.jsPDF;
+  await new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload = res; s.onerror = rej; document.head.append(s);
+  });
+  return window.jspdf.jsPDF;
+}
+const pdfText = t => stripEmoji(String(t)).replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/…/g, '...').replace(/[–—]/g, '-').replace(/·/g, '-').replace(/[^\x20-\x7E\xA0-\xFF\n]/g, '');
+async function exportPdf(days) {
+  const C = window.claude;
+  let dl = null;
+  try { dl = C && typeof C.use === 'function' ? await C.use('downloads') : null; } catch {}
+  if (!dl) { toast("Saving files doesn't work here. 📄"); return; }
+  const since = days ? Date.now() - days * 86400000 : 0;
+  const list = Store.all().filter(e => (e.createdAt || 0) >= since).sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+  if (!list.length) { toast('No entries to share yet. 📖'); return; }
+  let JsPDF;
+  try { JsPDF = await loadJsPDF(); } catch { toast("Couldn't load the PDF maker. Try again. 🔌"); return; }
+  const doc = new JsPDF({ unit: 'pt', format: 'a4' });
+  const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 50;
+  let y = M;
+  const write = (text, { size = 12, bold = false, gap = 6 } = {}) => {
+    doc.setFont('helvetica', bold ? 'bold' : 'normal'); doc.setFontSize(size);
+    doc.splitTextToSize(pdfText(text), W - 2 * M).forEach(r => { if (y > H - M) { doc.addPage(); y = M; } doc.text(r, M, y); y += size * 1.45; });
+    y += gap;
+  };
+  const dateLong = d => d.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  write('Lexi journal', { size: 22, bold: true });
+  write(dateLong(new Date(list[0].createdAt)) + ' to ' + dateLong(new Date(list[list.length - 1].createdAt)) + ' - ' + list.length + (list.length === 1 ? ' entry' : ' entries'));
+  write('Made with Lexi, a journaling app for dyslexic people.', { size: 10, gap: 18 });
+  list.forEach(en => {
+    const d = new Date(en.createdAt);
+    write(dateLong(d) + ', ' + d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) + ' - ' + (en.kind === 'free' ? 'Free writing' : en.kind === 'voice' ? 'Voice entry' : 'Check-in'), { size: 13, bold: true, gap: 2 });
+    entrySummary(en).split('\n').forEach(l => write(l, { gap: 2 }));
+    if (en.reflection) write('Lexi: ' + en.reflection.replace(/\n/g, ' '), { size: 11, gap: 2 });
+    y += 12;
+  });
+  try { await dl.save({ filename: 'lexi-journal.pdf', data: doc.output('blob') }); toast('Your journal PDF is ready. 📄'); }
+  catch (e) { if (!e || e.code !== 'declined') toast("Couldn't save the PDF. Try again. 📄"); }
+}
+async function deleteEverything() {
+  for (const en of Store.all()) await Store.remove(en.id, en._src);
+  LS.del('lexi.draft'); LS.del(DRAFT_KEY);
+  profile.settings = { ...DEFAULTS }; profile.custom = {}; profile.onboarded = false;
+  mirrorProfile(); writeProfileNow();
+  applySettings(); retone(); renderSettings(); renderJournal(); autosize();
+  toast('Everything is deleted. 🗑️');
+}
 sv.addEventListener('input', e => {
   const t = e.target;
   if (t.id === 'set-rate') { profile.settings.rate = +t.value; $('#out-rate').textContent = (+t.value).toFixed(2) + '×'; }
@@ -1897,7 +2266,7 @@ sv.addEventListener('change', e => {
   if (e.target.id === 'set-pitch') { saveProfile(); speak('This is how I sound now.', { voice: currentVoice() }); }
 });
 function retone() {
-  $$('[data-raw]').forEach(n => { n.innerHTML = renderRich(n.dataset.raw); });
+  $$('[data-raw]').forEach(n => { n.innerHTML = n.dataset.words ? renderWords(n.dataset.raw) : renderRich(n.dataset.raw); });
   $$('.me-ava').forEach(n => rich(n, profile.settings.avatar));
 }
 
@@ -1961,6 +2330,10 @@ form.addEventListener('submit', e => {
   const v = msg.value.trim(); if (!v) return;
   msg.value = ''; autosize(); pop.hidden = true;
   sendChat(v);
+});
+chat.addEventListener('click', e => {
+  if (!profile.settings.tapWord || e.target.closest('button,a,input,textarea')) return;
+  const w = e.target.closest('.bubble .w'); if (w) speakWord(w);
 });
 $('#msg-emoji').onclick = () => { if (!pop.hidden && emojiTarget === msg) { pop.hidden = true; return; } openEmoji(msg); };
 document.addEventListener('keydown', e => {

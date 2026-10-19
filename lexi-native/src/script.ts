@@ -1,12 +1,14 @@
 // Lexi's conversation script: onboarding (Chat Bot Plan), the guided check-in, free chat and reflections.
 // Copy and order match lexi.html.
-import { BAND_BY, TOPIC_BY, YES_NO, type Pick } from './content';
+import { BANDS, BAND_BY, TOPIC_BY, YES_NO, type BandKey, type Pick } from './content';
 import { addBot, addCard, addMe, addMeEmoji, ask, say, sayMany, sayQueue, showTyping } from './chat';
 import { aiErrorText, claude, parseJsonReply, type Msg } from './ai';
 import { asLevel, maxLevel, riskCheck, styleCheck, type Level } from './safety';
+import type { RecapLine, StepResult } from './components/Cards';
+import { firstPending, order, stepInfo, type StepId } from './steps';
 import {
-  addEntry, aiReady, ready, setOnboarded, setSending, setSheet, showView, state, toast, updateEntry,
-  type Entry, type NewEntry, type TopicAnswer,
+  addEntry, aiReady, clearCheckin, loadCheckin, ready, saveCheckin, setOnboarded, setSending, setSheet, setVoiceSheet, showView, state, toast, updateEntry,
+  type CheckinDraft, type Entry, type NewEntry, type TopicAnswer,
 } from './store';
 import { dayKey, sleep } from './text';
 
@@ -35,6 +37,7 @@ export function answerText(a: TopicAnswer): string {
 export function entrySummary(en: NewEntry): string {
   const parts: string[] = [];
   if (en.moods && en.moods.length) parts.push('Mood: ' + en.moods.map(m => m.label + (m.band ? ' (' + BAND_BY[m.band].name + ')' : '')).join(', '));
+  if (en.nuance && en.nuance.length) parts.push('Named more exactly: ' + en.nuance.map(m => m.label).join(', '));
   (en.topics || []).forEach(tp => {
     const T = TOPIC_BY[tp.key]; const bits: string[] = [];
     if (tp.picks && tp.picks.length) bits.push(tp.picks.map(p => p.label).join(', '));
@@ -42,7 +45,7 @@ export function entrySummary(en: NewEntry): string {
     if (tp.note) bits.push(tp.note);
     parts.push((T ? T.name : tp.key) + ': ' + bits.join('. '));
   });
-  if (en.text) parts.push('Writing: ' + en.text);
+  if (en.text) parts.push((en.kind === 'voice' ? 'Spoken: ' : 'Writing: ') + en.text);
   return parts.join('\n');
 }
 
@@ -52,41 +55,115 @@ export function offerActions() {
     options: [
       { e: '🧭', label: 'Guided check-in', run: () => startGuided() },
       { e: '✏️', label: 'Write on my own', run: () => openSheet() },
+      { e: '🎙️', label: 'Speak an entry', run: () => openVoiceSheet() },
       { e: '📖', label: 'Open journal', run: () => showView('journal') },
     ],
   }, false);
 }
 export function openSheet() { setSheet(true); }
+export function openVoiceSheet() { setVoiceSheet(true); }
 
-/* ---------- guided check-in ---------- */
+/* ---------- Quick start (FEATURES_SOON §9) ---------- */
+export async function quickStart() {
+  showView('home');
+  await say("Let's set me up so I'm easy for you to read.");
+  await sayQueue;
+  await addCard('quickstart');
+  await say('You can change these any time in Settings. ⚙️');
+}
+
+/* ---------- guided check-in, in numbered steps (FEATURES_SOON §6, §12) ----------
+   Steps: feelings (1), "Name it more" (1b, only if moods were picked), topics (2), one per topic, recap (N).
+   N = 2 + topics + 1. The draft is saved after every step; only the recap's Save writes the entry.
+   Numbering and "what's next" live in steps.ts. */
+const bandsOf = (moods: Pick[]) => BANDS.map(b => b.key).filter(k => moods.some(m => m.band === k)) as BandKey[];
+const labels = (ps: Pick[]) => ps.map(p => p.label).join(' · ');
+function echo(ps: Pick[], skip = 'Skip') { if (ps.length) addMeEmoji(ps.map(p => p.e), labels(ps)); else addMeEmoji(['⏭️'], skip); }
+
+/** One step: Lexi's question, then its card, pre-filled with the answers so far. */
+async function runStep(step: StepId, d: CheckinDraft): Promise<'next' | 'back'> {
+  const info = stepInfo(d, step);
+  if (step === 'feelings') {
+    await say('How do you feel? Pick as many as you like.');
+    const r = await addCard<StepResult<Pick[]>>('mood', { step: info, initial: d.moods });
+    if (r.action === 'back') return 'back';
+    d.moods = r.value; echo(d.moods);
+    // Exact words only make sense for the bands still picked.
+    if (d.nuance) d.nuance = d.nuance.filter(n => d.moods.some(m => m.band === n.band));
+    if (!d.moods.length) d.nuance = null;
+    await say(reactionFor(d.moods));
+    return 'next';
+  }
+  if (step === 'nuance') {
+    await say('Want to name it more exactly? You can skip this.');
+    const r = await addCard<StepResult<Pick[]>>('nuance', { step: info, bands: bandsOf(d.moods), initial: d.nuance || [] });
+    if (r.action === 'back') return 'back';
+    d.nuance = r.value; echo(d.nuance);
+    return 'next';
+  }
+  if (step === 'topics') {
+    await say('What do you want to talk about today?');
+    const r = await addCard<StepResult<string[]>>('topics', { step: info, initial: d.keys || [] });
+    if (r.action === 'back') return 'back';
+    d.keys = r.value;
+    for (const k of Object.keys(d.answers)) if (!d.keys.includes(k)) delete d.answers[k];
+    if (d.keys.length) addMeEmoji(d.keys.map(k => TOPIC_BY[k].icon), d.keys.map(k => TOPIC_BY[k].name).join(' · '));
+    else addMe('Just my mood today');
+    return 'next';
+  }
+  const T = TOPIC_BY[step.slice(2)];
+  await say(T.icon + ' ' + T.q);
+  const r = await addCard<StepResult<TopicAnswer | null>>('topicAnswer', { step: info, topic: T, initial: d.answers[T.key] ?? null });
+  if (r.action === 'back') return 'back';
+  const a = r.value;
+  d.answers[T.key] = a;
+  // Picks alone show as big emoji; anything typed (notes, to-dos) keeps a bubble.
+  if (!a) addMeEmoji(['⏭️'], 'Skip');
+  else if (a.picks.length && !a.note && !a.todos.length) echo(a.picks);
+  else addMe(answerText(a));
+  return 'next';
+}
+function recapLines(d: CheckinDraft): RecapLine[] {
+  const lines: RecapLine[] = [{ id: 'feelings', icon: '🌡️', title: 'Feelings', text: labels(d.moods) || 'Skipped' }];
+  if (d.moods.length) lines.push({ id: 'nuance', icon: '🔎', title: 'Name it more', text: labels(d.nuance || []) || 'Skipped' });
+  lines.push({ id: 'topics', icon: '🗂️', title: 'Topics', text: (d.keys || []).map(k => TOPIC_BY[k].name).join(' · ') || 'Just my mood today' });
+  for (const k of d.keys || []) {
+    const a = d.answers[k];
+    lines.push({ id: 't:' + k, icon: TOPIC_BY[k].icon, title: TOPIC_BY[k].name, text: a ? answerText(a) : 'Skipped' });
+  }
+  return lines;
+}
+
 let guidedActive = false;
-export async function startGuided(fromIntro = false) {
+export async function startGuided(fromIntro = false, resume: CheckinDraft | null = null) {
   showView('home');
   if (guidedActive) { toast('Your check-in is already open below. 👇'); return; }
   guidedActive = true;
   try {
-    if (!fromIntro) await say("Let's check in. 🧭");
-    await say('How do you feel? Pick as many as you like.');
-    const moods = await addCard<Pick[]>('mood');
-    if (moods.length) addMeEmoji(moods.map(m => m.e), moods.map(m => m.label).join(' · ')); else addMeEmoji(['⏭️'], 'Skip');
-    await say(reactionFor(moods));
-    await say('What do you want to talk about today?');
-    const keys = await addCard<string[]>('topics');
-    if (keys.length) addMeEmoji(keys.map(k => TOPIC_BY[k].icon), keys.map(k => TOPIC_BY[k].name).join(' · '));
-    else addMe('Just my mood today');
-    const topics: TopicAnswer[] = [];
-    for (const k of keys) {
-      const T = TOPIC_BY[k];
-      await say(T.icon + ' ' + T.q);
-      const a = await addCard<TopicAnswer | null>('topicAnswer', { topic: T });
-      // Picks alone show as big emoji; anything typed (notes, to-dos) keeps a bubble.
-      if (!a) addMeEmoji(['⏭️'], 'Skip');
-      else if (a.picks.length && !a.note && !a.todos.length) addMeEmoji(a.picks.map(p => p.e), a.picks.map(p => p.label).join(' · '));
-      else addMe(answerText(a));
-      if (a) topics.push(a);
+    const d: CheckinDraft = resume ? { ...resume, answers: { ...resume.answers } } : { step: 'feelings', moods: [], nuance: null, keys: null, answers: {} };
+    if (!fromIntro && !resume) await say("Let's check in. 🧭");
+    let step: StepId = resume ? (order(d).includes(resume.step) ? resume.step : firstPending(d)) : 'feelings';
+    let toRecap = !!resume && step === 'recap';
+    for (;;) {
+      saveCheckin({ ...d, step });
+      if (step === 'recap') {
+        await say('Here is your check-in. Tap Change to fix anything.');
+        const r = await addCard<{ action: 'save' } | { action: 'change'; step: StepId }>('recap', { step: stepInfo(d, 'recap'), lines: recapLines(d) });
+        if (r.action === 'save') break;
+        step = r.step; toRecap = true;
+        continue;
+      }
+      const went = await runStep(step, d);
+      const o = order(d);
+      if (went === 'back') { step = o[Math.max(0, o.indexOf(step) - 1)]; continue; }
+      // After a Change from the recap, answer anything new (like a newly added topic), then back to the recap.
+      step = toRecap ? firstPending(d) : o[o.indexOf(step) + 1] ?? 'recap';
     }
+    clearCheckin();
+    const moods = d.moods, nuance = d.nuance || [];
+    const topics = (d.keys || []).map(k => d.answers[k]).filter((a): a is TopicAnswer => !!a);
     if (!moods.length && !topics.length) { await say("Nothing to save this time. That's okay. 🏡"); offerActions(); return; }
-    const entry: NewEntry = { kind: 'guided', createdAt: Date.now(), day: dayKey(), moods, topics, text: '' };
+    const entry: NewEntry = { kind: 'guided', createdAt: Date.now(), day: dayKey(), moods, topics, text: '', ...(nuance.length ? { nuance } : {}) };
     const id = await addEntry(entry);
     await say('Saved to your journal. 📖 ✔️');
     // Check-in notes and to-dos get the same crisis check as other writing (§8). No celebration after it fires.
@@ -275,6 +352,7 @@ export async function sendChat(text: string) {
 export async function intro() {
   await say("Hi! I'm Lexi, the journaling chatbot. 🤖 I'm here to make journaling easy and fun.");
   await say("I speak English, but I'm better at emoji. 😉");
+  await quickStart();
   await say('ℹ️ This means information.', { info: true });
   await say('ℹ️ My developer created me to help dyslexic people journal.', { info: true });
   await say("ℹ️ Text blocks will never be too large, and I'll rely a lot on icons and emojis.", { info: true });
@@ -304,6 +382,14 @@ async function welcomeBack() {
   const today = state.entries.some((e: Entry) => e.day === dayKey());
   await say('Welcome back! 🏡');
   if (today) await say("You've already saved something today. ✔️");
+  // An unfinished check-in (§6): finish it, or let it go.
+  const draft = loadCheckin();
+  if (draft) {
+    await say("You have a check-in you didn't finish.");
+    const finish = await ask('Want to finish it?', YES_NO, true);
+    if (finish) { startGuided(false, draft); return; }
+    clearCheckin();
+  }
   await say('What would you like to do?');
   offerActions();
 }

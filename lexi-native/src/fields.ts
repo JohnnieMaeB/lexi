@@ -22,7 +22,7 @@ export function useField(initial = '') {
   const onSelectionChange = useCallback((e: TextInputSelectionChangeEvent) => {
     sel.current = e.nativeEvent.selection;
   }, []);
-  return { value, ref, set, onChange, insert, onSelectionChange };
+  return { value, ref, sel, set, onChange, insert, onSelectionChange };
 }
 export type Field = ReturnType<typeof useField>;
 

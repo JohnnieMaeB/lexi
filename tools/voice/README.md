@@ -23,6 +23,6 @@ When you add or change a line Lexi says:
    Then download `en_US-ljspeech-high.onnx` and its `.json` file from `rhasspy/piper-voices` on Hugging Face.
 4. Make the clips:
    ```bash
-   python synth.py en_US-ljspeech-high.onnx jobs.json ../../web/voice
+   python synth.py en_US-ljspeech-high.onnx jobs.json ../../web/voice ../../web/voice/timings.json
    ```
-5. Rebuild the `CLIPS` table in `web/lexi.html` from `jobs.json` (`key` → `voice/<file>`), then republish the artifact with the `voice/` folder.
+5. Rebuild the `CLIPS` table in `web/lexi.html` from `jobs.json` and `timings.json` (`key` → [`voice/<file>`, word start times in ms + end]), then republish the artifact with the `voice/` folder. Re-record every clip together with its timings: Piper adds a little randomness, so old timings won't match new audio.

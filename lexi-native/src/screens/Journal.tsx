@@ -2,7 +2,9 @@
 import React, { useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View, type ScrollViewInstance } from 'react-native';
 import { TOPIC_BY, type Pick } from '../content';
-import { entrySummary, moodShares, openSheet, startGuided } from '../script';
+import { entrySummary, moodShares, openSheet, openVoiceSheet, startGuided } from '../script';
+import { usePlayback } from '../recording';
+import { WordText } from '../components/WordText';
 import { speak } from '../speech';
 import { removeEntry, toast, updateEntry, useLexi, type Entry } from '../store';
 import { dayKey, fmtDay, fmtTime, stripEmoji } from '../text';
@@ -16,7 +18,7 @@ const countWords = (s: string) => stripEmoji(s).split(/\s+/).filter(w => /[A-Za-
  *  The streak allows rest days: one missed day doesn't break the run, two in a row do. */
 export function stats(all: Entry[], byDay: Map<string, Entry[]>) {
   const days = byDay.size;
-  const feelings = all.reduce((n, e) => n + (e.moods || []).length, 0);
+  const feelings = all.reduce((n, e) => n + (e.moods || []).length + (e.nuance || []).length, 0);
   let streak = 0, missed = 0;
   const d = new Date();
   for (let i = 0; i < 3660 && missed < 2; i++) {
@@ -94,7 +96,8 @@ function CheckBox({ on }: { on: boolean }) {
 function EntryCard({ en, confirming, setConfirm }: { en: Entry; confirming: boolean; setConfirm: (id: string | null) => void }) {
   const t = useTheme();
   const [showOriginal, setShowOriginal] = useState(false);
-  const kind = en.kind === 'free' ? ['✏️', 'Free writing'] : ['🧭', 'Check-in'];
+  const play = usePlayback(en.audio);
+  const kind = en.kind === 'free' ? ['✏️', 'Free writing'] : en.kind === 'voice' ? ['🎙️', 'Voice entry'] : ['🧭', 'Check-in'];
   const toggleTodo = (ti: number, i: number) => {
     const topics = en.topics.map((tp, a) => (a !== ti ? tp : { ...tp, todos: tp.todos.map((td, b) => (b !== i ? td : { ...td, done: !td.done })) }));
     updateEntry(en.id, { topics });
@@ -129,6 +132,21 @@ function EntryCard({ en, confirming, setConfirm }: { en: Entry; confirming: bool
           ))}
         </Row>
       ) : null}
+      {/* "Name it more" words, after the mood chips (FEATURES_SOON §12). */}
+      {en.nuance && en.nuance.length ? (
+        <Row gap={8}>
+          {en.nuance.map((m, i) => (
+            <View key={i} style={[s.mchip, { borderWidth: 2, borderColor: mix(t.band(m.band).b, t.c.surface, 0.6), backgroundColor: t.c.surface }]}>
+              <Ico e={m.e} size={24} />
+              <T em={0.85}>{m.label}</T>
+            </View>
+          ))}
+        </Row>
+      ) : null}
+      {/* Voice entries (§4): ▶ plays the recording, and the transcript is under it. */}
+      {en.audio ? (
+        <Row><Chip icon={play.playing ? '⏹️' : '▶️'} label={play.playing ? 'Stop' : 'Play my recording'} onPress={play.toggle} /></Row>
+      ) : null}
       {(en.topics || []).map((tp, ti) => {
         const T0 = TOPIC_BY[tp.key];
         return (
@@ -153,11 +171,12 @@ function EntryCard({ en, confirming, setConfirm }: { en: Entry; confirming: bool
                 <T style={td.done ? { opacity: 0.6 } : undefined}>{td.t}</T>
               </Pressable>
             ))}
-            {tp.note ? <T>{tp.note}</T> : null}
+            {tp.note ? <WordText text={tp.note} /> : null}
           </View>
         );
       })}
-      {en.text ? <T>{showOriginal && en.original ? en.original : en.text}</T> : null}
+      {/* Tap any word to hear it (§2). */}
+      {en.text ? <WordText text={showOriginal && en.original ? en.original : en.text} /> : null}
       {en.original ? (
         <Row><Chip icon={showOriginal ? '✨' : '📝'} label={showOriginal ? 'See the tidied words' : 'See my original words'} selected={showOriginal} onPress={() => setShowOriginal(!showOriginal)} /></Row>
       ) : null}
@@ -222,6 +241,7 @@ export function JournalScreen() {
       <Row style={{ marginTop: 18 }}>
         <Btn variant="primary" icon="🧭" label="Guided check-in" onPress={() => startGuided()} />
         <Btn icon="✏️" label="Write on my own" onPress={() => openSheet()} />
+        <Btn icon="🎙️" label="Speak an entry" onPress={() => openVoiceSheet()} />
       </Row>
 
       {!all.length ? (

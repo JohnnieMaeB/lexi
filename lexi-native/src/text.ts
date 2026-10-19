@@ -74,3 +74,22 @@ export function fmtTime(ms: number): string {
 }
 
 export const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
+
+/** A line split for display: whitespace kept, and each non-emoji token numbered as a word, the same way the
+ *  clip timings count them (speechKey(text).split(/\s+/)). Used by the word highlight (FEATURES_SOON §1). */
+export type Token = { s: string; word: number | -1; space: boolean };
+export function tokenize(text: string): Token[] {
+  let n = 0;
+  return String(text).split(/(\s+)/).filter(s => s !== '').map(s => {
+    if (/^\s+$/.test(s)) return { s, word: -1, space: true };
+    return { s, word: speechKey(s) ? n++ : -1, space: false };
+  });
+}
+
+/** For a clip's word timings (word starts in ms, then the end time): the word being said at `ms`, or -1 before
+ *  the first word. After the end it stays on the last word. */
+export function wordAt(t: number[], ms: number): number {
+  if (t.length < 2 || ms < t[0]) return -1;
+  for (let i = t.length - 2; i >= 0; i--) if (ms >= t[i]) return i;
+  return -1;
+}

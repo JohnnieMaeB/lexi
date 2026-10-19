@@ -1,12 +1,12 @@
 // 🔊 Read aloud (DESIGN.md "Voice"). Lexi's fixed lines play as her own recorded voice (src/clips.ts, via
 // expo-audio). Everything else is read by the most natural voice the phone has (expo-speech), one sentence at a
 // time with emoji stripped, pausing briefly between bubbles.
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import * as Speech from 'expo-speech';
 import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
-import { CLIPS } from './clips';
+import { CLIPS, type Clip } from './clips';
 import { state } from './store';
-import { speechKey } from './text';
+import { speechKey, wordAt } from './text';
 
 export type RankedVoice = Speech.Voice & { score: number; label: string; detail: string; english: boolean };
 
@@ -99,12 +99,31 @@ export function sentences(text: string): string[] {
   return (t.match(/[^.!?…\n]+(?:[.!?…]+["')\]]*|$)/g) || []).map(s => s.trim()).filter(s => /[^\s.!?…"'()[\]\-–—,:;]/.test(s));
 }
 /** Lexi's recorded clip for a line, unless the person picked a device voice. */
-export function clipFor(text: string): number | undefined {
+export function clipFor(text: string): Clip | undefined {
   return state.settings.lexiVoice === 'device' ? undefined : CLIPS[speechKey(text)];
+}
+/** A line's words, the way the bubble and the clip timings count them: the speech key's whitespace tokens. */
+export const wordsOf = (text: string) => speechKey(text).split(/\s+/).filter(Boolean);
+
+/* ---------- which bubble, and which word, is being read (FEATURES_SOON §1) ---------- */
+let reading: { target: string; word: number } | null = null;
+let readVersion = 0;
+const readListeners = new Set<() => void>();
+function setReading(r: { target: string; word: number } | null) {
+  if (r === reading || (r && reading && r.target === reading.target && r.word === reading.word)) return;
+  reading = r; readVersion++; readListeners.forEach(l => l());
+}
+const subscribeReading = (l: () => void) => { readListeners.add(l); return () => { readListeners.delete(l); }; };
+/** For one bubble: null when it isn't being read, -1 while it's read with no word known yet, else the word. */
+export function useReadingWord(target: string | undefined): number | null {
+  return useSyncExternalStore(subscribeReading, () => (target && reading && reading.target === target ? reading.word : null));
 }
 
 // One queue for everything Lexi says, so her bubbles are read in order. A part is a recorded clip or one sentence.
-type Part = { kind: 'clip'; src: number; text: string; gap: number } | { kind: 'tts'; text: string; gap: number; voice?: string };
+// `target` is the bubble being read and `offset` the index of the part's first word in it.
+type Part =
+  | { kind: 'clip'; clip: Clip; text: string; gap: number; target?: string }
+  | { kind: 'tts'; text: string; gap: number; voice?: string; target?: string; offset: number };
 let queue: Part[] = [];
 let busy = false;
 let gen = 0;
@@ -120,11 +139,11 @@ function ensureAudioMode() {
   setAudioModeAsync({ playsInSilentMode: true, interruptionMode: 'duckOthers', shouldPlayInBackground: false }).catch(e => console.warn('audio mode', e));
 }
 
-/** Plays one clip at the speed setting. Calls fail() if it can't start, so the line is spoken instead. */
-function playClip(src: number, done: () => void, fail: () => void) {
+/** Plays one clip at the speed setting (pitch kept). Calls fail() if it can't start, so the line is spoken instead. */
+function playClip(clip: Clip, target: string | undefined, done: () => void, fail: () => void) {
   ensureAudioMode();
   let p: AudioPlayer;
-  try { p = createAudioPlayer(src); } catch (e) { console.warn('clip', e); fail(); return; }
+  try { p = createAudioPlayer(clip.src, { updateInterval: 50 }); } catch (e) { console.warn('clip', e); fail(); return; }
   player = p;
   let started = false, over = false;
   let cap: ReturnType<typeof setTimeout> | null = null;
@@ -144,6 +163,8 @@ function playClip(src: number, done: () => void, fail: () => void) {
       // A safety net in case the "finished" event never arrives.
       if (st.duration > 0) cap = setTimeout(() => { if (cleanup()) done(); }, (st.duration / Math.max(0.5, state.settings.rate) + 2) * 1000);
     }
+    // currentTime is media time, so the timings hold at any playback rate.
+    if (target && st.playing) setReading({ target, word: wordAt(clip.t, st.currentTime * 1000) });
     if (st.didJustFinish && cleanup()) done();
   });
   const startTimer = setTimeout(() => { if (!started && cleanup()) fail(); }, 4000);
@@ -153,49 +174,80 @@ function playClip(src: number, done: () => void, fail: () => void) {
   } catch (e) { console.warn('clip', e); if (cleanup()) fail(); }
 }
 
+/** Device-voice parts for a line: one per sentence, each knowing where its words start in the bubble. */
+function ttsParts(text: string, gap: number, voice?: string, target?: string): Part[] {
+  const key = speechKey(text);
+  const parts = sentences(text);
+  let cursor = 0;
+  return parts.map((p, i): Part => {
+    const at = key.indexOf(p, cursor);
+    const offset = at < 0 ? 0 : key.slice(0, at).split(/\s+/).filter(Boolean).length;
+    if (at >= 0) cursor = at + p.length;
+    return { kind: 'tts', text: p, gap: i === parts.length - 1 ? gap : 0, voice, target, offset };
+  });
+}
+
 function pump(g: number) {
   if (g !== gen) return;
   const next = queue.shift();
-  if (!next) { busy = false; return; }
+  if (!next) { busy = false; setReading(null); return; }
   busy = true;
   const S = state.settings;
-  const after = () => { if (g !== gen) return; if (next.gap) setTimeout(() => pump(g), next.gap); else pump(g); };
+  const after = () => {
+    if (g !== gen) return;
+    if (!queue.length || queue[0].target !== next.target) setReading(null);
+    if (next.gap) setTimeout(() => pump(g), next.gap); else pump(g);
+  };
+  if (next.target) setReading({ target: next.target, word: -1 }); // the bubble's ring shows straight away
   if (next.kind === 'clip') {
     // If the clip can't play, read the same line with the device voice instead.
-    playClip(next.src, after, () => {
+    playClip(next.clip, next.target, after, () => {
       if (g !== gen) return;
-      const parts = sentences(next.text);
-      queue.unshift(...parts.map((t, i): Part => ({ kind: 'tts', text: t, gap: i === parts.length - 1 ? next.gap : 0 })));
+      queue.unshift(...ttsParts(next.text, next.gap, undefined, next.target));
       pump(g);
     });
     return;
   }
+  const { target, offset, text } = next;
   try {
-    Speech.speak(next.text, {
+    Speech.speak(text, {
       voice: next.voice ?? currentVoice()?.identifier,
       rate: S.rate, pitch: S.pitch,
       onDone: after, onError: after,
+      // Word boundaries give a char index in this sentence; count the words before it. No events = ring only.
+      onBoundary: target ? (ev: { charIndex?: number }) => {
+        if (g !== gen || typeof ev?.charIndex !== 'number') return;
+        const before = text.slice(0, ev.charIndex).split(/\s+/).filter(Boolean).length;
+        const inWord = ev.charIndex > 0 && !/\s/.test(text[ev.charIndex - 1] || ' ');
+        setReading({ target, word: offset + before - (inWord ? 1 : 0) });
+      } : undefined,
     });
   } catch (e) { console.warn('speak', e); after(); }
 }
 
 /** A tap on 🔊 interrupts whatever is playing; `queue` (Lexi reading her own bubbles) waits its turn.
- *  `voice` forces a device voice (the voice picker's ▶ previews), so no clip is used. */
-export function speak(text: string, opts: { queue?: boolean; voice?: string } = {}) {
+ *  `voice` forces a device voice (the voice picker's ▶ previews), so no clip is used.
+ *  `target` is the chat bubble being read, for its ring and word highlight. */
+export function speak(text: string, opts: { queue?: boolean; voice?: string; target?: string; device?: boolean } = {}) {
   if (!opts.queue) stopSpeaking();
-  const clip = opts.voice ? undefined : clipFor(text);
+  const clip = opts.voice || opts.device ? undefined : clipFor(text);
   if (clip !== undefined) {
-    queue.push({ kind: 'clip', src: clip, text, gap: BUBBLE_GAP });
+    queue.push({ kind: 'clip', clip, text, gap: BUBBLE_GAP, target: opts.target });
   } else {
-    const parts = sentences(text);
+    const parts = ttsParts(text, BUBBLE_GAP, opts.voice, opts.target);
     if (!parts.length) return;
-    parts.forEach((p, i) => queue.push({ kind: 'tts', text: p, gap: i === parts.length - 1 ? BUBBLE_GAP : 0, voice: opts.voice }));
+    queue.push(...parts);
   }
   if (!busy) pump(gen);
+}
+/** Tap a word to hear it (§2): just that word, in the device voice. */
+export function speakWord(word: string) {
+  speak(word, { device: true });
 }
 export function stopSpeaking() {
   gen++; queue = []; busy = false;
   if (stopPlayer) stopPlayer();
+  setReading(null);
   try { Speech.stop(); } catch {}
 }
 

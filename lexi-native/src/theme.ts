@@ -3,7 +3,7 @@ import { createContext, useContext } from 'react';
 import { Platform, type TextStyle, type ViewStyle } from 'react-native';
 import type { BandKey, Settings, ThemeKey } from './content';
 import { stripEmoji, tone } from './text';
-import { LETTERS, SIZES, SPACING } from './content';
+import { HIGHLIGHTS, LETTERS, SIZES, SPACING } from './content';
 
 export type Palette = {
   bg: string;            // canvas behind everything
@@ -39,6 +39,11 @@ export const PALETTES: Record<Exclude<ThemeKey, 'auto'>, Palette> = {
   purple: { ...LIGHT_BASE, bar: '#8100E3', onBar: '#FFFFFF', ring: '#8100E3', bot: '#79EAB9', botInk: '#020000' },
   // Theme frame. The ring is a deeper mint so a selected white tile still reads as selected.
   mint: { ...LIGHT_BASE, bar: '#79EAB9', onBar: '#06281A', ring: '#1F8F62', bot: '#FFDCC1', botInk: '#2E1500' },
+  // FEATURES_SOON §5: a warm background (Rello & Bigham 2017). Everything not listed is the same as Orange.
+  cream: {
+    ...LIGHT_BASE, bar: '#E38100', onBar: '#1E1000', ring: '#E38100', bot: '#79EAB9', botInk: '#020000',
+    bg: '#F5E4CC', surface: '#FFFAF2', surface2: '#F3E1C8', ink: '#020000', inkSoft: '#4A3F35', line: '#E0CAAE', me: '#FFFFFF',
+  },
   // Screen 12: black, bars blend into the background, outlined dark bubbles with orange words, mint Yes.
   night: {
     bg: '#020000', bar: '#020000', onBar: '#E38100', surface: '#1A1A1A', surface2: '#262626', field: '#0D0D0D',
@@ -117,6 +122,8 @@ export function makeTheme(S: Settings, systemDark: boolean, windowWidth: number,
     avatarBot: Math.round(46 * k), avatarMe: Math.round(52 * k),
     /** Ember draws the butterfly engraving behind the chat. */
     butterfly: key === 'ember',
+    /** The spoken word's highlight (FEATURES_SOON §1); null when Highlight is Off. */
+    hl: HIGHLIGHTS[S.highlight]?.[1] ? { bg: HIGHLIGHTS[S.highlight][1] as string, ink: HIGHLIGHTS[S.highlight][2] as string } : null,
     barsBlend: c.bar === c.bg,
     shadow,
     /** Text style at `em` times the base size, in the body font (or Lexend for headings). */

@@ -46,11 +46,16 @@ export type SizeKey = 's' | 'm' | 'l' | 'xl' | 'xxl';
 export type SpacingKey = 'normal' | 'wide' | 'xwide';
 /** Letter spacing (FEATURES_DO_NEXT §1). Word spacing grows with it, because letter spacing alone slows reading. */
 export type LettersKey = 'normal' | 'roomy' | 'xroomy';
-/** docs/DESIGN.md "Themes". `auto` = Orange in light mode, Ember in dark mode. */
-export type ThemeKey = 'auto' | 'orange' | 'purple' | 'mint' | 'night' | 'ember';
+/** docs/DESIGN.md "Themes" plus Cream (FEATURES_SOON §5). `auto` = Orange in light mode, Ember in dark mode. */
+export type ThemeKey = 'auto' | 'orange' | 'purple' | 'mint' | 'cream' | 'night' | 'ember';
+export type HighlightKey = 'yellow' | 'mint' | 'off';
+export type PaceKey = 'auto' | 'tap' | 'fast';
+export type Reminders = { on: boolean; hour: number; minute: number; every: 'daily' | 'alternate' };
 export type Settings = {
   icons: boolean; font: FontKey; size: SizeKey; spacing: SpacingKey; letters: LettersKey; theme: ThemeKey;
   tone: string; avatar: string; autoread: boolean;
+  /** FEATURES_SOON §1 word highlight, §2 tap a word to hear it, §7 message pace, §13 gentle reminders. */
+  highlight: HighlightKey; tapWord: boolean; pace: PaceKey; reminders: Reminders;
   /** Crisis lines to show (FEATURES_DO_NEXT §7). Defaults from the phone's region. */
   country: Country;
   /** Journal: also show "Days in a row (rest days OK)" and "Words written" (off by default, §11). */
@@ -62,6 +67,7 @@ export type Settings = {
 };
 export const DEFAULTS: Settings = {
   icons: true, font: 'verdana', size: 'm', spacing: 'wide', letters: 'normal', theme: 'auto', tone: '\u{1F3FD}', avatar: '👧🏽', autoread: false,
+  highlight: 'yellow', tapWord: true, pace: 'auto', reminders: { on: false, hour: 19, minute: 0, every: 'daily' },
   country: 'Other', showStreak: false,
   lexiVoice: 'natural', voice: '', rate: 0.95, pitch: 1,
 };
@@ -71,8 +77,20 @@ export const SIZES: Record<SizeKey, [string, number]> = { s: ['Small', 16], m: [
 export const SPACING: Record<SpacingKey, [string, number]> = { normal: ['Normal', 1.5], wide: ['Wide', 1.7], xwide: ['Extra wide', 2] };
 /** [label, letter spacing em, extra word spacing em] */
 export const LETTERS: Record<LettersKey, [string, number, number]> = { normal: ['Normal', 0.012, 0.08], roomy: ['Roomy', 0.06, 0.16], xroomy: ['Extra roomy', 0.12, 0.32] };
-export const THEME_NAMES: Record<ThemeKey, string> = { auto: 'Match my device', orange: 'Orange', purple: 'Purple', mint: 'Mint', night: 'Night', ember: 'Ember' };
-export const RATE_RANGE = [0.6, 1.4] as const;
+export const THEME_NAMES: Record<ThemeKey, string> = { auto: 'Match my device', orange: 'Orange', purple: 'Purple', mint: 'Mint', cream: 'Cream', night: 'Night', ember: 'Ember' };
+/** [label, highlight background, word color] (§1). */
+export const HIGHLIGHTS: Record<HighlightKey, [string, string | null, string | null]> = { yellow: ['Yellow', '#FFE36E', '#020000'], mint: ['Mint', '#79EAB9', '#020000'], off: ['Off', null, null] };
+export const PACES: Record<PaceKey, string> = { auto: 'Lexi decides', tap: 'I tap for next', fast: 'All at once' };
+export const RATE_RANGE = [0.5, 2.0] as const;
 export const PITCH_RANGE = [0.8, 1.2] as const;
 export const TONES: [string, string][] = [['', 'Yellow'], ['\u{1F3FB}', 'Light'], ['\u{1F3FC}', 'Medium light'], ['\u{1F3FD}', 'Medium'], ['\u{1F3FE}', 'Medium dark'], ['\u{1F3FF}', 'Dark']];
 export const AVATARS = ['👧🏽', '🧒🏽', '👦🏽', '👩🏽', '🧑🏽', '👨🏽', '🦊', '🐱', '🌻', '⭐'];
+
+/** "Name it more" (FEATURES_SOON §12): five exact words per band. Each word is recorded. */
+export const NUANCE: Record<BandKey, [string, string][]> = {
+  content: [['😌', 'Relieved'], ['🙂', 'Satisfied'], ['🕊️', 'Peaceful'], ['😎', 'Confident'], ['🤩', 'Excited']],
+  stressed: [['😰', 'Anxious'], ['🏃🏽‍♀️', 'Rushed'], ['🗜️', 'Pressured'], ['😵‍💫', 'Confused'], ['😩', 'Worn out']],
+  low: [['😞', 'Disappointed'], ['😶', 'Lonely'], ['😳', 'Embarrassed'], ['🫥', 'Invisible'], ['😣', 'Ashamed']],
+};
+/** Sentence starters for free writing (§11). Each one is recorded. */
+export const STARTERS = ['Today I felt…', 'Something good was…', 'Something hard was…', "I'm thankful for…", 'Tomorrow I want to…', 'My body feels…'];

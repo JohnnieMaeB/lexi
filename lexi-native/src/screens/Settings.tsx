@@ -3,17 +3,23 @@ import React, { useEffect, useState } from 'react';
 import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { MODEL } from '../ai';
-import { AVATARS, FONTS, LETTERS, PITCH_RANGE, RATE_RANGE, SIZES, SPACING, THEME_NAMES, TONES, TOPICS, type Settings, type ThemeKey } from '../content';
+import { AVATARS, FONTS, HIGHLIGHTS, LETTERS, PACES, PITCH_RANGE, RATE_RANGE, SIZES, SPACING, THEME_NAMES, TONES, TOPICS, type Settings, type ThemeKey } from '../content';
 import { PrivacyLines } from '../components/Help';
+import { shareJournalPdf } from '../exportPdf';
 import { useField } from '../fields';
-import { intro } from '../script';
+import { REMINDER_BODY, applyReminders, askPermission, fmtClock } from '../reminders';
+import { intro, quickStart } from '../script';
 import { DEVICE_LINE, NATURAL_LINE, SPEED_LINE, TEST_LINE, bestVoice, currentVoice, speak, stopSpeaking, useVoices, type RankedVoice } from '../speech';
-import { removeAllEntries, removeCustom, setApiKey, setSetting, showView, toast, useLexi } from '../store';
+import { deleteEverything, removeCustom, setApiKey, setSetting, showView, state, toast, useLexi } from '../store';
 import { PALETTES, R, mix, useTheme, verdanaIsNative, type Palette } from '../theme';
 import { Badge, Btn, Chip, Ico, Row, T } from '../ui';
 import { Box } from '../components/Inputs';
 
 const BUTTERFLY = require('../../assets/butterfly.png');
+// FEATURES_SOON §14 (both recorded).
+const BASIC_NOTE = 'Your device only has basic voices, so they may sound robotic. My own voice still reads my regular lines.';
+const CANT_HEAR = "Can't hear anything? Check that your sound is on and silent mode is off.";
+const DELETE_ASK = "Delete everything? Your entries, settings and words will be gone. This can't be undone.";
 
 function Section({ icon, title, note, children }: { icon: string; title: string; note?: string; children?: React.ReactNode }) {
   const t = useTheme();
@@ -67,7 +73,7 @@ function ThemePicker() {
   const st = useLexi();
   const w = Math.floor((t.contentW - 28 - 20) / 3);
   const h = Math.round(w * 1.15);
-  const keys: ThemeKey[] = ['auto', 'orange', 'purple', 'mint', 'night', 'ember'];
+  const keys: ThemeKey[] = ['auto', 'orange', 'purple', 'mint', 'cream', 'night', 'ember'];
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
       {keys.map(k => {
@@ -173,6 +179,10 @@ function VoiceSection() {
   const best = bestVoice();
   // A picked voice that was uninstalled falls back to the best one, so "Best" shows as chosen then.
   const autoPick = !S.voice || !(voices || []).some(v => v.identifier === S.voice);
+  // Basic voices only (§14): nothing tagged Natural, Premium, Enhanced or Google.
+  const basicOnly = !!voices && voices.length > 0 && !voices.some(v => /natural|neural|premium|enhanced|google/i.test(v.identifier + ' ' + v.name + ' ' + v.detail) || v.quality === 'Enhanced');
+  const [tipsOpen, setTipsOpen] = useState<boolean | null>(null);
+  const tipsShown = tipsOpen ?? basicOnly;
   const tip = Platform.OS === 'ios'
     ? 'For a more natural voice on iPhone: open Settings › Accessibility › Spoken Content › Voices › English, and download an Enhanced or Premium voice. Then come back here and pick it.'
     : 'For a more natural voice on Android: install or update "Speech Services by Google", then open Settings › Accessibility › Text-to-speech output and download a voice. Then come back here and pick it.';
@@ -188,6 +198,14 @@ function VoiceSection() {
       </View>
 
       <T bold style={{ marginTop: 6 }}>{natural ? 'Device voice (for everything else)' : 'Device voice'}</T>
+      {/* Voice help (§14): say so when the phone only has basic voices. */}
+      {basicOnly ? (
+        <View style={[s.tip, { backgroundColor: t.c.surface2 }]}>
+          <Ico e="🤖" size={28} />
+          <T em={0.9} style={{ flex: 1 }}>{BASIC_NOTE}</T>
+          <Chip icon="🔊" words="Read" a11y="Read aloud" onPress={() => speak(BASIC_NOTE)} />
+        </View>
+      ) : null}
       {voices === null ? <T soft>Looking for voices…</T> : null}
       {voices && !voices.length ? <T soft>This phone didn't list any voices. Lexi will use its default voice.</T> : null}
       {voices && voices.length ? (
@@ -208,15 +226,66 @@ function VoiceSection() {
         onChange={v => { setSetting('pitch', v); speak(SPEED_LINE, { voice: currentVoice()?.identifier }); }} />
       {natural ? <T em={0.75} soft>Pitch changes the device voice only. Speed changes both.</T> : null}
       <Row><Btn variant="primary" icon="🔊" label="Test Lexi's voice" onPress={() => speak(TEST_LINE)} /></Row>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
+        <T em={0.85} soft style={{ flex: 1 }}>{CANT_HEAR}</T>
+        <Chip icon="🔊" words="Read" a11y="Read aloud" onPress={() => speak(CANT_HEAR)} />
+      </View>
 
       <T bold style={{ marginTop: 4 }}>Read Lexi out loud?</T>
       <Row gap={8}><Seg k="autoread" v={true} label="Read every message" /><Seg k="autoread" v={false} label="Only when I tap 🔊" /></Row>
 
-      <View style={[s.tip, { backgroundColor: t.c.surface2 }]}>
-        <Ico e="💡" size={28} />
-        <T em={0.85} style={{ flex: 1 }}>{tip}</T>
-      </View>
+      {/* "Sounds robotic?" tips, open by default when the phone only has basic voices. */}
+      <Pressable onPress={() => setTipsOpen(!tipsShown)} accessibilityRole="button" accessibilityState={{ expanded: tipsShown }}
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44 }}>
+        <Ico e="💡" size={26} />
+        <T bold style={{ flex: 1 }}>Sounds robotic?</T>
+        <T soft>{tipsShown ? '▲' : '▼'}</T>
+      </Pressable>
+      {tipsShown ? (
+        <View style={[s.tip, { backgroundColor: t.c.surface2 }]}>
+          <T em={0.85} style={{ flex: 1 }}>{tip}</T>
+        </View>
+      ) : null}
       <T em={0.75} soft>Lexi's own voice was made with Piper TTS and the public-domain LJ Speech voice.</T>
+    </Section>
+  );
+}
+
+/** 🔔 Reminders (§13): off by default; permission is asked only when they're turned on. */
+function Reminder() {
+  const t = useTheme();
+  const st = useLexi();
+  const r = st.settings.reminders;
+  const set = (next: Settings['reminders']) => { setSetting('reminders', next); applyReminders(next); };
+  const turnOn = async () => {
+    if (!(await askPermission())) { toast('Turn on notifications for Lexi in your phone settings to get reminders.'); return; }
+    set({ ...r, on: true });
+  };
+  const shift = (mins: number) => {
+    const total = (((r.hour * 60 + r.minute + mins) % 1440) + 1440) % 1440;
+    set({ ...r, hour: Math.floor(total / 60), minute: total % 60 });
+  };
+  return (
+    <Section icon="🔔" title="Reminders" note={'A kind nudge at a time you pick: "' + REMINDER_BODY + '"'}>
+      <Row gap={8}>
+        <Chip label="Off" selected={!r.on} onPress={() => set({ ...r, on: false })} />
+        <Chip label="On" selected={r.on} onPress={turnOn} />
+      </Row>
+      {r.on ? (
+        <>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Chip words="Earlier" icon="➖" a11y="Earlier by 15 minutes" onPress={() => shift(-15)} />
+            <Text style={[t.text(1.4, { display: true, bold: true }), { minWidth: t.fs * 6, textAlign: 'center' }]} accessibilityLabel={'Reminder time ' + fmtClock(r.hour, r.minute)}>
+              {fmtClock(r.hour, r.minute)}
+            </Text>
+            <Chip words="Later" icon="➕" a11y="Later by 15 minutes" onPress={() => shift(15)} />
+          </View>
+          <Row gap={8}>
+            <Chip label="Daily" selected={r.every === 'daily'} onPress={() => set({ ...r, every: 'daily' })} />
+            <Chip label="Every other day" selected={r.every === 'alternate'} onPress={() => set({ ...r, every: 'alternate' })} />
+          </Row>
+        </>
+      ) : null}
     </Section>
   );
 }
@@ -251,6 +320,13 @@ export function SettingsScreen() {
   const st = useLexi();
   const S = st.settings;
   const [wipeAsk, setWipeAsk] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const makePdf = async (range: 'month' | 'all') => {
+    setExporting(true);
+    try { if (!(await shareJournalPdf(st.entries, range))) toast("Sharing isn't available on this phone."); }
+    catch (e) { console.warn('pdf', e); toast("I couldn't make the PDF. Try again."); }
+    finally { setExporting(false); }
+  };
   const customs: [string, number, { e: string; label: string; band?: string }][] = [];
   (st.custom.mood || []).forEach((m, i) => customs.push(['mood', i, m]));
   TOPICS.forEach(tp => (st.custom[tp.key] || []).forEach((m, i) => customs.push([tp.key, i, m])));
@@ -287,6 +363,24 @@ export function SettingsScreen() {
 
       <Section icon="↔️" title="Letter spacing" note="More space between letters and words can make reading easier.">
         <Row gap={8}>{(Object.keys(LETTERS) as Settings['letters'][]).map(k => <Seg key={k} k="letters" v={k} label={LETTERS[k][0]} labelStyle={{ letterSpacing: t.fs * LETTERS[k][1] }} />)}</Row>
+      </Section>
+
+      <Section icon="🖍️" title="Highlight" note="While Lexi reads, the word she's saying lights up.">
+        <Row gap={8}>
+          {(Object.keys(HIGHLIGHTS) as Settings['highlight'][]).map(k => (
+            <Seg key={k} k="highlight" v={k} label={HIGHLIGHTS[k][0]}>
+              {HIGHLIGHTS[k][1] ? <View style={{ width: 18, height: 18, borderRadius: 5, backgroundColor: HIGHLIGHTS[k][1] as string, borderWidth: 1, borderColor: t.c.line }} /> : null}
+            </Seg>
+          ))}
+        </Row>
+      </Section>
+
+      <Section icon="👆" title="Tap a word to hear it" note="Tap any word in Lexi's messages or your journal to hear just that word.">
+        <Row gap={8}><Seg k="tapWord" v={true} label="On" /><Seg k="tapWord" v={false} label="Off" /></Row>
+      </Section>
+
+      <Section icon="⏩" title="Message pace">
+        <Row gap={8}>{(Object.keys(PACES) as Settings['pace'][]).map(k => <Seg key={k} k="pace" v={k} label={PACES[k]} />)}</Row>
       </Section>
 
       <VoiceSection />
@@ -338,16 +432,26 @@ export function SettingsScreen() {
         <Row gap={8}><Seg k="showStreak" v={false} label="Hide them" /><Seg k="showStreak" v={true} label="Show streak and word count" /></Row>
       </Section>
 
+      <Reminder />
+
+      <Section icon="📤" title="Share my journal" note="Make a PDF of your journal, then choose where to send or save it.">
+        <Row gap={8}>
+          <Chip icon="📄" label="Make a PDF: last 30 days" disabled={exporting} onPress={() => makePdf('month')} />
+          <Chip icon="📚" label="Make a PDF: everything" disabled={exporting} onPress={() => makePdf('all')} />
+        </Row>
+      </Section>
+
       <Section icon="💾" title="Your journal" note="Saved on this device only.">
         <Row gap={8}>
+          <Chip icon="▶️" label="Run quick start" onPress={() => quickStart()} />
           <Chip icon="🔁" label="Replay Lexi's intro" onPress={() => { showView('home'); intro(); }} />
-          <Chip icon="🗑️" label="Delete all entries" onPress={() => setWipeAsk(true)} />
+          <Chip icon="🗑️" label="Delete everything" onPress={() => setWipeAsk(true)} />
         </Row>
         {wipeAsk ? (
           <View style={[s.confirm, { backgroundColor: t.c.surface2 }]}>
-            <T bold style={{ flexGrow: 1, flexBasis: t.fs * 10 }}>{'Delete all ' + st.entries.length + " entries? This can't be undone."}</T>
-            <Btn label="Keep them" onPress={() => setWipeAsk(false)} />
-            <Btn variant="danger" label="Delete all" onPress={() => { setWipeAsk(false); removeAllEntries(); toast('All entries deleted. 🗑️'); }} />
+            <T bold style={{ flexGrow: 1, flexBasis: t.fs * 10 }}>{DELETE_ASK}</T>
+            <Btn label="Keep everything" onPress={() => setWipeAsk(false)} />
+            <Btn variant="danger" label="Delete everything" onPress={async () => { setWipeAsk(false); await deleteEverything(); applyReminders(state.settings.reminders); toast('Everything is deleted. 🗑️'); }} />
           </View>
         ) : null}
       </Section>

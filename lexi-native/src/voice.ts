@@ -4,6 +4,7 @@
 import { useSyncExternalStore } from 'react';
 import { requireOptionalNativeModule } from 'expo';
 import type { ExpoSpeechRecognitionErrorEvent, ExpoSpeechRecognitionResultEvent } from 'expo-speech-recognition';
+import { Paths } from 'expo-file-system';
 import { BANDS, TOPICS } from './content';
 import { state, toast } from './store';
 import { stopSpeaking } from './speech';
@@ -14,7 +15,16 @@ const SR: SRModule | null = requireOptionalNativeModule('ExpoSpeechRecognition')
   : null;
 
 /** What the mic types into. `continuous` keeps listening through pauses until the person taps stop. */
-export type VoiceTarget = { id: string; getText: () => string; setText: (t: string) => void; continuous?: boolean };
+export type VoiceTarget = {
+  id: string; getText: () => string; setText: (t: string) => void; continuous?: boolean;
+  /** Voice entries (FEATURES_SOON §4): keep the audio and hand back the file once it's written. */
+  onAudio?: (uri: string) => void;
+};
+/** Whether this phone can keep the recording next to the words (Android 13+ and iOS). */
+export function canKeepRecording(): boolean {
+  try { return !!SR && !!SR.supportsRecording(); } catch { return false; }
+}
+export const voiceTypingAvailable = () => !!SR;
 
 let active: VoiceTarget | null = null;
 let base = '', committed = '', interim = '';
@@ -32,9 +42,12 @@ function vocabulary(): string[] {
 }
 function startSession(sr: SRModule, onDevice: boolean) {
   onDeviceSession = onDevice; gotResult = false;
+  const keep = !!active?.onAudio && canKeepRecording();
   sr.start({
     lang: 'en-US', interimResults: true, continuous: !!active?.continuous, addsPunctuation: true, iosTaskHint: 'dictation',
     requiresOnDeviceRecognition: onDevice, contextualStrings: vocabulary(),
+    // The recording goes in the app's documents folder (not the cache), so the journal can keep it.
+    ...(keep ? { recordingOptions: { persist: true, outputDirectory: Paths.document.uri } } : {}),
   });
 }
 function supportsOnDevice(sr: SRModule): boolean {
@@ -84,6 +97,10 @@ function wire(sr: SRModule) {
       return;
     }
     if (ev.error !== 'aborted') toast(m[ev.error] || 'Voice typing stopped. Try again. 🎙');
+  });
+  // The persisted file is only safe to use once audio capture has ended.
+  sr.addListener('audioend', (ev: { uri: string | null }) => {
+    if (ev?.uri && active?.onAudio && !retryWithoutOnDevice) active.onAudio(ev.uri);
   });
   sr.addListener('end', () => {
     if (retryWithoutOnDevice && active) {
