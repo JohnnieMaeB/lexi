@@ -16,13 +16,15 @@ import { ChatLog } from './src/components/ChatLog';
 import { Dock } from './src/components/Composer';
 import { FreeWriteSheet } from './src/components/FreeWrite';
 import { AiLabel, HelpPill, HelpSheet } from './src/components/Help';
+import { VoiceEntrySheet } from './src/components/VoiceEntry';
+import { applyReminders } from './src/reminders';
 import { EmojiPicker, Toast } from './src/components/Overlays';
 import { closeEmoji, getEmojiTarget } from './src/fields';
 import { JournalScreen } from './src/screens/Journal';
 import { SettingsScreen } from './src/screens/Settings';
 import { boot } from './src/script';
 import { loadVoices } from './src/speech';
-import { initStore, setHelp, setSheet, showView, state, useLexi } from './src/store';
+import { initStore, setHelp, setSheet, setVoiceSheet, showView, state, useLexi } from './src/store';
 import { shortDate } from './src/text';
 import { ThemeContext, makeTheme, useTheme } from './src/theme';
 import { T } from './src/ui';
@@ -31,6 +33,8 @@ import { stopVoice } from './src/voice';
 SplashScreen.preventAutoHideAsync().catch(() => {});
 initStore();
 loadVoices(); // so the first message is already read in the best voice
+// Every-other-day reminders are single dates, so top them up on each launch (this never asks for permission).
+if (state.settings.reminders.on) applyReminders(state.settings.reminders);
 
 export default function App() {
   const [loaded, error] = useFonts({ Lexend_400Regular, Lexend_600SemiBold, AtkinsonHyperlegible_400Regular, AtkinsonHyperlegible_700Bold });
@@ -74,6 +78,7 @@ function useBackButton() {
       if (getEmojiTarget()) { closeEmoji(); return true; }
       if (state.helpOpen) { setHelp(false); return true; }
       if (state.sheetOpen) { stopVoice('fw'); setSheet(false); return true; }
+      if (state.voiceOpen) { stopVoice('voice-entry'); setVoiceSheet(false); return true; }
       if (state.view !== 'home') { showView('home'); return true; }
       return false;
     });
@@ -115,6 +120,7 @@ function Shell() {
         <Dock bottomInset={insets.bottom} keyboardOpen={kb} />
       </KeyboardAvoidingView>
       <FreeWriteSheet />
+      <VoiceEntrySheet />
       <HelpSheet />
       <EmojiPicker />
       <Toast />

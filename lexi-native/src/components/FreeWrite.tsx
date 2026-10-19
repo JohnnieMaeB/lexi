@@ -5,7 +5,8 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { aiErrorText, claude, parseJsonReply } from '../ai';
 import { say } from '../chat';
-import { closeEmoji, toggleEmoji, useField, useVoiceTarget } from '../fields';
+import { closeEmoji, toggleEmoji, useField, useVoiceTarget, type Field } from '../fields';
+import { STARTERS } from '../content';
 import { checkSavedWriting, safetyFlow } from '../script';
 import { speak } from '../speech';
 import { addEntry, aiReady, clearDraft, loadDraft, saveDraft, setSheet, showView, state, toast, useLexi } from '../store';
@@ -23,6 +24,24 @@ type Tidy =
   | { status: 'error'; msg: string }
   | { status: 'none' }
   | { status: 'ready'; original: string; fixes: PlacedFix[]; accepted: boolean[]; applied: string };
+
+/** A starter goes in at the cursor, plus a space, starting a new line unless the text before it already ends one. */
+function insertStarter(f: Field, starter: string) {
+  const before = f.ref.current.slice(0, f.sel.current.start);
+  f.insert((before && !before.endsWith('\n') ? '\n' : '') + starter + ' ');
+}
+
+/** "there 📍 a place", with 🔊 saying the word and then its meaning. */
+function MeaningLine({ word, emoji, meaning, bold }: { word: string; emoji?: string; meaning?: string; bold?: boolean }) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+      <T raw bold={bold}>{word}</T>
+      {emoji ? <Ico e={emoji} size={24} /> : null}
+      {meaning ? <T em={0.9} soft raw>{meaning}</T> : null}
+      <Chip icon="🔊" words="Hear it" a11y={'Hear ' + word} onPress={() => { speak(word, { device: true }); if (meaning) speak(meaning, { queue: true, device: true }); }} />
+    </View>
+  );
+}
 
 export function FreeWriteSheet() {
   const st = useLexi();
@@ -124,6 +143,10 @@ function Sheet() {
           </View>
 
           <T bold em={0.9}>Your words</T>
+          {/* Sentence starters (§11): insert at the cursor, on a new line if needed, and say it. */}
+          <Row gap={8}>
+            {STARTERS.map(s0 => <Chip key={s0} label={s0} onPress={() => { insertStarter(f, s0); speak(s0); }} />)}
+          </Row>
           <Box field={f} multiline lines={7} placeholder="Write anything. Spelling doesn't matter here." accessibilityLabel="Your words" autoFocus={!f.value} />
 
           <Row gap={8}>
@@ -147,12 +170,19 @@ function Sheet() {
                     const on = tidy.accepted[i];
                     return (
                       <View key={i + fx.from + fx.at} style={[s.fix, { borderColor: on ? t.c.ring : t.c.line, backgroundColor: on ? t.c.sel : t.c.field }]}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
-                          <T raw>{fx.from}</T><T>→</T><T raw bold>{fx.to}</T>
-                          {fx.kind === 'sound-alike' && fx.hint ? <T em={0.8} soft raw>{'(' + fx.hint + ')'}</T> : null}
-                        </View>
+                        {fx.kind === 'sound-alike' ? (
+                          // Sound-alike (§10): both words on their own line, each with its emoji, meaning and 🔊.
+                          <View style={{ gap: 6 }}>
+                            <MeaningLine word={fx.to} emoji={fx.emoji} meaning={fx.hint} bold />
+                            <MeaningLine word={fx.from} emoji={fx.wrongEmoji} meaning={fx.wrongHint} />
+                          </View>
+                        ) : (
+                          <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+                            <T raw>{fx.from}</T><T>→</T><T raw bold>{fx.to}</T>
+                          </View>
+                        )}
                         <Row gap={8}>
-                          <Chip icon="🔊" words="Hear it" a11y={'Hear ' + fx.to} onPress={() => hear(fx)} />
+                          {fx.kind === 'sound-alike' ? null : <Chip icon="🔊" words="Hear it" a11y={'Hear ' + fx.to} onPress={() => hear(fx)} />}
                           <Chip icon="✔️" label="Use" selected={on} onPress={() => choose(tidy.accepted.map((a, j) => (j === i ? true : a)))} />
                           <Chip icon="✋🏽" label="Keep mine" selected={!on} onPress={() => choose(tidy.accepted.map((a, j) => (j === i ? false : a)))} />
                         </Row>

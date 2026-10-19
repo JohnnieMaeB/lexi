@@ -4,12 +4,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Image, Pressable, ScrollView, StyleSheet, Text, View, type ScrollViewInstance } from 'react-native';
 import { addMeEmoji, reduceMotion, useChatItems, type ChatItem } from '../chat';
 import type { Option } from '../content';
-import { speak } from '../speech';
+import { speak, useReadingWord } from '../speech';
 import { useLexi } from '../store';
 import { emojiList, stripEmoji } from '../text';
 import { R, useTheme } from '../theme';
 import { Choice, PopIn, Row, T } from '../ui';
 import { CardView } from './Cards';
+import { WordText } from './WordText';
 
 const BUTTERFLY = require('../../assets/butterfly.png');
 type CardItem = Extract<ChatItem, { type: 'card' }>;
@@ -24,27 +25,43 @@ function Ava({ e, show, size }: { e: string; show: boolean; size: number }) {
   );
 }
 
-function SpeakButton({ text, color }: { text: string; color: string }) {
+function SpeakButton({ text, color, target }: { text: string; color: string; target?: string }) {
   const t = useTheme();
   if (!stripEmoji(text)) return null;
   return (
-    <Pressable onPress={() => speak(text)} accessibilityRole="button" accessibilityLabel="Read aloud" hitSlop={10}
+    <Pressable onPress={() => speak(text, { target })} accessibilityRole="button" accessibilityLabel="Read aloud" hitSlop={10}
       style={({ pressed }) => ({ alignSelf: 'flex-end', marginTop: 2, paddingHorizontal: 4, opacity: pressed ? 1 : 0.75 })}>
       {t.icons ? <Text style={t.emoji(22)}>🔊</Text> : <T em={0.8} color={color}>Read</T>}
     </Pressable>
   );
 }
 
-/** Bot bubble shell: fixed width, radius 22, a 6 px corner pointing at 🤖 on the last bubble. */
-function BotBubble({ last, info, children }: { last: boolean; info?: boolean; children: React.ReactNode }) {
+/** Bot bubble shell: fixed width, radius 22, a 6 px corner pointing at 🤖 on the last bubble. While Lexi reads
+ *  it, it gets a ring (FEATURES_SOON §1); the spoken word is highlighted inside by WordText. */
+function BotBubble({ last, info, target, children }: { last: boolean; info?: boolean; target?: string; children: React.ReactNode }) {
   const t = useTheme();
+  const reading = useReadingWord(target) !== null;
   return (
     <View style={[s.bubble, t.shadow, {
       width: t.bubbleW, paddingHorizontal: Math.round(t.fs * 0.85), paddingVertical: Math.round(t.fs * 0.6),
       backgroundColor: info ? t.c.surface : t.c.bot, borderBottomLeftRadius: last && t.icons ? 6 : R.m,
-      borderWidth: info ? 2 : t.c.botLine ? 1 : 0, borderStyle: info ? 'dashed' : 'solid', borderColor: info ? t.c.bot : t.c.botLine || 'transparent',
+      borderWidth: reading ? 3 : info ? 2 : t.c.botLine ? 1 : 0, borderStyle: info && !reading ? 'dashed' : 'solid',
+      borderColor: reading ? t.c.ring : info ? t.c.bot : t.c.botLine || 'transparent',
     }]}>
       {children}
+    </View>
+  );
+}
+
+/** "I tap for next": ▸ Next under Lexi's bubble; her next message waits for it. */
+function NextPill({ go }: { go: () => void }) {
+  const t = useTheme();
+  return (
+    <View style={{ paddingLeft: t.icons ? t.avatarBot + 8 : 0, marginTop: -12 }}>
+      <Pressable onPress={go} accessibilityRole="button" accessibilityLabel="Next message"
+        style={({ pressed }) => [t.shadow, { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44, paddingHorizontal: 18, borderRadius: R.pill, backgroundColor: t.c.yes, transform: [{ scale: pressed ? 0.96 : 1 }] }]}>
+        <T bold color={t.c.onYes}>▸ Next</T>
+      </Pressable>
     </View>
   );
 }
@@ -64,18 +81,19 @@ function Celebration({ text }: { text: string }) {
   );
 }
 
-function BotRow({ text, info, last }: { text: string; info?: boolean; last: boolean }) {
+function BotRow({ id, text, info, last }: { id: string; text: string; info?: boolean; last: boolean }) {
   const t = useTheme();
   const emojiOnly = !stripEmoji(text);
   // Celebration rows are left out in words-only mode and under Reduce Motion.
   if (emojiOnly && (!t.icons || reduceMotion)) return null;
+  const ink = info ? t.c.ink : t.c.botInk;
   return (
     <PopIn style={s.row}>
       <Ava e="🤖" show={last} size={t.avatarBot} />
       {emojiOnly ? <Celebration text={text} /> : (
-        <BotBubble last={last} info={info}>
-          <T color={info ? t.c.ink : t.c.botInk}>{text}</T>
-          <SpeakButton text={text} color={info ? t.c.ink : t.c.botInk} />
+        <BotBubble last={last} info={info} target={id}>
+          <WordText text={text} target={id} color={ink} />
+          <SpeakButton text={text} color={ink} target={id} />
         </BotBubble>
       )}
     </PopIn>
@@ -89,8 +107,8 @@ function QuestionRow({ item, last }: { item: CardItem; last: boolean }) {
   return (
     <PopIn style={s.row}>
       <Ava e="🤖" show={last} size={t.avatarBot} />
-      <BotBubble last={last}>
-        <T color={t.c.botInk}>{text}</T>
+      <BotBubble last={last} target={item.id}>
+        <WordText text={text} target={item.id} color={t.c.botInk} />
         <Row gap={10} style={{ marginTop: 10 }}>
           {options.map((o, i) => (
             <Choice key={o.label} big label={o.label} icon={o.e} filled={!!yn && i === 0}
@@ -98,7 +116,7 @@ function QuestionRow({ item, last }: { item: CardItem; last: boolean }) {
               onPress={() => { item.finish(o.v, i); addMeEmoji([o.e], o.label); }} />
           ))}
         </Row>
-        <SpeakButton text={text} color={t.c.botInk} />
+        <SpeakButton text={text} color={t.c.botInk} target={item.id} />
       </BotBubble>
     </PopIn>
   );
@@ -192,7 +210,8 @@ export function ChatLog({ visible }: { visible: boolean }) {
         onContentSizeChange={() => { if (pending.current) { pending.current = false; ref.current?.scrollToEnd({ animated: !reduceMotion }); } }}>
         {items.map((it, i) => {
           const last = side(items[i + 1]) !== side(it);
-          if (it.type === 'bot') return <BotRow key={it.id} text={it.text} info={it.info} last={last} />;
+          if (it.type === 'bot') return <BotRow key={it.id} id={it.id} text={it.text} info={it.info} last={last} />;
+          if (it.type === 'next') return <NextPill key={it.id} go={it.go} />;
           if (it.type === 'typing') return <Typing key={it.id} last={last} />;
           if (it.type === 'me') return <MeRow key={it.id} item={it} last={last} />;
           if (it.card === 'question') return <QuestionRow key={it.id} item={it} last={last} />;
