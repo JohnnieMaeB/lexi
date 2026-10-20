@@ -70,7 +70,7 @@ export const narrowDay = (d: Date) => WEEKDAYS[d.getDay()][0];
 export function fmtTime(ms: number): string {
   const d = new Date(ms);
   const h = d.getHours() % 12 || 12;
-  return h + ':' + String(d.getMinutes()).padStart(2, '0') + ' ' + (d.getHours() < 12 ? 'AM' : 'PM');
+  return h + ':' + String(d.getMinutes()).padStart(2, '0') + ' ' + (d.getHours() < 12 ? 'am' : 'pm');
 }
 
 export const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));

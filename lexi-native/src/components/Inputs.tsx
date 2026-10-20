@@ -1,152 +1,104 @@
-// Inputs: the themed text box, the 🎙 mic button, a note line (text + 🙂 + 🎙) and the custom-word adder.
-import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Pressable, StyleSheet, Text, TextInput, View, type StyleProp, type TextInputInstance, type TextInputProps, type TextStyle, type ViewStyle } from 'react-native';
-import { BANDS, type BandKey, type Pick } from '../content';
+// Inputs: the themed text box, the 🎙 mic button, a note line (text + emoji + mic) and the ➕ My own adder.
+import React, { useRef, useState } from 'react';
+import { StyleSheet, TextInput, View, type StyleProp, type TextInputInstance, type TextInputProps, type TextStyle } from 'react-native';
+import type { Pick } from '../content';
 import { closeEmoji, toggleEmoji, useField, useVoiceTarget, type Field } from '../fields';
 import { firstEmoji } from '../text';
-import { useTheme } from '../theme';
-import { Btn, Chip, Row, Swatch, T } from '../ui';
+import { R, useTheme } from '../theme';
+import { Btn, Chip, IconBtn, Row, T } from '../ui';
 import { stopVoice, toggleVoice, useListeningId, type VoiceTarget } from '../voice';
-import { reduceMotion } from '../chat';
 
 let fieldUid = 0;
 export const useFieldId = (p: string) => useRef(p + '-' + (++fieldUid)).current;
 
 type BoxProps = TextInputProps & { field: Field; style?: StyleProp<TextStyle>; lines?: number };
-/** A text box: soft fill, soft outline, radius 14, the person's font and spacing. */
+/** A text box (§10): sunken fill, a 1 px strong edge, 12 px corners, the person's font and spacing. */
 export const Box = React.forwardRef<TextInputInstance, BoxProps>(function Box({ field, style, lines = 1, multiline, ...rest }, ref) {
   const t = useTheme();
-  const base = t.text(1);
+  const base = t.txt('body');
   return (
     <TextInput
       ref={ref}
       value={field.value}
       onChangeText={field.onChange}
       onSelectionChange={field.onSelectionChange}
-      placeholderTextColor={t.c.inkSoft}
+      placeholderTextColor={t.c.inkMuted}
       multiline={multiline}
       textAlignVertical={multiline ? 'top' : 'center'}
       style={[base, s.box, {
-        borderColor: t.c.line, backgroundColor: t.c.field,
-        minHeight: multiline ? (base.lineHeight as number) * lines + 18 : 48,
-        paddingHorizontal: t.fs * 0.75,
+        borderColor: t.c.borderStrong, backgroundColor: t.c.sunken,
+        minHeight: multiline ? (base.lineHeight as number) * lines + 20 : 48,
+        paddingHorizontal: Math.round(t.fs * 0.75),
       }, style]}
       {...rest}
     />
   );
 });
 
-/** 🎙 Mic: tap to talk, tap again to stop. Pulses while listening. */
-export function MicButton({ target, variant = 'round', size = 44 }: { target: VoiceTarget; variant?: 'round' | 'chip'; size?: number }) {
-  const t = useTheme();
+/** 🎙 Mic: tap to talk, tap again to stop. While on, it shows the stop square. */
+export function MicButton({ target, variant = 'round' }: { target: VoiceTarget; variant?: 'round' | 'chip' }) {
   const on = useListeningId() === target.id;
-  const pulse = useRef(new Animated.Value(1)).current;
-  useEffect(() => {
-    if (!on || reduceMotion) { pulse.setValue(1); return; }
-    const loop = Animated.loop(Animated.sequence([
-      Animated.timing(pulse, { toValue: 0.55, duration: 600, useNativeDriver: true }),
-      Animated.timing(pulse, { toValue: 1, duration: 600, useNativeDriver: true }),
-    ]));
-    loop.start();
-    return () => loop.stop();
-  }, [on, pulse]);
-  useEffect(() => () => stopVoice(target.id), [target.id]);
+  React.useEffect(() => () => stopVoice(target.id), [target.id]);
   const press = () => { closeEmoji(); toggleVoice(target); };
-  const a11y = on ? 'Stop voice typing' : 'Voice typing';
   if (variant === 'chip') {
-    return (
-      <Animated.View style={{ opacity: pulse }}>
-        <Chip icon={on ? '⏹️' : '🎙'} label={on ? 'Stop' : 'Speak'} selected={on} onPress={press} a11y={a11y} />
-      </Animated.View>
-    );
+    return <Chip icon={on ? 'stop' : 'mic'} label={on ? 'Stop' : 'Speak'} selected={on} onPress={press} a11y={on ? 'Stop voice typing' : 'Voice typing'} />;
   }
-  return (
-    <Animated.View style={{ opacity: pulse }}>
-      <Pressable onPress={press} accessibilityRole="button" accessibilityLabel={a11y} accessibilityState={{ selected: on }}
-        hitSlop={4}
-        style={[s.round, { minWidth: size, height: size, backgroundColor: on ? t.c.yes : 'transparent', paddingHorizontal: t.icons ? 0 : 10 }]}>
-        {t.icons
-          ? <Text style={t.emoji(Math.round(size * 0.64))}>{on ? '⏹️' : '🎙'}</Text>
-          : <T em={0.8} color={on ? t.c.onYes : t.c.ink}>{on ? 'Stop' : 'Speak'}</T>}
-      </Pressable>
-    </Animated.View>
-  );
+  return <IconBtn icon={on ? 'stop' : 'mic'} label={on ? 'Stop voice typing' : 'Voice typing'} words={on ? 'Stop' : 'Speak'} variant={on ? 'ink' : 'surface'} selected={on} onPress={press} />;
 }
 
-/** Round 🙂 button that opens the emoji picker for a field. */
-export function EmojiButton({ field, k, size = 44, single }: { field: Field; k: string; size?: number; single?: boolean }) {
-  const t = useTheme();
-  return (
-    <Pressable onPress={() => toggleEmoji({ key: k, insert: single ? field.set : field.insert, single })}
-      accessibilityRole="button" accessibilityLabel="Add emoji" hitSlop={4}
-      style={[s.round, { minWidth: size, height: size, paddingHorizontal: t.icons ? 0 : 10 }]}>
-      {t.icons ? <Text style={t.emoji(Math.round(size * 0.64))}>🙂</Text> : <T em={0.8}>Emoji</T>}
-    </Pressable>
-  );
+/** The smile button that opens the emoji picker for a field. */
+export function EmojiButton({ field, k, single, variant = 'plain' }: { field: Field; k: string; single?: boolean; variant?: 'plain' | 'surface' }) {
+  return <IconBtn icon="emoji" label="Add emoji" words="Emoji" variant={variant} onPress={() => toggleEmoji({ key: k, insert: single ? field.set : field.insert, single })} />;
 }
 
-/** A two-line note with 🙂 and 🎙 beside it (`.note-line`). */
+/** A two-line note with the emoji and mic buttons beside it (`.note-line`). */
 export function NoteLine({ field, placeholder, disabled }: { field: Field; placeholder: string; disabled?: boolean }) {
   const id = useFieldId('note');
   const voice = useVoiceTarget(id, field);
   return (
     <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
       <Box field={field} multiline lines={2} placeholder={placeholder} accessibilityLabel={placeholder} editable={!disabled} style={{ flex: 1 }} />
-      <View style={{ gap: 6 }}>
-        <Chip icon="🙂" words="Emoji" a11y="Add emoji" onPress={() => toggleEmoji({ key: id, insert: field.insert })} />
-        <MicButton target={voice} variant="chip" />
+      <View style={{ gap: 8 }}>
+        <EmojiButton field={field} k={id} variant="surface" />
+        <MicButton target={voice} />
       </View>
     </View>
   );
 }
 
-/** ➕ My own: add a custom word and emoji (with a band for moods). */
-export function CustomAdder({ withBand, onAdd }: { withBand: boolean; onAdd: (m: Pick) => void }) {
+/** ➕ My own: a word and an emoji. A mood joins the group on show, so there's no group to choose here. */
+export function CustomAdder({ onAdd, onClose }: { onAdd: (m: Pick) => void; onClose: () => void }) {
   const t = useTheme();
-  const [open, setOpen] = useState(false);
-  const [band, setBand] = useState<BandKey>('content');
   const [err, setErr] = useState('');
   const emo = useField(''), word = useField('');
   const id = useFieldId('emo');
   const wordRef = useRef<TextInputInstance>(null);
+  React.useEffect(() => { const h = setTimeout(() => wordRef.current?.focus(), 50); return () => clearTimeout(h); }, []);
   const submit = () => {
     const e = firstEmoji(emo.ref.current), w = word.ref.current.trim();
     if (!e && !w) { setErr('Add a word or an emoji.'); return; }
-    onAdd({ e: e || '🏷️', label: w || e, ...(withBand ? { band } : {}) });
-    emo.set(''); word.set(''); setErr(''); setOpen(false); closeEmoji();
+    onAdd({ e: e || '🏷️', label: w || e });
+    emo.set(''); word.set(''); setErr(''); closeEmoji();
   };
   return (
-    <View style={{ gap: 10, alignItems: 'flex-start' }}>
-      <Chip icon="➕" label="My own" selected={open} onPress={() => { setOpen(!open); if (!open) setTimeout(() => wordRef.current?.focus(), 50); }} />
-      {open ? (
-        <View style={[s.adder, { borderColor: t.c.line }]}>
-          <Row gap={8}>
-            <Box field={emo} placeholder="🙂" accessibilityLabel="Emoji" maxLength={16} style={{ width: t.fs * 4.2, textAlign: 'center' }} />
-            <Chip icon="🙂" label="Pick" onPress={() => toggleEmoji({ key: id, insert: emo.set, single: true })} />
-            <Box ref={wordRef} field={word} placeholder="Your word" accessibilityLabel="Your word" maxLength={28}
-              returnKeyType="done" onSubmitEditing={submit} style={{ flexGrow: 1, flexBasis: t.fs * 9, minWidth: 0 }} />
-          </Row>
-          {withBand ? (
-            <Row gap={8} style={{ alignSelf: 'stretch' }}>
-              {BANDS.map(b => (
-                <Chip key={b.key} label={b.name} selected={band === b.key} onPress={() => setBand(b.key)}>
-                  <Swatch color={t.band(b.key).b} />
-                </Chip>
-              ))}
-            </Row>
-          ) : null}
-          {err ? <T em={0.9} bold color={t.c.danger}>{err}</T> : null}
-          <Row end style={{ alignSelf: 'stretch' }}><Btn variant="primary" icon="✔️" label="Add" onPress={submit} /></Row>
-        </View>
-      ) : null}
+    <View style={[s.adder, { borderColor: t.c.borderStrong }]}>
+      <T v="label" w={600}>My own</T>
+      <Row gap={8}>
+        <Box field={emo} placeholder="🙂" accessibilityLabel="Emoji" maxLength={16} style={{ width: Math.round(t.fs * 4.2), textAlign: 'center' }} />
+        <Chip icon="emoji" label="Pick" onPress={() => toggleEmoji({ key: id, insert: emo.set, single: true })} />
+        <Box ref={wordRef} field={word} placeholder="Your word" accessibilityLabel="Your word" maxLength={28}
+          returnKeyType="done" onSubmitEditing={submit} style={{ flexGrow: 1, flexBasis: t.fs * 9, minWidth: 0 }} />
+      </Row>
+      {err ? <T v="label" color={t.danger.bg}>{err}</T> : null}
+      <Row end>
+        <Btn label="Cancel" height={48} onPress={() => { closeEmoji(); onClose(); }} />
+        <Btn variant="primary" icon="add" label="Add" height={48} onPress={submit} />
+      </Row>
     </View>
   );
 }
 
-export function Spacer({ style }: { style?: StyleProp<ViewStyle> }) { return <View style={[{ flex: 1 }, style]} />; }
-
 const s = StyleSheet.create({
-  box: { borderWidth: 2, borderRadius: 14, paddingVertical: 8 },
-  round: { alignItems: 'center', justifyContent: 'center', borderRadius: 999 },
-  adder: { alignSelf: 'stretch', gap: 10, padding: 12, borderWidth: 2, borderStyle: 'dashed', borderRadius: 16 },
+  box: { borderWidth: 1, borderRadius: R.md, paddingVertical: 10 },
+  adder: { alignSelf: 'stretch', gap: 12, padding: 16, borderWidth: 1.5, borderStyle: 'dashed', borderRadius: R.lg },
 });

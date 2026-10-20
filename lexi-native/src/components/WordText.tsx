@@ -6,7 +6,7 @@ import { Text, type StyleProp, type TextStyle } from 'react-native';
 import { speakWord, useReadingWord } from '../speech';
 import { useLexi } from '../store';
 import { speechKey, stripEmoji, tokenize } from '../text';
-import { useTheme } from '../theme';
+import { R, useTheme } from '../theme';
 
 export function WordText({ text, target, em = 1, bold, color, style }: {
   text: string; target?: string; em?: number; bold?: boolean; color?: string; style?: StyleProp<TextStyle>;
@@ -22,7 +22,7 @@ export function WordText({ text, target, em = 1, bold, color, style }: {
   const hl = t.hl;
   const lit = (i: number) => hl && i >= 0 && (i === reading || i === flash);
   return (
-    <Text style={[t.text(em, { bold, color }), style]}>
+    <Text style={[t.txt('body', { em, w: bold ? 700 : undefined, color }), style]}>
       {tokens.map((tk, k) => {
         if (tk.space) return <Text key={k}>{t.rich(tk.s)}</Text>;
         const shown = t.icons ? t.toned(tk.s) : stripEmoji(t.toned(tk.s));
@@ -37,7 +37,7 @@ export function WordText({ text, target, em = 1, bold, color, style }: {
               if (timer.current) clearTimeout(timer.current);
               timer.current = setTimeout(() => setFlash(-1), 700);
             } : undefined}
-            style={on && hl ? { backgroundColor: hl.bg, color: hl.ink, borderRadius: 4 } : undefined}>
+            style={on && hl ? { backgroundColor: hl.bg, color: hl.ink, borderRadius: R.xs } : undefined}>
             {shown}
           </Text>
         );

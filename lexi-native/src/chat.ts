@@ -3,21 +3,27 @@
 import { useSyncExternalStore } from 'react';
 import { AccessibilityInfo } from 'react-native';
 import type { Option } from './content';
-import { emit as emitStore, state } from './store';
+import { reduceMotion, savedHaptic } from './a11y';
+import { state } from './store';
 import { speak } from './speech';
-import { sleep, stripEmoji } from './text';
+import { sleep, speechKey } from './text';
 
-/** `question` is a bot bubble with its answer pills inside (Yes / No on Screens 11-13).
+/** `question` is a Lexi bubble with its Yes / No pills under the words.
+ *  `actions` is the Home block: Guided check-in, Write on my own and the This week card.
  *  `crisis` is the help-lines card for the chosen country (`emergencyOnly` shows just the emergency number). */
-export type CardKind = 'question' | 'choices' | 'legend' | 'mood' | 'nuance' | 'topics' | 'topicAnswer' | 'recap' | 'quickstart' | 'crisis';
+export type CardKind = 'question' | 'choices' | 'actions' | 'legend' | 'mood' | 'nuance' | 'topics' | 'topicAnswer' | 'recap' | 'quickstart' | 'crisis';
 export type ChatItem =
-  | { id: string; type: 'bot'; text: string; info?: boolean }
+  /** `saved` is the "Saved to your journal." moment: a slower fade and one light haptic (DESIGN_WARM_PAPER §6). */
+  | { id: string; type: 'bot'; text: string; info?: boolean; saved?: boolean }
   /** `emoji` set: the answer shows as huge emoji with a small caption and no bubble. */
   | { id: string; type: 'me'; text: string; emoji?: string[]; caption?: string }
-  | { id: string; type: 'typing' }
+  /** The Thinking row: the butterfly with folded wings and "Thinking…" (§8). */
+  | { id: string; type: 'thinking' }
+  /** The Home welcome block: the big butterfly and the greeting (§10). */
+  | { id: string; type: 'welcome'; greeting: string }
   /** "I tap for next" pace (FEATURES_SOON §7): the ▸ Next pill under a bubble when Lexi has more to say. */
   | { id: string; type: 'next'; go: () => void }
-  | { id: string; type: 'card'; card: CardKind; props: any; done: boolean; picked?: number; finish: (v: unknown, picked?: number) => void };
+  | { id: string; type: 'card'; card: CardKind; props: any; finish: (v: unknown) => void };
 
 let items: ChatItem[] = [];
 let version = 0;
@@ -29,27 +35,37 @@ export function useChatItems(): ChatItem[] { useSyncExternalStore(subscribe, () 
 let uid = 0;
 export const nextId = (p = 'c') => p + '-' + (++uid);
 
-/** The phone's Reduce Motion setting (FEATURES_DO_NEXT §4): no typing dots, no pop-in, no celebration rows. */
-export let reduceMotion = false;
-const setReduceMotion = (v: boolean) => { reduceMotion = v; emit(); emitStore(); };
-AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion).catch(() => {});
-AccessibilityInfo.addEventListener('reduceMotionChanged', setReduceMotion);
-
 function push(item: ChatItem) { items = [...items, item]; emit(); }
 function remove(id: string) { items = items.filter(i => i.id !== id); emit(); }
-function patch(id: string, p: Partial<ChatItem>) { items = items.map(i => (i.id === id ? ({ ...i, ...p } as ChatItem) : i)); emit(); }
+function replace(id: string, next: ChatItem) { items = items.map(i => (i.id === id ? next : i)); emit(); }
+/** Whether a card of this kind is still waiting in the chat. */
+export const hasCard = (kind: CardKind) => items.some(i => i.type === 'card' && i.card === kind);
+/** Take waiting cards of one kind out of the chat (their promises are simply left unanswered). */
+export function dropCards(kind: CardKind) {
+  if (hasCard(kind)) { items = items.filter(i => !(i.type === 'card' && i.card === kind)); emit(); }
+}
 
-/** "Lexi is typing" while she waits for the chat brain. Under Reduce Motion it's a still line, not dots. */
-export function showTyping(): () => void {
+/** Screen readers hear each new Lexi line once; focus never moves (§9). */
+function announce(text: string) {
+  const words = speechKey(text);
+  if (words) AccessibilityInfo.announceForAccessibility('Lexi says: ' + words);
+}
+
+/** The Thinking row while Lexi works out a reply. */
+export function showThinking(): () => void {
   const id = nextId('t');
-  push({ id, type: 'typing' });
+  push({ id, type: 'thinking' });
   return () => remove(id);
 }
+/** The welcome block, first in the chat when the app opens. */
+export function addWelcome(greeting: string) { push({ id: nextId('w'), type: 'welcome', greeting }); }
 /** `quiet` skips read-aloud for lines the caller reads out together. Reading targets the bubble, for its
  *  ring and word highlight. */
-export function addBot(text: string, opts: { info?: boolean; quiet?: boolean } = {}) {
+export function addBot(text: string, opts: { info?: boolean; quiet?: boolean; saved?: boolean } = {}) {
   const id = nextId('b');
-  push({ id, type: 'bot', text, info: opts.info });
+  push({ id, type: 'bot', text, info: opts.info, saved: opts.saved });
+  announce(text);
+  if (opts.saved) savedHaptic();
   if (state.settings.autoread && !opts.quiet) speak(text, { queue: true, target: id });
 }
 export function addMe(text: string) { push({ id: nextId('m'), type: 'me', text }); }
@@ -58,12 +74,20 @@ export function addMeEmoji(emoji: string[], caption: string) {
   push({ id: nextId('m'), type: 'me', text: caption, emoji, caption });
 }
 
-/** Put a card in the log and wait until it calls finish(). The card then locks, as in lexi.html. */
-export function addCard<T>(card: CardKind, props: object = {}, lockOnFinish = true, id = nextId('k')): Promise<T> {
+/** Put a card in the log and wait until it calls finish(). A finished card folds away (§9): it leaves the chat and
+ *  only the answer row stays. A question keeps Lexi's words as a plain bubble; its buttons go. */
+export function addCard<T>(card: CardKind, props: object = {}, id = nextId('k')): Promise<T> {
   return new Promise<T>(res => {
+    let done = false;
     push({
-      id, type: 'card', card, props, done: false,
-      finish: (v, picked) => { if (lockOnFinish) patch(id, { done: true, picked }); res(v as T); },
+      id, type: 'card', card, props,
+      finish: v => {
+        if (done) return;
+        done = true;
+        if (card === 'question') replace(id, { id, type: 'bot', text: (props as { text: string }).text });
+        else remove(id);
+        res(v as T);
+      },
     });
   });
 }
@@ -76,8 +100,9 @@ function waitForNext(): Promise<void> {
     push({ id, type: 'next', go: () => { remove(id); res(); } });
   });
 }
-/** Wait before Lexi's next line, by the Message pace setting (§7): "Lexi decides" types for a moment (or ~150 ms
- *  with no dots under Reduce Motion), "I tap for next" waits for ▸ Next when she's mid-run, "All at once" doesn't wait. */
+/** Wait before Lexi's next line, by the Message pace setting (§7): "Lexi decides" thinks for a moment (or ~150 ms
+ *  with no Thinking row under Reduce Motion), "I tap for next" waits for ▸ Next when she's mid-run, "All at once"
+ *  doesn't wait. */
 async function pause(text: string) {
   const pace = state.settings.pace;
   if (pace === 'fast') return;
@@ -86,25 +111,22 @@ async function pause(text: string) {
     return;
   }
   if (reduceMotion) { await sleep(150); return; }
-  const done = showTyping(); await sleep(delayFor(text)); done();
+  const done = showThinking(); await sleep(delayFor(text)); done();
 }
 export let sayQueue: Promise<void> = Promise.resolve();
-export function say(text: string, opts?: { info?: boolean }): Promise<void> {
-  sayQueue = sayQueue.then(async () => {
-    // Celebration rows (👏🏽 / 🎉, emoji only) are left out under Reduce Motion.
-    if (reduceMotion && !stripEmoji(text)) return;
-    await pause(text); addBot(text, opts);
-  });
+export function say(text: string, opts?: { info?: boolean; saved?: boolean }): Promise<void> {
+  sayQueue = sayQueue.then(async () => { await pause(text); addBot(text, opts); });
   return sayQueue;
 }
 export async function sayMany(lines: string[]) { for (const l of lines) await say(l); }
 
-/** Lexi asks, and the answer pills sit inside her bubble. */
+/** Lexi asks, and the answer pills sit under her words. */
 export function ask<T>(text: string, options: Option<T>[], yn = false): Promise<T> {
   sayQueue = sayQueue.then(() => pause(text));
   return sayQueue.then(() => {
     const id = nextId('k');
-    const answer = addCard<T>('question', { text, options, yn }, true, id);
+    const answer = addCard<T>('question', { text, options, yn }, id);
+    announce(text);
     if (state.settings.autoread) speak(text, { queue: true, target: id });
     return answer;
   });

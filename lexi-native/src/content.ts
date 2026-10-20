@@ -46,9 +46,10 @@ export type SizeKey = 's' | 'm' | 'l' | 'xl' | 'xxl';
 export type SpacingKey = 'normal' | 'wide' | 'xwide';
 /** Letter spacing (FEATURES_DO_NEXT §1). Word spacing grows with it, because letter spacing alone slows reading. */
 export type LettersKey = 'normal' | 'roomy' | 'xroomy';
-/** docs/DESIGN.md "Themes" plus Cream (FEATURES_SOON §5). `auto` = Orange in light mode, Ember in dark mode. */
+/** The six looks (DESIGN_WARM_PAPER §1). `auto` = Cream by day, Ember at night. `orange` is shown as Peach. */
 export type ThemeKey = 'auto' | 'orange' | 'purple' | 'mint' | 'cream' | 'night' | 'ember';
-export type HighlightKey = 'yellow' | 'mint' | 'off';
+/** `auto` ("Best for my colors") uses the look's own highlight: Mint on Cream, Yellow on the others. */
+export type HighlightKey = 'auto' | 'yellow' | 'mint' | 'off';
 export type PaceKey = 'auto' | 'tap' | 'fast';
 export type Reminders = { on: boolean; hour: number; minute: number; every: 'daily' | 'alternate' };
 export type Settings = {
@@ -66,8 +67,8 @@ export type Settings = {
   voice: string; rate: number; pitch: number;
 };
 export const DEFAULTS: Settings = {
-  icons: true, font: 'verdana', size: 'm', spacing: 'wide', letters: 'normal', theme: 'auto', tone: '\u{1F3FD}', avatar: '👧🏽', autoread: false,
-  highlight: 'yellow', tapWord: true, pace: 'auto', reminders: { on: false, hour: 19, minute: 0, every: 'daily' },
+  icons: true, font: 'verdana', size: 'm', spacing: 'wide', letters: 'normal', theme: 'auto', tone: '\u{1F3FD}', avatar: '', autoread: false,
+  highlight: 'auto', tapWord: true, pace: 'auto', reminders: { on: false, hour: 19, minute: 0, every: 'daily' },
   country: 'Other', showStreak: false,
   lexiVoice: 'natural', voice: '', rate: 0.95, pitch: 1,
 };
@@ -77,14 +78,15 @@ export const SIZES: Record<SizeKey, [string, number]> = { s: ['Small', 16], m: [
 export const SPACING: Record<SpacingKey, [string, number]> = { normal: ['Normal', 1.5], wide: ['Wide', 1.7], xwide: ['Extra wide', 2] };
 /** [label, letter spacing em, extra word spacing em] */
 export const LETTERS: Record<LettersKey, [string, number, number]> = { normal: ['Normal', 0.012, 0.08], roomy: ['Roomy', 0.06, 0.16], xroomy: ['Extra roomy', 0.12, 0.32] };
-export const THEME_NAMES: Record<ThemeKey, string> = { auto: 'Match my device', orange: 'Orange', purple: 'Purple', mint: 'Mint', cream: 'Cream', night: 'Night', ember: 'Ember' };
-/** [label, highlight background, word color] (§1). */
-export const HIGHLIGHTS: Record<HighlightKey, [string, string | null, string | null]> = { yellow: ['Yellow', '#FFE36E', '#020000'], mint: ['Mint', '#79EAB9', '#020000'], off: ['Off', null, null] };
+export const THEME_NAMES: Record<ThemeKey, string> = { auto: 'Match my device', orange: 'Peach', purple: 'Purple', mint: 'Mint', cream: 'Cream', night: 'Night', ember: 'Ember' };
+/** [label, highlight background] (§1). `auto` takes the look's colour. A highlighted word's ink is always #17130F. */
+export const HIGHLIGHTS: Record<HighlightKey, [string, string | null]> = { auto: ['Best for my colors', null], yellow: ['Yellow', '#FFE36E'], mint: ['Mint', '#79EAB9'], off: ['Off', null] };
 export const PACES: Record<PaceKey, string> = { auto: 'Lexi decides', tap: 'I tap for next', fast: 'All at once' };
 export const RATE_RANGE = [0.5, 2.0] as const;
 export const PITCH_RANGE = [0.8, 1.2] as const;
 export const TONES: [string, string][] = [['', 'Yellow'], ['\u{1F3FB}', 'Light'], ['\u{1F3FC}', 'Medium light'], ['\u{1F3FD}', 'Medium'], ['\u{1F3FE}', 'Medium dark'], ['\u{1F3FF}', 'Dark']];
-export const AVATARS = ['👧🏽', '🧒🏽', '👦🏽', '👩🏽', '🧑🏽', '👨🏽', '🦊', '🐱', '🌻', '⭐'];
+/** My avatar. '' is None, the first option and the default: the user's turns have no avatar. */
+export const AVATARS = ['', '👧🏽', '🧒🏽', '👦🏽', '👩🏽', '🧑🏽', '👨🏽', '🦊', '🐱', '🌻', '⭐'];
 
 /** "Name it more" (FEATURES_SOON §12): five exact words per band. Each word is recorded. */
 export const NUANCE: Record<BandKey, [string, string][]> = {

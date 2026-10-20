@@ -1,15 +1,17 @@
-// 🆘 Help (FEATURES_DO_NEXT §5, §6, §7, §13): the Help pill, the "I'm an AI" line, local crisis lines,
-// the plain-words privacy lines and the Help sheet. All fixed lines here are recorded in Lexi's voice.
+// Help (FEATURES_DO_NEXT §5, §6, §7, §13; DESIGN_WARM_PAPER §7): the Help pill, the "I'm an AI" note, local crisis
+// lines, the plain-words privacy lines and the Help sheet. All fixed lines here are recorded in Lexi's voice.
 import type { ReactNode } from 'react';
-import { Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COUNTRIES, COUNTRY_KEYS, type Country, type HelpLine } from '../safety';
 import { speak, stopSpeaking } from '../speech';
 import { setHelp, setSetting, useLexi } from '../store';
 import { R, useTheme } from '../theme';
-import { Chip, Ico, Row, T } from '../ui';
+import { Card, Chip, Icon, IconBtn, Ico, Press, Row, T } from '../ui';
+import { SheetFrame, SheetHead } from './Sheet';
 
-export const AI_LABEL = '🤖 Lexi is an AI, not a person or a therapist.';
+/** The AI note has no emoji (§7); the recorded clip is the same words. */
+export const AI_LABEL = 'Lexi is an AI, not a person or a therapist.';
 export const HELP_NOW = 'If you might hurt yourself, or you are in danger, call your local emergency number now.';
 export const HOW_TIPS = [
   '🧭 Check in: tap Guided check-in and pick emoji.',
@@ -33,36 +35,30 @@ function readAll(text: string | string[]) {
   (Array.isArray(text) ? text : [text]).forEach((p, i) => speak(p, { queue: i > 0 }));
 }
 
-/** A small 🔊 that reads a line (in Lexi's recorded voice when there's a clip). */
-export function SpeakIcon({ text, label = 'Read aloud', color }: { text: string | string[]; label?: string; color?: string }) {
-  const t = useTheme();
-  return (
-    <Pressable onPress={() => readAll(text)} accessibilityRole="button" accessibilityLabel={label} hitSlop={10}
-      style={({ pressed }) => [s.speak, { opacity: pressed ? 1 : 0.8 }]}>
-      {t.icons ? <Text style={t.emoji(22)}>🔊</Text> : <T em={0.8} color={color}>Read</T>}
-    </Pressable>
-  );
+/** The 48 px speaker button that reads a line (in Lexi's recorded voice when there's a clip). */
+export function SpeakIcon({ text, label = 'Read aloud', variant = 'surface' }: { text: string | string[]; label?: string; variant?: 'surface' | 'plain' }) {
+  return <IconBtn icon="speaker" label={label} words="Read" variant={variant} onPress={() => readAll(text)} />;
 }
 
-/** 🆘 Help, at the right of every header. */
+/** Help, at the right of every header: 48 px, surface, a strong edge, the lifebuoy and the word. */
 export function HelpPill() {
   const t = useTheme();
   return (
-    <Pressable onPress={() => setHelp(true)} accessibilityRole="button" accessibilityLabel="Help"
-      style={({ pressed }) => [s.help, t.shadow, { backgroundColor: t.c.surface, borderColor: t.c.danger, transform: [{ scale: pressed ? 0.95 : 1 }] }]}>
-      {t.icons ? <Text style={t.emoji(20)}>🆘</Text> : null}
-      <T em={0.8} bold>Help</T>
-    </Pressable>
+    <Press onPress={() => setHelp(true)} accessibilityRole="button" accessibilityLabel="Help"
+      style={[s.help, { backgroundColor: t.card, borderColor: t.c.borderStrong }]}>
+      {t.icons ? <Icon name="help" /> : null}
+      <T v="label">Help</T>
+    </Press>
   );
 }
 
-/** The slim line always shown under the top bar on the chat screen (§5). */
+/** The quiet line under the top bar on Home (§7): caption text, muted, no box and no emoji. */
 export function AiLabel() {
   const t = useTheme();
   return (
-    <View style={[s.ai, { backgroundColor: t.dark ? t.c.surface : t.c.surface2, borderBottomColor: t.c.line }]}>
-      <T em={0.75} soft style={{ flex: 1 }}>{AI_LABEL}</T>
-      <SpeakIcon text={AI_LABEL} label="Read: Lexi is an AI" />
+    <View style={[s.ai, { paddingHorizontal: t.gutter }]}>
+      <T v="caption" muted style={{ flex: 1 }}>{AI_LABEL}</T>
+      <SpeakIcon text={AI_LABEL} label="Read: Lexi is an AI" variant="plain" />
     </View>
   );
 }
@@ -79,25 +75,25 @@ export function CrisisLines({ emergencyOnly, picker }: { emergencyOnly?: boolean
   const isNumber = !!c.dial;
   return (
     <View style={{ gap: 12 }}>
-      <View style={[s.emergency, { backgroundColor: t.c.surface2, borderColor: t.c.danger }]}>
-        <T em={0.85} bold>{'🆘 Emergency' + (st.settings.country === 'Other' ? '' : ' · ' + c.name)}</T>
-        <Text selectable style={[t.text(isNumber ? 2 : 1.1, { display: true, bold: true }), { lineHeight: undefined }]}>{c.emergency}</Text>
-        {c.dial ? <Row><Chip icon="📞" label={'Call ' + c.dial} onPress={() => open('tel:' + c.dial)} /></Row> : null}
+      <View style={[s.emergency, { backgroundColor: t.c.sunken, borderColor: t.danger.bg }]}>
+        <T v="label" w={600}>{'🆘 Emergency' + (st.settings.country === 'Other' ? '' : ' · ' + c.name)}</T>
+        <Text selectable style={t.txt(isNumber ? 'display' : 'title')}>{c.emergency}</Text>
+        {c.dial ? <Row><Chip emoji="📞" label={'Call ' + c.dial} onPress={() => open('tel:' + c.dial)} /></Row> : null}
       </View>
       {emergencyOnly ? null : c.lines.map((l: HelpLine) => (
-        <View key={l.name} style={[s.line, { borderColor: t.c.line, backgroundColor: t.c.surface }]}>
-          <T bold>{l.name}</T>
-          <Text selectable style={t.text(1.15, { bold: true })}>{l.how}</Text>
+        <View key={l.name} style={[s.line, { borderColor: t.c.hairline, backgroundColor: t.card }]}>
+          <T v="label" w={600}>{l.name}</T>
+          <Text selectable style={t.txt('body', { w: 700 })}>{l.how}</Text>
           <Row gap={8}>
-            {l.call ? <Chip icon="📞" label="Call" onPress={() => open('tel:' + l.call)} /> : null}
-            {l.text ? <Chip icon="💬" label="Text" onPress={() => open(smsUrl(l.text!, l.textBody))} /> : null}
-            {l.web ? <Chip icon="🌐" label="Open" onPress={() => open(l.web!)} /> : null}
+            {l.call ? <Chip emoji="📞" label="Call" onPress={() => open('tel:' + l.call)} /> : null}
+            {l.text ? <Chip emoji="💬" label="Text" onPress={() => open(smsUrl(l.text!, l.textBody))} /> : null}
+            {l.web ? <Chip emoji="🌐" label="Open" onPress={() => open(l.web!)} /> : null}
           </Row>
         </View>
       ))}
       {picker ? (
-        <View style={{ gap: 6 }}>
-          <T bold>Your country</T>
+        <View style={{ gap: 8 }}>
+          <T v="label" w={600}>Your country</T>
           <Row gap={8}>
             {COUNTRY_KEYS.map((k: Country) => (
               <Chip key={k} label={COUNTRIES[k].name} selected={st.settings.country === k} onPress={() => setSetting('country', k)} />
@@ -109,12 +105,12 @@ export function CrisisLines({ emergencyOnly, picker }: { emergencyOnly?: boolean
   );
 }
 
-/** The five plain-words privacy lines, each with 🔊 (§13). */
+/** The five plain-words privacy lines, each with its speaker button (§13). */
 export function PrivacyLines() {
   return (
-    <View style={{ gap: 8 }}>
+    <View style={{ gap: 12 }}>
       {PRIVACY.map(l => (
-        <View key={l} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
+        <View key={l} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
           <T style={{ flex: 1 }}>{l}</T>
           <SpeakIcon text={l} />
         </View>
@@ -124,16 +120,15 @@ export function PrivacyLines() {
 }
 
 function Section({ icon, title, read, children }: { icon: string; title: string; read: string[]; children: ReactNode }) {
-  const t = useTheme();
   return (
-    <View style={[s.section, t.shadow, { backgroundColor: t.c.surface }, t.dark && { borderWidth: 1, borderColor: t.c.line }]}>
+    <Card>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Ico e={icon} size={32} />
-        <T display bold accessibilityRole="header" style={{ flex: 1 }}>{title}</T>
+        <Ico e={icon} size={30} />
+        <T v="title" accessibilityRole="header" style={{ flex: 1 }}>{title}</T>
         <SpeakIcon text={read} label={'Read ' + title} />
       </View>
       {children}
-    </View>
+    </Card>
   );
 }
 
@@ -151,23 +146,17 @@ function Sheet() {
   const close = () => { stopSpeaking(); setHelp(false); };
   const linesRead = [c.dial ? 'Emergency: ' + c.emergency + '.' : '', ...c.lines.map(l => l.name + ': ' + l.how + '.')].filter(Boolean);
   return (
-    <View style={[StyleSheet.absoluteFill, { backgroundColor: t.c.bg }]} accessibilityViewIsModal>
-      <View style={[s.head, { paddingTop: insets.top, height: 56 + insets.top, backgroundColor: t.c.bar, borderBottomWidth: t.barsBlend ? 1 : 0, borderBottomColor: t.c.line }]}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
-          <Ico e="🆘" size={28} />
-          <T em={1.1} display bold color={t.c.onBar} accessibilityRole="header">Help</T>
-        </View>
-        <Chip icon="✖️" label="Close" onPress={close} style={{ borderColor: 'transparent' }} />
-      </View>
-      <ScrollView contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: insets.bottom + 24 }}>
+    <SheetFrame>
+      <SheetHead icon="help" title="Help" onClose={close} />
+      <ScrollView contentContainerStyle={{ paddingHorizontal: t.gutter, paddingTop: 16, gap: 20, paddingBottom: insets.bottom + 32 }}>
         <Section icon="🛟" title="Need help now?" read={[HELP_NOW, ...linesRead]}>
           <T bold>{HELP_NOW}</T>
           <CrisisLines picker />
         </Section>
         <Section icon="🧭" title="How to use Lexi" read={HOW_TIPS}>
-          <View style={{ gap: 8 }}>
+          <View style={{ gap: 12 }}>
             {HOW_TIPS.map(tip => (
-              <View key={tip} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
+              <View key={tip} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
                 <T style={{ flex: 1 }}>{tip}</T>
                 <SpeakIcon text={tip} />
               </View>
@@ -181,16 +170,13 @@ function Sheet() {
           <PrivacyLines />
         </Section>
       </ScrollView>
-    </View>
+    </SheetFrame>
   );
 }
 
 const s = StyleSheet.create({
-  speak: { alignSelf: 'flex-start', paddingHorizontal: 4, minWidth: 32, minHeight: 32, alignItems: 'center', justifyContent: 'center' },
-  help: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 36, paddingHorizontal: 12, borderRadius: R.pill, borderWidth: 2 },
-  ai: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 3, borderBottomWidth: 1 },
-  emergency: { gap: 4, padding: 12, borderRadius: R.s, borderWidth: 2 },
-  line: { gap: 4, padding: 12, borderRadius: R.s, borderWidth: 1.5 },
-  section: { gap: 10, padding: 14, borderRadius: R.m },
-  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingHorizontal: 16 },
+  help: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 48, paddingHorizontal: 16, borderRadius: R.full, borderWidth: 1 },
+  ai: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingBottom: 2 },
+  emergency: { gap: 6, padding: 16, borderRadius: R.md, borderWidth: 2 },
+  line: { gap: 6, padding: 16, borderRadius: R.md, borderWidth: 1 },
 });
