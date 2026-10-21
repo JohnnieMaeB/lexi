@@ -1,7 +1,7 @@
 // Lexi's conversation script: onboarding (Chat Bot Plan), the guided check-in, free chat and reflections.
 // Copy and order match lexi.html.
 import { BANDS, BAND_BY, TOPIC_BY, YES_NO, type BandKey, type Pick } from './content';
-import { addBot, addCard, addMe, addMeEmoji, ask, say, sayMany, sayQueue, showTyping } from './chat';
+import { addBot, addCard, addMe, addMeEmoji, addWelcome, ask, dropCards, hasCard, say, sayMany, sayQueue, showThinking } from './chat';
 import { aiErrorText, claude, parseJsonReply, type Msg } from './ai';
 import { asLevel, maxLevel, riskCheck, styleCheck, type Level } from './safety';
 import type { RecapLine, StepResult } from './components/Cards';
@@ -11,6 +11,7 @@ import {
   type CheckinDraft, type Entry, type NewEntry, type TopicAnswer,
 } from './store';
 import { dayKey, sleep } from './text';
+import { greeting } from './week';
 
 /* ---------- helpers ---------- */
 export function moodShares(moods: Pick[] | undefined) {
@@ -50,15 +51,14 @@ export function entrySummary(en: NewEntry): string {
 }
 
 /* ---------- menus ---------- */
+/** The Home actions (DESIGN_WARM_PAPER §10): 🧭 Guided check-in, ✏️ Write on my own and the This week card.
+ *  Like every answered card, it folds away once used and the answer row stays. */
 export function offerActions() {
-  addCard('choices', {
-    options: [
-      { e: '🧭', label: 'Guided check-in', run: () => startGuided() },
-      { e: '✏️', label: 'Write on my own', run: () => openSheet() },
-      { e: '🎙️', label: 'Speak an entry', run: () => openVoiceSheet() },
-      { e: '📖', label: 'Open journal', run: () => showView('journal') },
-    ],
-  }, false);
+  addCard('actions', { guided: () => startGuided(), write: () => openSheet() });
+}
+/** Bring the Home actions back when nothing else is waiting, e.g. after the writing sheet closes. */
+export function ensureActions() {
+  sayQueue.then(() => { if (!guidedActive && !hasCard('actions') && !hasCard('choices')) offerActions(); });
 }
 export function openSheet() { setSheet(true); }
 export function openVoiceSheet() { setVoiceSheet(true); }
@@ -69,6 +69,7 @@ export async function quickStart() {
   await say("Let's set me up so I'm easy for you to read.");
   await sayQueue;
   await addCard('quickstart');
+  addMeEmoji(['✔️'], 'Done');
   await say('You can change these any time in Settings. ⚙️');
 }
 
@@ -139,6 +140,8 @@ export async function startGuided(fromIntro = false, resume: CheckinDraft | null
   showView('home');
   if (guidedActive) { toast('Your check-in is already open below. 👇'); return; }
   guidedActive = true;
+  // Started from the Journal tab: the Home actions waiting above would be out of date.
+  dropCards('actions');
   try {
     const d: CheckinDraft = resume ? { ...resume, answers: { ...resume.answers } } : { step: 'feelings', moods: [], nuance: null, keys: null, answers: {} };
     if (!fromIntro && !resume) await say("Let's check in. 🧭");
@@ -165,12 +168,12 @@ export async function startGuided(fromIntro = false, resume: CheckinDraft | null
     if (!moods.length && !topics.length) { await say("Nothing to save this time. That's okay. 🏡"); offerActions(); return; }
     const entry: NewEntry = { kind: 'guided', createdAt: Date.now(), day: dayKey(), moods, topics, text: '', ...(nuance.length ? { nuance } : {}) };
     const id = await addEntry(entry);
-    await say('Saved to your journal. 📖 ✔️');
-    // Check-in notes and to-dos get the same crisis check as other writing (§8). No celebration after it fires.
+    // The calm "Saved" moment (DESIGN_WARM_PAPER §6): a slow fade and one light haptic, no celebration row.
+    await say('Saved to your journal. ✔️', { saved: true });
+    // Check-in notes and to-dos get the same crisis check as other writing (§8).
     const notes = topics.flatMap(tp => [tp.note, ...(tp.todos || []).map(td => td.t)]).filter(Boolean).join('\n');
     const level = notes ? await checkSavedWriting(notes) : 'none';
     if (level !== 'none') { await safetyFlow(level); return; }
-    await say('👏🏽👏🏽👏🏽👏🏽');
     if (aiReady()) {
       const want = await ask('Want a short reflection on today?', YES_NO, true);
       if (want) await reflect(entry, id);
@@ -192,10 +195,24 @@ function kindRules(): string[] {
 }
 const TAG_RULE = '- Start your reply with exactly one tag on its own line: [ok], [check] if the user might be unsafe or very hopeless, or [risk] if they talk about wanting to die or hurt themselves.';
 
+/** AI replies are shown whole (DESIGN_WARM_PAPER §9): Lexi stays in Thinking for at least 600 ms, until the
+ *  style-checked reply is ready. Then each line comes like any other Lexi line, at the Message pace. */
+async function thinkAtLeast<T>(work: Promise<T>): Promise<T> {
+  const [r] = await Promise.all([work, sleep(600)]);
+  return r;
+}
+async function showLines(lines: string[], stopped: () => boolean = () => false) {
+  for (let i = 0; i < lines.length && !stopped(); i++) {
+    if (i === 0) addBot(lines[0]); // the Thinking row was this line's pause
+    else await say(lines[i]);
+  }
+}
+
 async function reflect(entry: NewEntry, id: string) {
-  const done = showTyping();
+  await sayQueue;
+  const done = showThinking();
   try {
-    const { text } = await claude({
+    const { text } = await thinkAtLeast(claude({
       effort: 'medium',
       messages: [{
         role: 'user',
@@ -204,12 +221,12 @@ async function reflect(entry: NewEntry, id: string) {
           'Name what they shared without judging it. No toxic positivity: never say "be happy", "cheer up" or "look on the bright side". ' +
           'No advice unless the entry asks for it. No lists, no markdown.\n' + kindRules().join('\n') + '\n\nCheck-in:\n' + entrySummary(entry),
       }],
-    });
+    }));
     done();
     // Every reflection goes through the reply style check (§10); each sentence is its own bubble.
     const { lines } = styleCheck(text, { icons: state.settings.icons });
-    lines.forEach(l => addBot(l));
     updateEntry(id, { reflection: lines.join('\n') });
+    await showLines(lines);
   } catch (e) {
     done();
     const m = aiErrorText(e); if (m) addBot(m, { info: true });
@@ -240,7 +257,7 @@ export async function safetyFlow(level: Level) {
 async function riskFlow(fromStart: boolean) {
   if (fromStart) await say("I'm really glad you told me. 💛");
   await say('Your safety matters most right now.');
-  await sayQueue; addCard('crisis', {}, false);
+  await sayQueue; addCard('crisis', {});
   await say('Please talk to someone now. You can call or text these lines.');
   const safe = await ask('Are you safe right now?', YES_NO, true);
   if (safe) {
@@ -248,7 +265,7 @@ async function riskFlow(fromStart: boolean) {
     await say('Tap Help at the top any time. 🆘');
   } else {
     await say('Please call your local emergency number now. 🆘');
-    await sayQueue; addCard('crisis', { emergencyOnly: true }, false);
+    await sayQueue; addCard('crisis', { emergencyOnly: true });
   }
 }
 
@@ -271,11 +288,11 @@ function lexiRules(): string {
     TAG_RULE,
     'What the app can do (use this to answer questions about the app):',
     '- 🧭 Guided check-in on the 🏡 Home tab: pick mood emoji in three groups (Content, Stressed, Low self-esteem), then topics: physical health, diet, self-esteem, relationships, financial health, stressors, to dos, hobbies and passions, gratitude. There is no "Happy" option on purpose. ➕ My own adds custom words and emoji.',
-    '- 🎙 The mic next to 🙂 turns speech into words, in the chat box and when writing.',
+    '- 🎙 The mic in the chat box listens until they tap Done, then they can Send, Say again or Fix the words. There is a mic when writing too.',
     '- ✏️ Write on my own: free writing with an emoji button, 🎙 voice typing, ✨ Tidy spelling (one word at a time, the original is kept) and 🔊 Read it back.',
-    '- 📖 Journal tab: days journaled, feelings named, day cards for the last 14 days, entries by day, tick off to dos, 🔊 read entries aloud, 🗑 delete entries.',
-    '- 🆘 Help at the top of every screen: help lines for their country, how to use Lexi, how Lexi keeps them safe, and privacy.',
-    "- ⚙️ Settings tab: theme (Orange, Purple, Mint, Night, Ember, or match the device), turn icons off, font (Verdana, Lexend, Atkinson Hyperlegible), text size, line spacing, letter spacing, Lexi's voice (her own recorded voice or a device voice, with speed and pitch), skin tone, avatar, read Lexi out loud, privacy, replay the intro.",
+    '- 📖 Journal tab: days journaled, feelings named, a grid of the last two weeks with a shape for each day\'s main feeling group, entries newest first, tick off to dos, 🔊 read entries aloud, 🗑 delete entries, 🎙️ speak an entry.',
+    '- 🛟 Help at the top of every screen: help lines for their country, how to use Lexi, how Lexi keeps them safe, and privacy.',
+    "- ⚙️ Settings tab: look (Cream, Peach, Purple, Mint, Night, Ember, or match the device), turn icons off, font (Verdana, Lexend, Atkinson Hyperlegible), text size, line spacing, letter spacing, Lexi's voice (her own recorded voice or a device voice, with speed and pitch), skin tone, avatar, read Lexi out loud, privacy, replay the intro.",
     "The user's recent journal entries are below. Mention them only when the user asks about their journal or feelings. Newer entries may arrive later in the chat as system notes.",
     journalContext(),
     'The conversation follows.',
@@ -325,17 +342,18 @@ export async function sendChat(text: string) {
   }
   await sayQueue;
   const ctl = new AbortController(); chatCtl = ctl; setSending(true);
-  const done = showTyping();
+  const done = showThinking();
   let level: Level = local;
   try {
-    const res = await claude({ system: s.system, messages: s.messages, effort: 'low', signal: ctl.signal });
+    const res = await thinkAtLeast(claude({ system: s.system, messages: s.messages, effort: 'low', signal: ctl.signal }));
     done();
     // The reply goes back into the history exactly as returned (tag and all); what's shown is checked (§10).
     s.messages.push({ role: 'assistant', content: res.content as Msg['content'] });
     const { tag, lines } = styleCheck(res.text, { icons: state.settings.icons });
-    lines.forEach(l => addBot(l));
-    if (res.truncated) addBot('That got cut short. Ask me for less at a time. ✂️', { info: true });
     level = maxLevel(local, asLevel(tag));
+    // Stop still works while the lines come in: the rest of the reply isn't shown.
+    await showLines(lines, () => ctl.signal.aborted);
+    if (res.truncated && !ctl.signal.aborted) await say('That got cut short. Ask me for less at a time. ✂️', { info: true });
   } catch (e) {
     done();
     // Nothing answered this turn, so take it back out; the history stays user/assistant pairs.
@@ -350,19 +368,19 @@ export async function sendChat(text: string) {
 
 /* ---------- onboarding (Chat Bot Plan) ---------- */
 export async function intro() {
-  await say("Hi! I'm Lexi, the journaling chatbot. 🤖 I'm here to make journaling easy and fun.");
+  // The butterfly replaces 🤖 (DESIGN_WARM_PAPER §12); the spoken words, and so the clip, are the same.
+  await say("Hi! I'm Lexi, the journaling chatbot. 🦋 I'm here to make journaling easy and fun.");
   await say("I speak English, but I'm better at emoji. 😉");
   await quickStart();
   await say('ℹ️ This means information.', { info: true });
   await say('ℹ️ My developer created me to help dyslexic people journal.', { info: true });
   await say("ℹ️ Text blocks will never be too large, and I'll rely a lot on icons and emojis.", { info: true });
   await say("🧠 If icons don't work for your brain, you can turn them off in settings.", { info: true });
-  await sayQueue; addCard('legend', {}, false);
+  await sayQueue; addCard('legend', {});
   await say('📖 This is your journal. Everything you save goes there.');
   const go = await ask('Would you like to start?', YES_NO, true);
   setOnboarded();
   if (!go) { await say("No problem. I'll be right here. 🏡"); offerActions(); return; }
-  await say('👏🏽👏🏽👏🏽👏🏽');
   const help = await ask('Would you like help?', YES_NO, true);
   if (help) {
     await say('You can choose to journal with me by selecting the guided experience. 🧭');
@@ -374,7 +392,7 @@ export async function intro() {
         { e: '✏️', label: 'Start writing', run: () => openSheet() },
         { e: '🧭', label: 'Guided check-in', run: () => startGuided() },
       ],
-    }, false);
+    });
   }
 }
 async function welcomeBack() {
@@ -398,7 +416,9 @@ let booted = false;
 export async function boot() {
   if (booted) return;
   booted = true;
-  const done = showTyping();
+  // The welcome block comes first (DESIGN_WARM_PAPER §10), then Lexi's usual lines.
+  addWelcome(greeting());
+  const done = showThinking();
   await Promise.race([ready, sleep(2500)]);
   done();
   if (state.onboarded) welcomeBack(); else intro();

@@ -1,101 +1,94 @@
-// ⚙️ Settings: themes, reading comfort, 🔊 voice, and the clearly marked optional "Chat brain" API key.
+// ⚙️ Settings (DESIGN_WARM_PAPER §10): raised sections for the look, reading comfort, 🔊 voice, and the clearly
+// marked optional "Chat brain" API key.
 import React, { useEffect, useState } from 'react';
-import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { MODEL } from '../ai';
 import { AVATARS, FONTS, HIGHLIGHTS, LETTERS, PACES, PITCH_RANGE, RATE_RANGE, SIZES, SPACING, THEME_NAMES, TONES, TOPICS, type Settings, type ThemeKey } from '../content';
-import { PrivacyLines } from '../components/Help';
+import { PrivacyLines, SpeakIcon } from '../components/Help';
 import { shareJournalPdf } from '../exportPdf';
 import { useField } from '../fields';
 import { REMINDER_BODY, applyReminders, askPermission, fmtClock } from '../reminders';
 import { intro, quickStart } from '../script';
 import { DEVICE_LINE, NATURAL_LINE, SPEED_LINE, TEST_LINE, bestVoice, currentVoice, speak, stopSpeaking, useVoices, type RankedVoice } from '../speech';
 import { deleteEverything, removeCustom, setApiKey, setSetting, showView, state, toast, useLexi } from '../store';
-import { PALETTES, R, mix, useTheme, verdanaIsNative, type Palette } from '../theme';
-import { Badge, Btn, Chip, Ico, Row, T } from '../ui';
+import { LOOKS, LOOK_ORDER, type Palette } from '../tokens';
+import { R, useTheme, verdanaIsNative } from '../theme';
+import { Badge, Btn, Card, Chip, Icon, IconBtn, Ico, Press, Row, T } from '../ui';
 import { Box } from '../components/Inputs';
 
-const BUTTERFLY = require('../../assets/butterfly.png');
 // FEATURES_SOON §14 (both recorded).
 const BASIC_NOTE = 'Your device only has basic voices, so they may sound robotic. My own voice still reads my regular lines.';
 const CANT_HEAR = "Can't hear anything? Check that your sound is on and silent mode is off.";
 const DELETE_ASK = "Delete everything? Your entries, settings and words will be gone. This can't be undone.";
 
+/** A raised section with its heading in `title` (emoji kept). */
 function Section({ icon, title, note, children }: { icon: string; title: string; note?: string; children?: React.ReactNode }) {
   const t = useTheme();
   return (
-    <View style={[s.section, t.shadow, { backgroundColor: t.c.surface }, t.dark && { borderWidth: 1, borderColor: t.c.line }]}>
+    <Card style={{ gap: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Ico e={icon} size={32} />
-        <T display bold accessibilityRole="header" style={{ flex: 1 }}>{title}</T>
+        {icon ? <Ico e={icon} size={Math.round(t.fs * 1.5)} /> : null}
+        <T v="title" accessibilityRole="header" style={{ flex: 1 }}>{title}</T>
       </View>
-      {note ? <T em={0.85} soft>{note}</T> : null}
+      {note ? <T muted>{note}</T> : null}
       {children}
-    </View>
+    </Card>
   );
 }
 
-function Seg<K extends keyof Settings>({ k, v, label, icon, labelStyle, children, a11y }: {
-  k: K; v: Settings[K]; label?: string; icon?: string; labelStyle?: object; children?: React.ReactNode; a11y?: string;
+function Seg<K extends keyof Settings>({ k, v, label, emoji, emojiSize, labelStyle, children, a11y }: {
+  k: K; v: Settings[K]; label?: string; emoji?: string; emojiSize?: number; labelStyle?: object; children?: React.ReactNode; a11y?: string;
 }) {
   const st = useLexi();
-  return <Chip label={label} icon={icon} selected={String(st.settings[k]) === String(v)} onPress={() => setSetting(k, v)} labelStyle={labelStyle} a11y={a11y}>{children}</Chip>;
+  return <Chip label={label} emoji={emoji} emojiSize={emojiSize} selected={String(st.settings[k]) === String(v)} onPress={() => setSetting(k, v)} labelStyle={labelStyle} a11y={a11y}>{children}</Chip>;
 }
 
-/* ---------- themes ---------- */
-function MiniPhone({ p, butterfly, w, h }: { p: Palette; butterfly?: boolean; w: number; h: number }) {
-  const blend = p.bar === p.bg;
+/* ---------- the look ---------- */
+/** A look's preview (§10): its canvas, a Lexi turn, a user turn and a dock strip. No bars or rails. */
+function MiniPhone({ p, w, h }: { p: Palette; w: number; h: number }) {
   return (
-    <View style={{ width: w, height: h, backgroundColor: p.bg, overflow: 'hidden' }}>
-      <View style={{ height: 12, backgroundColor: p.bar, borderBottomWidth: blend ? 1 : 0, borderBottomColor: p.line }} />
-      <View style={{ flex: 1, flexDirection: 'row' }}>
-        <View style={{ width: 4, backgroundColor: p.bar }} />
-        <View style={{ flex: 1, padding: 6, gap: 5 }}>
-          {butterfly ? <Image source={BUTTERFLY} resizeMode="contain" style={{ position: 'absolute', alignSelf: 'center', top: 2, width: w * 0.5, height: h * 0.62, tintColor: '#FFB877', opacity: 0.3 }} /> : null}
-          <View style={{ width: '70%', height: 12, borderRadius: 6, backgroundColor: p.bot, borderWidth: p.botLine ? 1 : 0, borderColor: p.botLine || 'transparent' }} />
-          <View style={{ width: '58%', height: 12, borderRadius: 6, backgroundColor: p.bot, borderWidth: p.botLine ? 1 : 0, borderColor: p.botLine || 'transparent' }} />
-          <View style={{ flexDirection: 'row', gap: 4 }}>
-            <View style={{ width: 16, height: 9, borderRadius: 5, backgroundColor: p.yes }} />
-            <View style={{ width: 16, height: 9, borderRadius: 5, borderWidth: 1.5, borderColor: p.yes, backgroundColor: p.surface }} />
-          </View>
-        </View>
-        <View style={{ width: 4, backgroundColor: p.bar }} />
+    <View style={{ width: w, height: h, backgroundColor: p.canvas, overflow: 'hidden' }}>
+      <View style={{ flex: 1, padding: 7, gap: 6, justifyContent: 'center' }}>
+        <View style={{ width: '74%', height: 14, borderRadius: 7, borderBottomLeftRadius: 3, backgroundColor: p.lexi }} />
+        <View style={{ width: '56%', height: 14, borderRadius: 7, borderBottomRightRadius: 3, alignSelf: 'flex-end', backgroundColor: p.me, borderWidth: p.meEdge ? 1 : 0, borderColor: p.hairline }} />
+        <View style={{ width: 22, height: 10, borderRadius: 5, backgroundColor: p.accent }} />
       </View>
-      <View style={{ height: 14, backgroundColor: p.bar, borderTopWidth: blend ? 1 : 0, borderTopColor: p.line, justifyContent: 'center', paddingHorizontal: 6 }}>
-        <View style={{ height: 7, borderRadius: 4, backgroundColor: p.surface }} />
+      <View style={{ height: 16, backgroundColor: p.dark ? p.raised : p.surface, borderTopWidth: 1, borderTopColor: p.hairline, justifyContent: 'center', paddingHorizontal: 7 }}>
+        <View style={{ height: 6, borderRadius: 3, backgroundColor: p.sunken }} />
       </View>
     </View>
   );
 }
 
-function ThemePicker() {
+function LookPicker() {
   const t = useTheme();
   const st = useLexi();
-  const w = Math.floor((t.contentW - 28 - 20) / 3);
-  const h = Math.round(w * 1.15);
-  const keys: ThemeKey[] = ['auto', 'orange', 'purple', 'mint', 'cream', 'night', 'ember'];
+  const [w0, setW0] = useState(0);
+  const cols = w0 && w0 / 3 >= t.em * 5.5 ? 3 : 2;
+  const w = w0 ? Math.floor((w0 - 12 * (cols - 1)) / cols) : 0;
+  const h = Math.round(w * 0.9);
   return (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-      {keys.map(k => {
+    <View onLayout={e => setW0(e.nativeEvent.layout.width)} style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+      {w ? LOOK_ORDER.map((k: ThemeKey) => {
         const on = st.settings.theme === k;
         return (
-          <Pressable key={k} onPress={() => setSetting('theme', k)} accessibilityRole="button" accessibilityLabel={THEME_NAMES[k] + ' theme'} accessibilityState={{ selected: on }}
-            style={({ pressed }) => [{ width: w, alignItems: 'center', gap: 6, transform: [{ scale: pressed ? 0.96 : 1 }] }]}>
-            <View style={[{ borderRadius: R.s, borderWidth: 3, borderColor: on ? t.c.ring : 'transparent', padding: 2 }, on && t.shadow]}>
-              <View style={{ borderRadius: R.s - 4, overflow: 'hidden', flexDirection: 'row', borderWidth: 1, borderColor: t.c.line }}>
-                {k === 'auto' ? (
-                  <>
-                    <MiniPhone p={PALETTES.orange} w={Math.floor((w - 10) / 2)} h={h} />
-                    <MiniPhone p={PALETTES.ember} butterfly w={Math.ceil((w - 10) / 2)} h={h} />
-                  </>
-                ) : <MiniPhone p={PALETTES[k]} butterfly={k === 'ember'} w={w - 10} h={h} />}
-              </View>
+          <Press key={k} onPress={() => setSetting('theme', k)} accessibilityRole="radio" accessibilityLabel={THEME_NAMES[k] + ' look'} accessibilityState={{ checked: on }}
+            style={{ width: w, alignItems: 'center', gap: 8 }}>
+            <View style={[{ borderRadius: R.md, overflow: 'hidden', flexDirection: 'row', borderWidth: 1, borderColor: t.c.hairline },
+              on && { outlineWidth: 2, outlineStyle: 'solid', outlineColor: t.c.accentInk, outlineOffset: 2 }]}>
+              {k === 'auto' ? (
+                <>
+                  <MiniPhone p={LOOKS.cream} w={Math.floor((w - 2) / 2)} h={h} />
+                  <MiniPhone p={LOOKS.ember} w={Math.ceil((w - 2) / 2)} h={h} />
+                </>
+              ) : <MiniPhone p={LOOKS[k]} w={w - 2} h={h} />}
               {on ? <Badge /> : null}
             </View>
-            <T em={0.8} bold={on} style={{ textAlign: 'center' }}>{THEME_NAMES[k]}</T>
-          </Pressable>
+            <T v="label" w={on ? 600 : 500} style={{ textAlign: 'center' }}>{THEME_NAMES[k]}</T>
+          </Press>
         );
-      })}
+      }) : null}
     </View>
   );
 }
@@ -105,39 +98,36 @@ function ThemePicker() {
 function BigChoice({ icon, title, tag, detail, on, onPress }: { icon: string; title: string; tag?: string; detail: string; on: boolean; onPress: () => void }) {
   const t = useTheme();
   return (
-    <Pressable onPress={onPress} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={title + (tag ? ', ' + tag : '') + '. ' + detail}
-      style={({ pressed }) => [s.big, on && t.shadow, {
-        borderWidth: 3, borderColor: on ? t.c.ring : t.c.line, backgroundColor: on ? t.c.sel : t.c.surface, transform: [{ scale: pressed ? 0.98 : 1 }],
-      }]}>
-      <Ico e={icon} size={36} />
+    <Press onPress={onPress} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={title + (tag ? ', ' + tag : '') + '. ' + detail}
+      style={[s.big, on
+        ? { borderWidth: 1, borderColor: t.c.accentInk, backgroundColor: t.c.accentTint, outlineWidth: 2, outlineStyle: 'solid', outlineColor: t.c.accentInk, outlineOffset: 0 }
+        : { borderWidth: 1, borderColor: t.c.hairline, backgroundColor: t.card }]}>
+      <Ico e={icon} size={Math.round(t.fs * 1.8)} />
       <View style={{ flex: 1, gap: 2 }}>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
-          <T bold>{title}</T>
-          {tag ? <View style={[s.tag, { backgroundColor: t.c.bot }]}><T em={0.7} bold color={t.c.botInk}>{tag}</T></View> : null}
+          <T v="label" w={600}>{title}</T>
+          {tag ? <View style={[s.tag, { backgroundColor: t.c.lexi }]}><T v="caption">{tag}</T></View> : null}
         </View>
-        <T em={0.8} soft>{detail}</T>
+        <T v="caption" muted>{detail}</T>
       </View>
       {on ? <Badge /> : null}
-    </Pressable>
+    </Press>
   );
 }
 
 function VoiceRow({ v, title, detail, on, onPick }: { v?: RankedVoice; title: string; detail: string; on: boolean; onPick: () => void }) {
   const t = useTheme();
   return (
-    <View style={[s.voice, { borderColor: on ? t.c.ring : t.c.line, borderWidth: on ? 3 : 1.5, backgroundColor: on ? t.c.sel : t.c.surface }]}>
+    <View style={[s.voice, { borderColor: on ? t.c.accentInk : t.c.hairline, borderWidth: on ? 2 : 1, backgroundColor: on ? t.c.accentTint : t.card }]}>
       <Pressable onPress={onPick} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={title + ', ' + detail}
-        style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48 }}>
-        <View style={[s.radio, { borderColor: on ? t.c.ring : t.c.inkSoft }]}>{on ? <View style={[s.radioDot, { backgroundColor: t.c.ring }]} /> : null}</View>
+        style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48 }}>
+        <View style={[s.radio, { borderColor: on ? t.c.accentInk : t.c.borderStrong }]}>{on ? <View style={[s.radioDot, { backgroundColor: t.c.accentInk }]} /> : null}</View>
         <View style={{ flex: 1 }}>
-          <T bold={on} raw>{title}</T>
-          <T em={0.75} soft raw>{detail}</T>
+          <T v="label" w={on ? 600 : 500} raw>{title}</T>
+          <T v="caption" muted raw>{detail}</T>
         </View>
       </Pressable>
-      <Pressable onPress={() => speak(NATURAL_LINE, { voice: v?.identifier ?? bestVoice()?.identifier })} accessibilityRole="button" accessibilityLabel={'Play a sample of ' + title}
-        hitSlop={6} style={({ pressed }) => [s.play, { borderColor: t.c.yes, backgroundColor: pressed ? t.c.yes : 'transparent' }]}>
-        {({ pressed }) => <Text style={{ color: pressed ? t.c.onYes : t.c.yes, fontSize: 18, lineHeight: 22, fontWeight: '700' }}>▶</Text>}
-      </Pressable>
+      <IconBtn icon="play" label={'Play a sample of ' + title} words="Play" onPress={() => speak(NATURAL_LINE, { voice: v?.identifier ?? bestVoice()?.identifier })} />
     </View>
   );
 }
@@ -150,17 +140,17 @@ function Stepper({ label, value, range, step, low, high, onChange }: {
   useEffect(() => setV(value), [value]);
   const set = (x: number) => { const r = Math.round(Math.min(range[1], Math.max(range[0], x)) * 100) / 100; setV(r); onChange(r); };
   return (
-    <View style={{ gap: 2 }}>
-      <T bold>{label + ': ' + v.toFixed(2).replace(/0$/, '') + '×'}</T>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-        <Chip words="Less" icon="➖" a11y={label + ' down'} onPress={() => set(v - step)} style={{ paddingHorizontal: 10 }} />
-        <Slider style={{ flex: 1, height: 44 }} minimumValue={range[0]} maximumValue={range[1]} step={step} value={v}
+    <View style={{ gap: 4 }}>
+      <T v="label" w={600}>{label + ': ' + v.toFixed(2).replace(/0$/, '') + '×'}</T>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Chip emoji="➖" label={t.icons ? undefined : 'Less'} a11y={label + ' down'} onPress={() => set(v - step)} style={{ paddingHorizontal: 12 }} />
+        <Slider style={{ flex: 1, height: 48 }} minimumValue={range[0]} maximumValue={range[1]} step={step} value={v}
           onValueChange={x => setV(Math.round(x * 100) / 100)} onSlidingComplete={x => set(x)}
-          minimumTrackTintColor={t.c.ring} maximumTrackTintColor={t.c.line} thumbTintColor={t.c.yes} accessibilityLabel={label} />
-        <Chip words="More" icon="➕" a11y={label + ' up'} onPress={() => set(v + step)} style={{ paddingHorizontal: 10 }} />
+          minimumTrackTintColor={t.c.accentInk} maximumTrackTintColor={t.c.borderStrong} thumbTintColor={t.c.accent} accessibilityLabel={label} />
+        <Chip emoji="➕" label={t.icons ? undefined : 'More'} a11y={label + ' up'} onPress={() => set(v + step)} style={{ paddingHorizontal: 12 }} />
       </View>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-        <T em={0.75} soft>{low}</T><T em={0.75} soft>{high}</T>
+        <T v="caption" muted>{low}</T><T v="caption" muted>{high}</T>
       </View>
     </View>
   );
@@ -190,24 +180,24 @@ function VoiceSection() {
   const pickLexi = (v: Settings['lexiVoice']) => { setSetting('lexiVoice', v); speak(v === 'device' ? DEVICE_LINE : NATURAL_LINE); };
   return (
     <Section icon="🔊" title="Voice" note="Pick how Lexi sounds when she reads out loud.">
-      <View style={{ gap: 10 }} accessibilityRole="radiogroup">
+      <View style={{ gap: 12 }} accessibilityRole="radiogroup">
         <BigChoice icon="🎙️" title="Lexi's own voice" tag="Natural" on={natural} onPress={() => pickLexi('natural')}
           detail="Lexi's words are recorded. Your writing and her chat replies use a voice from this device." />
         <BigChoice icon="📱" title="A voice from this device" on={!natural} onPress={() => pickLexi('device')}
           detail="Everything is read by the voice you pick below." />
       </View>
 
-      <T bold style={{ marginTop: 6 }}>{natural ? 'Device voice (for everything else)' : 'Device voice'}</T>
+      <T v="label" w={600} style={{ marginTop: 4 }}>{natural ? 'Device voice (for everything else)' : 'Device voice'}</T>
       {/* Voice help (§14): say so when the phone only has basic voices. */}
       {basicOnly ? (
-        <View style={[s.tip, { backgroundColor: t.c.surface2 }]}>
+        <View style={[s.tip, { backgroundColor: t.c.sunken }]}>
           <Ico e="🤖" size={28} />
-          <T em={0.9} style={{ flex: 1 }}>{BASIC_NOTE}</T>
-          <Chip icon="🔊" words="Read" a11y="Read aloud" onPress={() => speak(BASIC_NOTE)} />
+          <T style={{ flex: 1 }}>{BASIC_NOTE}</T>
+          <SpeakIcon text={BASIC_NOTE} />
         </View>
       ) : null}
-      {voices === null ? <T soft>Looking for voices…</T> : null}
-      {voices && !voices.length ? <T soft>This phone didn't list any voices. Lexi will use its default voice.</T> : null}
+      {voices === null ? <T muted>Looking for voices…</T> : null}
+      {voices && !voices.length ? <T muted>This phone didn't list any voices. Lexi will use its default voice.</T> : null}
       {voices && voices.length ? (
         <View style={{ gap: 8 }} accessibilityRole="radiogroup">
           <VoiceRow title="⭐ Best on this phone" detail={best ? best.label + ' · ' + best.detail : 'Default voice'} on={autoPick} onPick={() => setSetting('voice', '')} />
@@ -215,7 +205,7 @@ function VoiceSection() {
             <VoiceRow key={v.identifier} v={v} title={v.label} detail={v.detail} on={S.voice === v.identifier} onPick={() => setSetting('voice', v.identifier)} />
           ))}
           {voices.length > top.length ? (
-            <Row><Chip icon={all ? '🔼' : '🔽'} label={all ? 'Show fewer voices' : 'Show all voices (' + voices.length + ')'} onPress={() => setAll(!all)} /></Row>
+            <Row><Chip icon="chevron" label={all ? 'Show fewer voices' : 'Show all voices (' + voices.length + ')'} onPress={() => setAll(!all)} /></Row>
           ) : null}
         </View>
       ) : null}
@@ -224,29 +214,29 @@ function VoiceSection() {
         onChange={v => { setSetting('rate', v); speak(SPEED_LINE); }} />
       <Stepper label="Pitch" value={S.pitch} range={PITCH_RANGE} step={0.05} low="Lower" high="Higher"
         onChange={v => { setSetting('pitch', v); speak(SPEED_LINE, { voice: currentVoice()?.identifier }); }} />
-      {natural ? <T em={0.75} soft>Pitch changes the device voice only. Speed changes both.</T> : null}
-      <Row><Btn variant="primary" icon="🔊" label="Test Lexi's voice" onPress={() => speak(TEST_LINE)} /></Row>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
-        <T em={0.85} soft style={{ flex: 1 }}>{CANT_HEAR}</T>
-        <Chip icon="🔊" words="Read" a11y="Read aloud" onPress={() => speak(CANT_HEAR)} />
+      {natural ? <T v="caption" muted>Pitch changes the device voice only. Speed changes both.</T> : null}
+      <Row><Btn variant="primary" icon="speaker" label="Test Lexi's voice" onPress={() => speak(TEST_LINE)} /></Row>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+        <T muted style={{ flex: 1 }}>{CANT_HEAR}</T>
+        <SpeakIcon text={CANT_HEAR} />
       </View>
 
-      <T bold style={{ marginTop: 4 }}>Read Lexi out loud?</T>
+      <T v="label" w={600} style={{ marginTop: 4 }}>Read Lexi out loud?</T>
       <Row gap={8}><Seg k="autoread" v={true} label="Read every message" /><Seg k="autoread" v={false} label="Only when I tap 🔊" /></Row>
 
       {/* "Sounds robotic?" tips, open by default when the phone only has basic voices. */}
-      <Pressable onPress={() => setTipsOpen(!tipsShown)} accessibilityRole="button" accessibilityState={{ expanded: tipsShown }}
-        style={{ flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44 }}>
+      <Press onPress={() => setTipsOpen(!tipsShown)} accessibilityRole="button" accessibilityState={{ expanded: tipsShown }}
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 48 }}>
         <Ico e="💡" size={26} />
-        <T bold style={{ flex: 1 }}>Sounds robotic?</T>
-        <T soft>{tipsShown ? '▲' : '▼'}</T>
-      </Pressable>
+        <T v="label" w={600} style={{ flex: 1 }}>Sounds robotic?</T>
+        <Icon name="chevron" style={tipsShown ? { transform: [{ rotate: '180deg' }] } : undefined} />
+      </Press>
       {tipsShown ? (
-        <View style={[s.tip, { backgroundColor: t.c.surface2 }]}>
-          <T em={0.85} style={{ flex: 1 }}>{tip}</T>
+        <View style={[s.tip, { backgroundColor: t.c.sunken }]}>
+          <T style={{ flex: 1 }}>{tip}</T>
         </View>
       ) : null}
-      <T em={0.75} soft>Lexi's own voice was made with Piper TTS and the public-domain LJ Speech voice.</T>
+      <T v="caption" muted>Lexi's own voice was made with Piper TTS and the public-domain LJ Speech voice.</T>
     </Section>
   );
 }
@@ -274,11 +264,11 @@ function Reminder() {
       {r.on ? (
         <>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Chip words="Earlier" icon="➖" a11y="Earlier by 15 minutes" onPress={() => shift(-15)} />
-            <Text style={[t.text(1.4, { display: true, bold: true }), { minWidth: t.fs * 6, textAlign: 'center' }]} accessibilityLabel={'Reminder time ' + fmtClock(r.hour, r.minute)}>
+            <Chip emoji="➖" label="Earlier" a11y="Earlier by 15 minutes" onPress={() => shift(-15)} />
+            <T v="headline" style={{ minWidth: t.fs * 6, textAlign: 'center' }} accessibilityLabel={'Reminder time ' + fmtClock(r.hour, r.minute)}>
               {fmtClock(r.hour, r.minute)}
-            </Text>
-            <Chip words="Later" icon="➕" a11y="Later by 15 minutes" onPress={() => shift(15)} />
+            </T>
+            <Chip emoji="➕" label="Later" a11y="Later by 15 minutes" onPress={() => shift(15)} />
           </View>
           <Row gap={8}>
             <Chip label="Daily" selected={r.every === 'daily'} onPress={() => set({ ...r, every: 'daily' })} />
@@ -297,8 +287,8 @@ function ChatBrain() {
     return (
       <Section icon="🔑" title="Chat brain (optional)"
         note={st.aiOk ? "On. Free chat, ✨ Tidy spelling and reflections use Claude. Your key is kept in this phone's keychain." : "Your API key didn't work. Remove it and paste a new one."}>
-        <T em={0.85} soft>{'Model: ' + MODEL + '. What you send to the chat brain goes to Anthropic.'}</T>
-        <Row gap={8}><Chip icon="🗑️" label="Remove key" onPress={() => { setApiKey(null); toast('Chat brain turned off. 🔌'); }} /></Row>
+        <T v="caption" muted>{'Model: ' + MODEL + '. What you send to the chat brain goes to Anthropic.'}</T>
+        <Row gap={8}><Chip icon="delete" label="Remove key" onPress={() => { setApiKey(null); toast('Chat brain turned off. 🔌'); }} /></Row>
       </Section>
     );
   }
@@ -307,10 +297,10 @@ function ChatBrain() {
       note="Off. Free chat, ✨ Tidy spelling and reflections need Claude, an AI from Anthropic. Paste your own Anthropic API key to turn them on. Check-ins, writing, voice typing and your journal work without it.">
       <Box field={key} placeholder="sk-ant-…" accessibilityLabel="Anthropic API key" secureTextEntry autoCapitalize="none" autoCorrect={false} />
       <Row gap={8}>
-        <Btn variant="primary" icon="✔️" label="Save key" disabled={!key.value.trim()}
+        <Btn variant="primary" icon="check" label="Save key" disabled={!key.value.trim()}
           onPress={() => { setApiKey(key.ref.current); key.set(''); toast('Chat brain is on. 🤖'); }} />
       </Row>
-      <T em={0.8} soft>What you send to the chat brain goes to Anthropic. Get a key at console.anthropic.com.</T>
+      <T v="caption" muted>What you send to the chat brain goes to Anthropic. Get a key at console.anthropic.com.</T>
     </Section>
   );
 }
@@ -330,19 +320,18 @@ export function SettingsScreen() {
   const customs: [string, number, { e: string; label: string; band?: string }][] = [];
   (st.custom.mood || []).forEach((m, i) => customs.push(['mood', i, m]));
   TOPICS.forEach(tp => (st.custom[tp.key] || []).forEach((m, i) => customs.push([tp.key, i, m])));
+  const hlLook = t.c.highlight;
 
   return (
-    <ScrollView contentContainerStyle={{ paddingHorizontal: t.pad, paddingTop: 20, paddingBottom: 28, gap: 14 }} keyboardShouldPersistTaps="handled">
+    <ScrollView contentContainerStyle={{ paddingHorizontal: t.gutter, paddingTop: 16, paddingBottom: 32, gap: 32 }} keyboardShouldPersistTaps="handled">
       <View style={{ gap: 4 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Ico e="⚙️" size={36} />
-          <T em={1.45} display bold accessibilityRole="header">Settings</T>
-        </View>
-        <T em={0.85} soft>Make Lexi easy on your eyes and your brain.</T>
+        <T v="headline" accessibilityRole="header">Settings</T>
+        <T v="caption" muted>Make Lexi easy on your eyes and your brain.</T>
       </View>
 
-      <Section icon="🎨" title="Theme" note="Match my device: Orange by day, Ember at night.">
-        <ThemePicker />
+      <Section icon="🎨" title="Look" note="Pick the colors that feel easiest to read.">
+        <LookPicker />
+        {S.theme === 'auto' ? <T v="caption" muted>Match my device: Cream by day, Ember at night.</T> : null}
       </Section>
 
       <Section icon="🧠" title="Icons and emoji" note="If icons don't work for your brain, turn them off. Words will show instead.">
@@ -367,11 +356,14 @@ export function SettingsScreen() {
 
       <Section icon="🖍️" title="Highlight" note="While Lexi reads, the word she's saying lights up.">
         <Row gap={8}>
-          {(Object.keys(HIGHLIGHTS) as Settings['highlight'][]).map(k => (
-            <Seg key={k} k="highlight" v={k} label={HIGHLIGHTS[k][0]}>
-              {HIGHLIGHTS[k][1] ? <View style={{ width: 18, height: 18, borderRadius: 5, backgroundColor: HIGHLIGHTS[k][1] as string, borderWidth: 1, borderColor: t.c.line }} /> : null}
-            </Seg>
-          ))}
+          {(Object.keys(HIGHLIGHTS) as Settings['highlight'][]).map(k => {
+            const color = k === 'auto' ? hlLook : HIGHLIGHTS[k][1];
+            return (
+              <Seg key={k} k="highlight" v={k} label={HIGHLIGHTS[k][0]}>
+                {color ? <View style={{ width: 20, height: 20, borderRadius: R.xs, backgroundColor: color, borderWidth: 1, borderColor: t.c.borderStrong }} /> : null}
+              </Seg>
+            );
+          })}
         </Row>
       </Section>
 
@@ -387,37 +379,34 @@ export function SettingsScreen() {
 
       <Section icon="✋🏽" title="Skin tone">
         <Row gap={8}>
-          {TONES.map(([tn, name]) => (
-            <Seg key={name} k="tone" v={tn} label={name} a11y={name + ' skin tone'}>
-              <Text style={t.emoji(30)}>{'✋' + tn}</Text>
-            </Seg>
-          ))}
+          {TONES.map(([tn, name]) => <Seg key={name} k="tone" v={tn} emoji={'✋' + tn} label={name} a11y={name + ' skin tone'} />)}
         </Row>
       </Section>
 
-      <Section icon={S.avatar} title="My avatar">
+      <Section icon={S.avatar || '🙂'} title="My avatar" note="Shown beside your messages. None keeps the chat simple.">
         <Row gap={8}>
-          {AVATARS.map(a => (
-            <Seg key={a} k="avatar" v={a} a11y={'Avatar ' + a}>
-              <Text style={t.emoji(38)}>{t.toned(a)}</Text>
-            </Seg>
-          ))}
+          {AVATARS.map(a => (a
+            ? <Seg key={a} k="avatar" v={a} emoji={t.toned(a)} emojiSize={34} a11y={'Avatar ' + a} />
+            : <Seg key="none" k="avatar" v="" label="None" a11y="No avatar" />))}
         </Row>
       </Section>
 
       <Section icon="🎙" title="Voice typing"
-        note={'Tap 🎙 next to 🙂 and say your words. Your phone turns speech into text' + (Platform.OS === 'ios' ? ' with Apple speech recognition.' : ' with its speech service (usually Google).')} />
+        note={'In the chat, tap the mic and talk. Lexi listens until you tap Done, then you can Send, Say again or Fix the words. Your phone turns speech into text' + (Platform.OS === 'ios' ? ' with Apple speech recognition.' : ' with its speech service (usually Google).')} />
 
-      <Section icon="🏷️" title="My own words" note={customs.length ? 'Words and emoji you added. Tap ✖️ to remove one.' : 'Add your own feeling words with ➕ My own during a check-in.'}>
+      <Section icon="🏷️" title="My own words" note={customs.length ? 'Words and emoji you added. Tap × to remove one.' : 'Add your own feeling words with ➕ My own during a check-in.'}>
         {customs.length ? (
           <Row gap={8}>
-            {customs.map(([g, i, m]) => (
-              <View key={g + i + m.label} style={[s.custom, { backgroundColor: mix(t.band(m.band).b, t.c.surface, 0.3) }]}>
-                <Ico e={m.e} size={26} />
-                <T>{m.label}</T>
-                <Chip icon="✖️" iconSize={18} words="Remove" a11y={'Remove ' + m.label} onPress={() => removeCustom(g, i)} style={{ minHeight: 40, borderColor: 'transparent', backgroundColor: 'transparent', paddingHorizontal: 6 }} />
-              </View>
-            ))}
+            {customs.map(([g, i, m]) => {
+              const tone = t.band(m.band);
+              return (
+                <View key={g + i + m.label} style={[s.custom, { backgroundColor: tone.soft }]}>
+                  <Ico e={m.e} size={Math.round(t.fs * 1.3)} />
+                  <T v="label" color={tone.ink}>{m.label}</T>
+                  <IconBtn icon="close" label={'Remove ' + m.label} words="Remove" variant="plain" onPress={() => removeCustom(g, i)} />
+                </View>
+              );
+            })}
           </Row>
         ) : null}
       </Section>
@@ -428,7 +417,7 @@ export function SettingsScreen() {
         <PrivacyLines />
       </Section>
 
-      <Section icon="📊" title="Journal numbers" note="The journal always shows days journaled, feelings named and entries. You can also show a streak, where rest days are OK, and a word count.">
+      <Section icon="📊" title="Journal numbers" note="The journal always shows days journaled and feelings named. You can also show a streak, where rest days are OK, and a word count.">
         <Row gap={8}><Seg k="showStreak" v={false} label="Hide them" /><Seg k="showStreak" v={true} label="Show streak and word count" /></Row>
       </Section>
 
@@ -436,22 +425,22 @@ export function SettingsScreen() {
 
       <Section icon="📤" title="Share my journal" note="Make a PDF of your journal, then choose where to send or save it.">
         <Row gap={8}>
-          <Chip icon="📄" label="Make a PDF: last 30 days" disabled={exporting} onPress={() => makePdf('month')} />
-          <Chip icon="📚" label="Make a PDF: everything" disabled={exporting} onPress={() => makePdf('all')} />
+          <Chip emoji="📄" label="Make a PDF: last 30 days" disabled={exporting} onPress={() => makePdf('month')} />
+          <Chip emoji="📚" label="Make a PDF: everything" disabled={exporting} onPress={() => makePdf('all')} />
         </Row>
       </Section>
 
       <Section icon="💾" title="Your journal" note="Saved on this device only.">
         <Row gap={8}>
-          <Chip icon="▶️" label="Run quick start" onPress={() => quickStart()} />
-          <Chip icon="🔁" label="Replay Lexi's intro" onPress={() => { showView('home'); intro(); }} />
-          <Chip icon="🗑️" label="Delete everything" onPress={() => setWipeAsk(true)} />
+          <Chip icon="play" label="Run quick start" onPress={() => quickStart()} />
+          <Chip emoji="🔁" label="Replay Lexi's intro" onPress={() => { showView('home'); intro(); }} />
+          <Chip icon="delete" label="Delete everything" onPress={() => setWipeAsk(true)} />
         </Row>
         {wipeAsk ? (
-          <View style={[s.confirm, { backgroundColor: t.c.surface2 }]}>
+          <View style={[s.confirm, { backgroundColor: t.c.sunken }]}>
             <T bold style={{ flexGrow: 1, flexBasis: t.fs * 10 }}>{DELETE_ASK}</T>
-            <Btn label="Keep everything" onPress={() => setWipeAsk(false)} />
-            <Btn variant="danger" label="Delete everything" onPress={async () => { setWipeAsk(false); await deleteEverything(); applyReminders(state.settings.reminders); toast('Everything is deleted. 🗑️'); }} />
+            <Btn label="Keep everything" height={48} onPress={() => setWipeAsk(false)} />
+            <Btn variant="danger" label="Delete everything" height={48} onPress={async () => { setWipeAsk(false); await deleteEverything(); applyReminders(state.settings.reminders); toast('Everything is deleted. 🗑️'); }} />
           </View>
         ) : null}
       </Section>
@@ -460,14 +449,12 @@ export function SettingsScreen() {
 }
 
 const s = StyleSheet.create({
-  section: { gap: 10, padding: 14, borderRadius: R.m },
-  custom: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 10, paddingRight: 2, borderRadius: 999 },
-  confirm: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10, padding: 12, borderRadius: R.s },
-  voice: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 12, paddingRight: 8, paddingVertical: 4, borderRadius: R.s },
+  custom: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 12, borderRadius: R.full },
+  confirm: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10, padding: 12, borderRadius: R.md },
+  voice: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 14, paddingRight: 6, paddingVertical: 4, borderRadius: R.md },
   radio: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   radioDot: { width: 12, height: 12, borderRadius: 6 },
-  play: { width: 44, height: 44, borderRadius: 22, borderWidth: 2, alignItems: 'center', justifyContent: 'center', paddingLeft: 3 },
-  tip: { flexDirection: 'row', gap: 10, alignItems: 'flex-start', padding: 12, borderRadius: R.s },
-  big: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 72, paddingVertical: 12, paddingHorizontal: 14, borderRadius: R.m },
-  tag: { paddingHorizontal: 8, paddingVertical: 1, borderRadius: 999 },
+  tip: { flexDirection: 'row', gap: 10, alignItems: 'flex-start', padding: 12, borderRadius: R.md },
+  big: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 72, paddingVertical: 12, paddingHorizontal: 16, borderRadius: R.lg },
+  tag: { paddingHorizontal: 10, borderRadius: R.full },
 });

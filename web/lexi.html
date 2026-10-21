@@ -1,445 +1,462 @@
 <title>Lexi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Lexend:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Lexend:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: the Lexi wireframe phone (Miro Screens 11–15): 48px accent top bar, 14px accent side rails,
-   a fixed-width column of bot bubbles, and an accent dock with big nav icons above a white input pill.
-   Default tokens are the Orange theme (Screen 11); dark falls back to Ember (Screen 15). */
-:root{
-  --bg:#E6E6E6; --surface:#FFFFFF; --surface-2:#F3F3F3; --ink:#020000; --ink-soft:#4B4B4B; --line:#D2D2D2;
-  --bar:#E38100; --on-bar:#1E1000; --rail:#E38100;
-  --pill:#FFFFFF; --pill-ink:#020000;
-  --accent:#8100E3; --on-accent:#FFFFFF;
-  --bot:#79EAB9; --bot-ink:#020000; --me:#FFFFFF; --me-ink:#020000;
-  --yes:#8100E3; --yes-ink:#FFFFFF; --no-bg:#FFFFFF; --no-line:#8100E3; --no-ink:#020000;
-  --b-content:#E38100; --b-content-ink:#1E1000; --b-stressed:#79EAB9; --b-stressed-ink:#06281A; --b-low:#8100E3; --b-low-ink:#FFFFFF;
-  --tab-on:#FFFFFF; --tab-on-ink:#020000;
-  --shadow:rgba(0,0,0,.10); --scrim:rgba(0,0,0,.45);
-  --deco:#000000; --deco-o:0; --deco-img:none;
-  --danger:#C0352B; --on-danger:#FFFFFF;
-  --font:Verdana,"Atkinson Hyperlegible","DejaVu Sans",Tahoma,sans-serif;
-  --font-display:"Lexend",Verdana,"DejaVu Sans",sans-serif;
-  --fs:18px; --lh:1.7; --r-s:14px; --r-m:22px; --r-l:28px;
+/* Warm paper (docs/DESIGN_WARM_PAPER.md): warm canvas, no accent frame, one accent per screen,
+   big type, Lexend 400/500/600 for the interface. Default tokens are Cream; dark falls back to Ember. */
+:root,.app[data-look="cream"]{
+  --canvas:#F6EEE2; --surface:#FFFBF5; --sunken:#EFE5D6; --raised:#FFFBF5; --lexi:#FBE2C4; --lexi-edge:transparent; --me:#FFFBF5; --me-edge:#E3D6C4;
+  --ink:#17130F; --muted:#4E443B; --accent:#9C4A0B; --on-accent:#FFFBF5; --accent-ink:#9C4A0B; --accent-tint:#F3E6D9;
+  --edge:#8C7F70; --hairline:#E3D6C4; --hl-look:#79EAB9; --sh:23 19 15;
+  --elev:0 1px 2px rgb(var(--sh) / 6%),0 4px 12px rgb(var(--sh) / 6%); --elev-over:0 2px 6px rgb(var(--sh) / 8%),0 12px 32px rgb(var(--sh) / 12%);
+  --dock-sh:0 -4px 12px rgb(var(--sh) / 5%); --scrim:rgb(23 19 15 / 45%); --wing1:#E38100; --wing2:#F2B36B;
+  --bc-soft:#FAE1C0; --bc-ink:#6E3A08; --bc-solid:#C26A06; --bs-soft:#D2EEE2; --bs-ink:#1B5A45; --bs-solid:#2A8A69; --bl-soft:#E6DDF4; --bl-ink:#4B2C80; --bl-solid:#7A4FC4;
+  color-scheme:light;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#201B17; --surface:#2B2520; --surface-2:#352F2B; --ink:#ECE0DA; --ink-soft:#D6C3B6; --line:#51443A;
-    --bar:#201B17; --on-bar:#FFB877; --rail:#201B17; --pill:#352F2B; --pill-ink:#ECE0DA;
-    --accent:#FFB877; --on-accent:#4C2700; --bot:#FFB877; --bot-ink:#4C2700; --me:#51443A; --me-ink:#FFDCC1;
-    --yes:#4C2700; --yes-ink:#FFDCC1; --no-bg:#FFDCC1; --no-line:#4C2700; --no-ink:#4C2700;
-    --b-content:#F29A2E; --b-content-ink:#1E1000; --b-stressed:#79EAB9; --b-stressed-ink:#06281A; --b-low:#A866FF; --b-low-ink:#1D0038;
-    --tab-on:#352F2B; --tab-on-ink:#FFB877; --shadow:rgba(0,0,0,.45); --scrim:rgba(0,0,0,.65);
-    --deco:#FFB877; --deco-o:.17; --deco-img:url("butterfly.webp");
+    --canvas:#201B17; --surface:#2B2520; --sunken:#1A1612; --raised:#352F2B; --lexi:#3A2F27; --lexi-edge:transparent; --me:#4A3A2C; --me-edge:transparent;
+    --ink:#F0E5DE; --muted:#E2D2C6; --accent:#FFB877; --on-accent:#4C2700; --accent-ink:#FFB877; --accent-tint:#443729;
+    --edge:#9E8E82; --hairline:#44392F; --hl-look:#FFE36E; --sh:0 0 0;
+    --elev:none; --elev-over:0 0 0 1px #9E8E82,0 12px 32px rgb(0 0 0 / 35%); --dock-sh:none; --scrim:rgb(0 0 0 / 60%); --wing1:#F29A2E; --wing2:#FFC98F;
+    --bc-soft:#4A3418; --bc-ink:#F7D3A6; --bc-solid:#E8963A; --bs-soft:#1E3F35; --bs-ink:#BDEBD8; --bs-solid:#4FC49A; --bl-soft:#352A4D; --bl-ink:#DCCCF7; --bl-solid:#A98BEA;
     color-scheme:dark;
   }
 }
-:root[data-theme="dark"]{
-  --bg:#201B17; --surface:#2B2520; --surface-2:#352F2B; --ink:#ECE0DA; --ink-soft:#D6C3B6; --line:#51443A;
-  --bar:#201B17; --on-bar:#FFB877; --rail:#201B17; --pill:#352F2B; --pill-ink:#ECE0DA;
-  --accent:#FFB877; --on-accent:#4C2700; --bot:#FFB877; --bot-ink:#4C2700; --me:#51443A; --me-ink:#FFDCC1;
-  --yes:#4C2700; --yes-ink:#FFDCC1; --no-bg:#FFDCC1; --no-line:#4C2700; --no-ink:#4C2700;
-  --b-content:#F29A2E; --b-content-ink:#1E1000; --b-stressed:#79EAB9; --b-stressed-ink:#06281A; --b-low:#A866FF; --b-low-ink:#1D0038;
-  --tab-on:#352F2B; --tab-on-ink:#FFB877; --shadow:rgba(0,0,0,.45); --scrim:rgba(0,0,0,.65);
-  --deco:#FFB877; --deco-o:.17; --deco-img:url("butterfly.webp");
+:root[data-theme="dark"],.app[data-look="ember"]{
+  --canvas:#201B17; --surface:#2B2520; --sunken:#1A1612; --raised:#352F2B; --lexi:#3A2F27; --lexi-edge:transparent; --me:#4A3A2C; --me-edge:transparent;
+  --ink:#F0E5DE; --muted:#E2D2C6; --accent:#FFB877; --on-accent:#4C2700; --accent-ink:#FFB877; --accent-tint:#443729;
+  --edge:#9E8E82; --hairline:#44392F; --hl-look:#FFE36E; --sh:0 0 0;
+  --elev:none; --elev-over:0 0 0 1px #9E8E82,0 12px 32px rgb(0 0 0 / 35%); --dock-sh:none; --scrim:rgb(0 0 0 / 60%); --wing1:#F29A2E; --wing2:#FFC98F;
+  --bc-soft:#4A3418; --bc-ink:#F7D3A6; --bc-solid:#E8963A; --bs-soft:#1E3F35; --bs-ink:#BDEBD8; --bs-solid:#4FC49A; --bl-soft:#352A4D; --bl-ink:#DCCCF7; --bl-solid:#A98BEA;
   color-scheme:dark;
 }
-/* the five wireframe themes, chosen in Settings → Look */
+/* light looks share the light shadows and mood bands */
 .app[data-look="orange"],.app[data-look="purple"],.app[data-look="mint"]{
-  --bg:#E6E6E6; --surface:#FFFFFF; --surface-2:#F3F3F3; --ink:#020000; --ink-soft:#4B4B4B; --line:#D2D2D2;
-  --bar:#E38100; --on-bar:#1E1000; --rail:#E38100; --pill:#FFFFFF; --pill-ink:#020000;
-  --accent:#8100E3; --on-accent:#FFFFFF; --bot:#79EAB9; --bot-ink:#020000; --me:#FFFFFF; --me-ink:#020000;
-  --yes:#8100E3; --yes-ink:#FFFFFF; --no-bg:#FFFFFF; --no-line:#8100E3; --no-ink:#020000;
-  --b-content:#E38100; --b-content-ink:#1E1000; --b-stressed:#79EAB9; --b-stressed-ink:#06281A; --b-low:#8100E3; --b-low-ink:#FFFFFF;
-  --tab-on:#FFFFFF; --tab-on-ink:#020000; --shadow:rgba(0,0,0,.10); --scrim:rgba(0,0,0,.45);
-  --deco:#000000; --deco-o:0; --deco-img:none;
+  --elev:0 1px 2px rgb(var(--sh) / 6%),0 4px 12px rgb(var(--sh) / 6%); --elev-over:0 2px 6px rgb(var(--sh) / 8%),0 12px 32px rgb(var(--sh) / 12%);
+  --dock-sh:0 -4px 12px rgb(var(--sh) / 5%); --wing1:#E38100; --wing2:#F2B36B; --hl-look:#FFE36E; --lexi-edge:transparent;
+  --bc-soft:#FAE1C0; --bc-ink:#6E3A08; --bc-solid:#C26A06; --bs-soft:#D2EEE2; --bs-ink:#1B5A45; --bs-solid:#2A8A69; --bl-soft:#E6DDF4; --bl-ink:#4B2C80; --bl-solid:#7A4FC4;
   color-scheme:light;
 }
-.app[data-look="purple"]{ --bar:#8100E3; --on-bar:#FFFFFF; --rail:#8100E3; }
-/* Cream: the warm background family that read fastest in Rello & Bigham 2017 */
-.app[data-look="cream"]{
-  --bg:#F5E4CC; --surface:#FFFAF2; --surface-2:#F3E1C8; --ink:#020000; --ink-soft:#4A3F35; --line:#E0CAAE;
-  --bar:#E38100; --on-bar:#1E1000; --rail:#E38100; --pill:#FFFFFF; --pill-ink:#020000;
-  --accent:#8100E3; --on-accent:#FFFFFF; --bot:#79EAB9; --bot-ink:#020000; --me:#FFFFFF; --me-ink:#020000;
-  --yes:#8100E3; --yes-ink:#FFFFFF; --no-bg:#FFFFFF; --no-line:#8100E3; --no-ink:#020000;
-  --b-content:#E38100; --b-content-ink:#1E1000; --b-stressed:#79EAB9; --b-stressed-ink:#06281A; --b-low:#8100E3; --b-low-ink:#FFFFFF;
-  --tab-on:#FFFFFF; --tab-on-ink:#020000; --shadow:rgba(60,35,0,.12); --scrim:rgba(0,0,0,.45);
-  --deco:#000000; --deco-o:0; --deco-img:none;
-  color-scheme:light;
+.app[data-look="orange"]{ /* shown as Peach */
+  --canvas:#F9E3CC; --surface:#FFF9F2; --sunken:#F3DDC6; --raised:#FFF9F2; --lexi:#FFF9F2; --lexi-edge:#EBCDB0; --me:#FFF9F2; --me-edge:#EBCDB0;
+  --ink:#2A1C12; --muted:#5E4335; --accent:#A3480A; --on-accent:#FFF9F2; --accent-ink:#93410A; --accent-tint:#F4E4D6;
+  --edge:#957360; --hairline:#EBCDB0; --sh:42 28 18; --scrim:rgb(42 28 18 / 45%);
 }
-.app[data-look="mint"]{ --bar:#79EAB9; --on-bar:#06281A; --rail:#79EAB9; --bot:#FFDCC1; --bot-ink:#2E1500; }
+.app[data-look="purple"]{
+  --canvas:#F5F0F8; --surface:#FFFCFF; --sunken:#ECE6F1; --raised:#FFFCFF; --lexi:#FFFCF8; --lexi-edge:#E3DAEC; --me:#ECE2F8; --me-edge:transparent;
+  --ink:#221A2E; --muted:#574A6B; --accent:#6E3BC4; --on-accent:#FFFFFF; --accent-ink:#6630BB; --accent-tint:#EEE5F8;
+  --edge:#857A97; --hairline:#E3DAEC; --sh:34 26 46; --scrim:rgb(34 26 46 / 45%);
+}
+.app[data-look="mint"]{
+  --canvas:#EEF5EC; --surface:#FBFDF8; --sunken:#E4EDE2; --raised:#FBFDF8; --lexi:#FCFCF6; --lexi-edge:#D5E4D7; --me:#D8EEE0; --me-edge:transparent;
+  --ink:#13261D; --muted:#3A5346; --accent:#1F7A57; --on-accent:#FFFFFF; --accent-ink:#1A6A4C; --accent-tint:#E1EDE5;
+  --edge:#6F877A; --hairline:#D5E4D7; --sh:19 38 29; --scrim:rgb(19 38 29 / 45%);
+}
 .app[data-look="night"]{
-  --bg:#020000; --surface:#141414; --surface-2:#1F1F1F; --ink:#F4F4F4; --ink-soft:#B8B8B8; --line:#2E2E2E;
-  --bar:#020000; --on-bar:#E38100; --rail:#020000; --pill:#1A1A1A; --pill-ink:#F4F4F4;
-  --accent:#79EAB9; --on-accent:#06281A; --bot:#1A1A1A; --bot-ink:#E38100; --me:#262626; --me-ink:#FFFFFF;
-  --yes:#79EAB9; --yes-ink:#06281A; --no-bg:#FFFFFF; --no-line:#79EAB9; --no-ink:#020000;
-  --b-content:#E38100; --b-content-ink:#1E1000; --b-stressed:#79EAB9; --b-stressed-ink:#06281A; --b-low:#A866FF; --b-low-ink:#1D0038;
-  --tab-on:#1F1F1F; --tab-on-ink:#E38100; --shadow:rgba(0,0,0,.6); --scrim:rgba(0,0,0,.7);
-  --deco:#000000; --deco-o:0; --deco-img:none;
+  --canvas:#17181D; --surface:#1F2027; --sunken:#121317; --raised:#272932; --lexi:#2A2B33; --lexi-edge:transparent; --me:#3A3326; --me-edge:transparent;
+  --ink:#ECE7DF; --muted:#DDD7CE; --accent:#F2A65A; --on-accent:#1E1408; --accent-ink:#F6B97A; --accent-tint:#38302D;
+  --edge:#7C7A82; --hairline:#2E3038; --hl-look:#FFE36E; --sh:0 0 0;
+  --elev:none; --elev-over:0 0 0 1px #7C7A82,0 12px 32px rgb(0 0 0 / 35%); --dock-sh:none; --scrim:rgb(0 0 0 / 60%); --wing1:#F29A2E; --wing2:#FFC98F;
+  --bc-soft:#4A3418; --bc-ink:#F7D3A6; --bc-solid:#E8963A; --bs-soft:#1E3F35; --bs-ink:#BDEBD8; --bs-solid:#4FC49A; --bl-soft:#352A4D; --bl-ink:#DCCCF7; --bl-solid:#A98BEA;
   color-scheme:dark;
 }
-.app[data-look="ember"]{
-  --bg:#201B17; --surface:#2B2520; --surface-2:#352F2B; --ink:#ECE0DA; --ink-soft:#D6C3B6; --line:#51443A;
-  --bar:#201B17; --on-bar:#FFB877; --rail:#201B17; --pill:#352F2B; --pill-ink:#ECE0DA;
-  --accent:#FFB877; --on-accent:#4C2700; --bot:#FFB877; --bot-ink:#4C2700; --me:#51443A; --me-ink:#FFDCC1;
-  --yes:#4C2700; --yes-ink:#FFDCC1; --no-bg:#FFDCC1; --no-line:#4C2700; --no-ink:#4C2700;
-  --b-content:#F29A2E; --b-content-ink:#1E1000; --b-stressed:#79EAB9; --b-stressed-ink:#06281A; --b-low:#A866FF; --b-low-ink:#1D0038;
-  --tab-on:#352F2B; --tab-on-ink:#FFB877; --shadow:rgba(0,0,0,.45); --scrim:rgba(0,0,0,.65);
-  --deco:#FFB877; --deco-o:.17; --deco-img:url("butterfly.webp");
-  color-scheme:dark;
+:root{
+  --danger:#B42F1F; --on-danger:#FFFBF5;
+  --font:Verdana,"Atkinson Hyperlegible","DejaVu Sans",Tahoma,sans-serif;
+  --font-display:"Lexend",Verdana,"DejaVu Sans",sans-serif;
+  --fs:18px; --lh:1.7;
+  --r-xs:6px; --r-sm:8px; --r-md:12px; --r-lg:20px; --r-xl:28px;
+  --cap:max(16px,.889em);
 }
+/* older names, kept so inline styles and helpers keep working */
+.app{--bg:var(--canvas); --surface-2:var(--sunken); --ink-soft:var(--muted); --line:var(--hairline); --bot:var(--lexi); --bot-ink:var(--ink); --me-ink:var(--ink); --shadow:rgb(var(--sh) / 10%)}
+[data-band="content"]{--b:var(--bc-solid);--b-soft:var(--bc-soft);--b-ink:var(--bc-ink)}
+[data-band="stressed"]{--b:var(--bs-solid);--b-soft:var(--bs-soft);--b-ink:var(--bs-ink)}
+[data-band="low"]{--b:var(--bl-solid);--b-soft:var(--bl-soft);--b-ink:var(--bl-ink)}
 
 html{height:100%;box-sizing:border-box}
 *,*::before,*::after{box-sizing:inherit}
-body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:var(--font)}
+body{height:100%;margin:0;background:var(--canvas);color:var(--ink);font-family:var(--font)}
 button,input,textarea,select{font:inherit;color:inherit}
 button{-webkit-tap-highlight-color:transparent}
-:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+:focus-visible{outline:3px solid var(--accent-ink);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 
-.app{height:100%;display:flex;justify-content:center;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:var(--fs);line-height:var(--lh);letter-spacing:var(--ls,.012em);word-spacing:var(--ws,.08em)}
+.app{height:100%;display:flex;justify-content:center;background:var(--canvas);color:var(--ink);font-family:var(--font);font-size:var(--fs);line-height:var(--lh);letter-spacing:var(--ls,.012em);word-spacing:var(--ws,.08em)}
 .phone{width:100%;max-width:560px;height:100%;min-height:0;display:flex;flex-direction:column}
 
-/* top bar (wireframe: 48px accent strip) */
-.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;padding:4px 18px;background:var(--bar);color:var(--on-bar)}
-.brand{display:flex;align-items:center;gap:.35em;font:700 1.12em/1.1 var(--font-display);letter-spacing:.01em}
-.brand .ico{font-size:28px}
-.help-btn{display:inline-flex;align-items:center;gap:.3em;min-height:42px;padding:0 14px;border:0;border-radius:999px;background:var(--tab-on);color:var(--tab-on-ink);font-weight:700;font-size:.9em;cursor:pointer;box-shadow:0 3px 10px var(--shadow)}
-.help-btn .ico{font-size:1.3em;line-height:1}
-.ai-note{display:flex;align-items:center;gap:.45em;padding:4px 18px;background:var(--surface);color:var(--ink-soft);border-bottom:2px solid var(--line);font-size:min(.78em,15px);font-weight:700;line-height:1.35;letter-spacing:.012em;word-spacing:.08em}
-.ai-note .ico{font-size:1.4em;line-height:1}
+/* line icons and the butterfly mark */
+.li{width:24px;height:24px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle}
+.ico:has(> .li){display:inline-grid;place-items:center;line-height:1}
+.mark{flex:none;display:block}
+.mark .w1{fill:var(--wing1)} .mark .w2{fill:var(--wing2)} .mark .bd{fill:var(--ink)} .mark .an{fill:none;stroke:var(--ink);stroke-width:1.8;stroke-linecap:round}
+.mark .wings{transform-box:view-box;transform-origin:50% 50%;transition:transform .35s cubic-bezier(.2,0,0,1)}
+.mark.think .wings{transform:scaleX(.78)}
+.shape{width:20px;height:20px;flex:none;fill:var(--b,var(--muted))}
+
+/* top bar: canvas colour, the butterfly, Help */
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:64px;padding:8px 20px 4px;background:var(--canvas);color:var(--ink)}
+.brand{display:flex;align-items:center;gap:10px;font:600 1.222em/1.2 var(--font-display)}
+.brand .mark{width:34px;height:34px}
+.help-btn{display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 18px 0 14px;border:1px solid var(--edge);border-radius:999px;background:var(--surface);color:var(--ink);font:500 1em/1 var(--font-display);cursor:pointer}
+.ai-note{display:flex;align-items:center;gap:6px;padding:0 14px 6px 20px;color:var(--muted);font:500 var(--cap)/1.45 var(--font-display)}
 .ai-note .txt{flex:1;min-width:0}
+.ai-note .speak{width:44px;height:44px;border:0;background:transparent}
 .crisis{display:flex;flex-direction:column;gap:10px}
-.crisis .emerg{display:flex;align-items:center;gap:.5em;padding:10px 14px;border-radius:var(--r-m);background:var(--danger);color:var(--on-danger);font-weight:700}
-.crisis .emerg .num{font:700 1.5em/1.1 var(--font-display);user-select:all}
-.crisis .line{display:flex;flex-direction:column;gap:2px;padding:10px 14px;border-radius:var(--r-m);background:var(--surface-2)}
-.crisis .line b{font-family:var(--font-display)}
-.crisis .line .how{font-size:.85em;color:var(--ink-soft)}
-.crisis .line .num{font:700 1.45em/1.2 var(--font-display);user-select:all;font-variant-numeric:tabular-nums}
+.crisis .emerg{display:flex;align-items:center;gap:.5em;padding:12px 14px;border-radius:var(--r-lg);background:var(--danger);color:var(--on-danger);font:600 1em/1.3 var(--font-display)}
+.crisis .emerg .num{font:600 1.5em/1.1 var(--font-display);user-select:all}
+.crisis .line{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-radius:var(--r-lg);background:var(--sunken)}
+.crisis .line b{font-family:var(--font-display);font-weight:600}
+.crisis .line .how{font:500 var(--cap)/1.45 var(--font-display);color:var(--muted)}
+.crisis .line .num{font:600 1.45em/1.2 var(--font-display);user-select:all;font-variant-numeric:tabular-nums}
 .crisis .acts{display:flex;flex-wrap:wrap;gap:8px}
-.crisis .acts a{display:inline-flex;align-items:center;gap:.3em;min-height:44px;padding:0 14px;border-radius:999px;background:var(--accent);color:var(--on-accent);font-weight:700;text-decoration:none}
+.crisis .acts a{display:inline-flex;align-items:center;gap:.4em;min-height:48px;padding:0 16px;border-radius:999px;background:var(--accent);color:var(--on-accent);font:600 1em/1 var(--font-display);text-decoration:none}
 .fixes{display:flex;flex-direction:column;gap:8px}
-.fix{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--r-s);background:rgba(255,255,255,.4)}
+.fix{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--hairline);border-radius:var(--r-md);background:var(--surface)}
 .fix .words{flex:1 1 10em;min-width:0;font-size:1.05em}
-.fix .from{opacity:.7}
+.fix .from{color:var(--muted)}
 .fix .to{font-weight:700}
-.fix .hint{display:block;font-size:.78em;opacity:.85}
-.fix .btn{min-height:44px;padding:.2em .9em}
-.fix .btn[aria-pressed="true"]{background:var(--bot-ink);color:var(--bot)}
-select{min-height:48px;padding:.3em .8em;border:2px solid var(--line);border-radius:var(--r-s);background:var(--surface-2);color:var(--ink);font:inherit}
-.orig{margin:0;padding:.6em .9em;border-radius:var(--r-m);background:var(--surface-2);white-space:pre-wrap}
-.w{border-radius:6px;transition:background-color .08s}
-.w.hl{background:var(--hl);color:#020000;box-shadow:0 0 0 2px var(--hl)}
-.w.tapped{background:var(--hl);color:#020000;box-shadow:0 0 0 2px var(--hl)}
+.fix .hint{display:block;font:500 var(--cap)/1.45 var(--font-display);color:var(--muted)}
+.fix .btn{min-height:48px;padding:.2em 1em}
+.fix .btn[aria-pressed="true"]{background:var(--accent-tint);border:2px solid var(--accent-ink);font-weight:600}
+select{min-height:48px;padding:.3em .8em;border:1px solid var(--edge);border-radius:var(--r-md);background:var(--sunken);color:var(--ink);font:inherit}
+.orig{margin:0;padding:.7em 1em;border-radius:var(--r-lg);background:var(--sunken);white-space:pre-wrap}
+.w{border-radius:var(--r-xs);transition:background-color .08s}
+.w.hl,.w.tapped{background:var(--hl);color:#17130F;box-shadow:0 0 0 2px var(--hl)}
 .app[data-tapword="1"] .bubble .w,.app[data-tapword="1"] .entry .text .w{cursor:pointer}
-.next-row{justify-content:flex-start;padding-left:56px}
-.next-pill{display:inline-flex;align-items:center;gap:.35em;min-height:46px;padding:0 1.2em;border:2px solid var(--accent);border-radius:999px;background:var(--surface);color:var(--ink);font-weight:700;cursor:pointer;box-shadow:0 4px 12px var(--shadow)}
+.next-row{justify-content:flex-start;padding-left:46px}
+.next-pill{display:inline-flex;align-items:center;gap:.4em;min-height:48px;padding:0 1.3em;border:1px solid var(--edge);border-radius:999px;background:var(--surface);color:var(--ink);font:600 1em/1 var(--font-display);cursor:pointer}
 .next-pill .ico{font-size:1.1em}
-.steps{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;font:700 .82em/1.3 var(--font-display);color:var(--ink-soft)}
+.newmsg{position:fixed;z-index:15;left:50%;transform:translateX(-50%);display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 18px 0 14px;border:1px solid var(--edge);border-radius:999px;background:var(--surface);color:var(--ink);font:500 var(--cap)/1 var(--font-display);box-shadow:var(--elev-over);cursor:pointer}
+.steps{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font:500 var(--cap)/1.3 var(--font-display);color:var(--muted)}
 .steps .dots2{display:flex;gap:6px}
-.steps .dots2 i{display:block;width:12px;height:12px;border-radius:50%;border:2px solid var(--accent);background:transparent}
-.steps .dots2 i.done{background:var(--accent)}
-.steps .dots2 i.now{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 35%,transparent)}
+.steps .dots2 i{display:block;width:10px;height:10px;border-radius:50%;border:2px solid var(--edge);background:transparent}
+.steps .dots2 i.done{background:var(--accent-ink);border-color:var(--accent-ink)}
+.steps .dots2 i.now{background:var(--accent-ink);border-color:var(--accent-ink);box-shadow:0 0 0 3px var(--accent-tint)}
 .recap{display:flex;flex-direction:column;gap:10px}
-.recap .item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:var(--r-m);background:var(--surface-2)}
+.recap .item{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:var(--r-lg);background:var(--sunken)}
 .recap .item .what{flex:1;min-width:0}
-.recap .item b{display:block;font-family:var(--font-display)}
+.recap .item b{display:block;font:600 1em/1.4 var(--font-display)}
 .qs-row{display:flex;flex-direction:column;gap:6px}
-.qs-row h4{margin:0;font:600 .9em var(--font-display)}
+.qs-row h4{margin:0;font:600 1em/1.3 var(--font-display)}
 .qs-preview{align-self:flex-start}
 .starters{display:flex;flex-wrap:wrap;gap:8px}
-.alt{display:block;font-size:.85em}
+.alt{display:block;font:500 var(--cap)/1.45 var(--font-display);color:var(--muted)}
 .help-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
-.help-list li{font-size:.95em;line-height:var(--lh)}
+.help-list li{font-size:max(16px,.95em);line-height:var(--lh)}
 .help-list li .ico{font-size:1.35em;line-height:1;vertical-align:-.15em;margin-right:.15em}
-#help-body .set p{font-size:.95em;color:var(--ink)}
+#help-body .set p{font-size:max(16px,.95em);color:var(--ink)}
 
-/* rails (wireframe: 14px accent strips) + Ember's butterfly engraving */
-.rails{position:relative;flex:1;min-height:0;display:flex;border-inline:14px solid var(--rail);background:var(--bg)}
-.rails::before{content:"";position:absolute;inset:4% 6% 2%;background:var(--deco);-webkit-mask:var(--deco-img) center/contain no-repeat;mask:var(--deco-img) center/contain no-repeat;opacity:var(--deco-o);pointer-events:none}
-.view{position:relative;z-index:1;flex:1;min-width:0;overflow-y:auto;overscroll-behavior:contain;padding:20px 14px 28px}
+.rails{position:relative;flex:1;min-height:0;display:flex;background:var(--canvas)}
+.view{position:relative;z-index:1;flex:1;min-width:0;overflow-y:auto;overscroll-behavior:contain;padding:12px 20px 28px}
 
 /* chat */
-.chat{display:flex;flex-direction:column;gap:22px}
-.row{display:flex;align-items:flex-end;gap:10px;min-width:0}
-.row.me{flex-direction:row-reverse}
-.row.bot:has(+ .row.bot),.row.me:has(+ .row.me){margin-bottom:-8px}
-.ava{flex:0 0 46px;width:46px;height:46px;display:grid;place-items:center;font-size:40px;line-height:1}
-.row.bot:has(+ .row.bot) > .ava,.row.me:has(+ .row.me) > .ava{visibility:hidden}
-.bubble{position:relative;padding:.7em 1em;border-radius:var(--r-m);background:var(--bot);color:var(--bot-ink);box-shadow:0 6px 18px var(--shadow);overflow-wrap:anywhere}
-.row.bot .bubble{width:min(70%,21em)}
-.app[data-wide="1"] .row.bot .bubble{width:min(86%,26em)}
-.row.bot:not(:has(+ .row.bot)) .bubble{border-bottom-left-radius:6px}
-.row.me .bubble{max-width:74%;background:var(--me);color:var(--me-ink)}
-.row.me:not(:has(+ .row.me)) .bubble{border-bottom-right-radius:6px}
+.chat{display:flex;flex-direction:column;gap:24px}
+.row{display:flex;align-items:flex-start;gap:10px;min-width:0}
+.row.me{flex-direction:row-reverse;align-items:flex-end}
+.row.bot + .row.bot,.row.me + .row.me{margin-top:-16px}
+.ava{flex:0 0 36px;width:36px;height:36px;display:grid;place-items:center;margin-top:4px;line-height:1}
+.ava .mark{width:36px;height:36px}
+.me-ava{font-size:30px;margin-top:0}
+.row.bot + .row.bot > .ava,.row.me + .row.me > .ava{visibility:hidden}
+.bubble{position:relative;padding:.75em 1em;border:1px solid var(--lexi-edge);border-radius:var(--r-lg);background:var(--lexi);color:var(--ink);overflow-wrap:break-word}
+.row.bot .bubble{width:min(calc(100% - 104px),21em)}
+.app[data-wide="1"] .row.bot .bubble{width:min(calc(100% - 104px),26em)}
+.row.bot:not(:has(+ .row.bot)) .bubble{border-bottom-left-radius:var(--r-xs)}
+.row.me .bubble{max-width:74%;border-color:var(--me-edge);background:var(--me);color:var(--ink)}
+.row.me:not(:has(+ .row.me)) .bubble{border-bottom-right-radius:var(--r-xs)}
 .bubble .lead{font-size:1.5em;line-height:1;vertical-align:-.12em;margin-right:.2em}
 .bubble .txt .ico{font-size:1.3em;line-height:1;vertical-align:-.12em}
-.row.bot .bubble:has(.yn){width:min(86%,22em)}
-.bubble.reading{box-shadow:0 0 0 4px var(--accent),0 6px 18px var(--shadow)}
-.speak{display:inline-grid;place-items:center;width:34px;height:34px;margin:-4px -6px -6px .25em;border:0;border-radius:50%;background:transparent;color:inherit;font-size:20px;vertical-align:middle;cursor:pointer;opacity:.75}
-.speak:hover{opacity:1;background:rgba(127,127,127,.18)}
-.yn{display:flex;flex-wrap:wrap;gap:10px;margin-top:.65em}
-.yn button{display:inline-flex;align-items:center;justify-content:center;gap:.3em;min-width:84px;min-height:58px;padding:4px 14px;border-radius:999px;border:3px solid var(--no-line);background:var(--no-bg);color:var(--no-ink);font-size:30px;line-height:1;cursor:pointer;box-shadow:0 4px 10px var(--shadow);transition:transform .12s}
-.yn button.yes{background:var(--yes);border-color:var(--yes);color:var(--yes-ink)}
-.yn button .lbl{font-size:15px;font-weight:700;letter-spacing:.02em}
-.yn button:active{transform:scale(.95)}
-.yn.done button{cursor:default;box-shadow:none}
-.yn.done button:not(.picked){opacity:.35}
+.row.bot .bubble:has(.yn){width:min(calc(100% - 104px),22em)}
+.bubble.reading{box-shadow:0 0 0 2px var(--accent-ink)}
+.speak{display:inline-grid;place-items:center;flex:none;align-self:flex-end;width:48px;height:48px;padding:0;border:1px solid var(--hairline);border-radius:50%;background:var(--surface);color:var(--ink);cursor:pointer}
+.speak:hover{border-color:var(--edge)}
+.row.typing .think{display:flex;align-items:center;min-height:44px;color:var(--muted);font:500 var(--cap)/1.45 var(--font-display)}
+.yn{display:flex;flex-wrap:wrap;gap:10px;margin-top:.7em}
+.yn button{display:inline-flex;align-items:center;justify-content:center;gap:.3em;min-width:84px;min-height:56px;padding:4px 14px;border:1px solid var(--edge);border-radius:999px;background:var(--surface);color:var(--ink);font:500 1em/1 var(--font-display);cursor:pointer;transition:background-color .15s}
+.yn button .ico{font-size:1.4em;line-height:1}
+.yn button.yes{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
 .answer{display:flex;flex-direction:column;align-items:flex-end;gap:2px;max-width:78%}
 .answer .emo{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:2px 6px;line-height:1.08;font-size:var(--es,64px)}
-.answer .cap{font-size:.78em;font-weight:700;color:var(--ink-soft);text-align:right;line-height:1.35}
-.party{justify-content:center;gap:4px}
-.party span{display:inline-block;font-size:clamp(48px,15vw,80px);line-height:1.1;animation:hop .6s cubic-bezier(.3,1.4,.5,1)}
-.party span:nth-child(2){animation-delay:.08s}.party span:nth-child(3){animation-delay:.16s}.party span:nth-child(4){animation-delay:.24s}
-.dots{display:flex;gap:7px;width:auto!important;padding:1em 1.1em}
-.dots i{display:block;width:11px;height:11px;border-radius:50%;background:currentColor;animation:bob 1s ease-in-out infinite}
-.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
-.row.in{animation:pop .22s ease-out}
-@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-@keyframes pop{from{transform:translateY(10px) scale(.96)}to{transform:none}}
-@keyframes hop{0%{transform:translateY(16px) scale(.5)}60%{transform:translateY(-10px) scale(1.08)}100%{transform:none}}
+.answer .cap{font:500 var(--cap)/1.45 var(--font-display);color:var(--muted);text-align:right}
+.row.in{animation:rise .25s cubic-bezier(.2,0,0,1)}
+@keyframes rise{from{transform:translateY(4px)}to{transform:none}}
+
+/* home: welcome, one primary action, this week */
+.hero{flex:1;display:flex;flex-direction:column;align-items:center;gap:14px;padding:6px 0 2px;text-align:center}
+.hero .halo{width:148px;height:148px;display:grid;place-items:center;border:1px solid var(--lexi-edge);border-radius:50%;background:var(--lexi)}
+.hero .halo .mark{width:104px;height:104px}
+.hero h2{margin:0;font:600 2em/1.2 var(--font-display)}
+.home-actions{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}
+.btn.wide{width:100%;justify-content:flex-start;padding:0 20px;text-align:left}
+.btn.wide .grow{flex:1}
+.btn.hero-btn{min-height:64px;font-size:1.111em}
+.three{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,7em),1fr));gap:10px;flex:1;min-width:0}
+.week{display:flex;flex-direction:column;gap:10px;padding:14px 16px;border:1px solid var(--hairline);border-radius:var(--r-xl);background:var(--raised);box-shadow:var(--elev)}
+.week-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.week-head h3{margin:0;font:600 1em/1.3 var(--font-display)}
+.week-head span{font:500 var(--cap)/1.3 var(--font-display);color:var(--muted)}
+.week-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;text-align:center;font:500 min(var(--cap),19px)/1.2 var(--font-display);color:var(--muted)}
+.wk{display:flex;flex-direction:column;align-items:center;gap:6px}
+.wk .mk{display:grid;place-items:center;width:32px;height:32px;border-radius:50%}
+.wk .shape{width:24px;height:24px}
+.wk .ring{width:22px;height:22px;border:2px dashed var(--edge);border-radius:50%}
+.wk .dot{width:12px;height:12px;border-radius:50%;background:var(--muted)}
+.wk.today{color:var(--ink);font-weight:600}
+.wk.today .mk{box-shadow:0 0 0 2px var(--accent-ink)}
 
 /* cards + tiles */
-.card{display:flex;flex-direction:column;gap:14px;padding:14px;border-radius:var(--r-l);background:var(--surface);color:var(--ink);box-shadow:0 8px 24px var(--shadow)}
-.card.done{opacity:.55;box-shadow:none}
-.card-title{margin:0;font:600 1em/1.3 var(--font-display)}
-.bands{display:flex;flex-direction:column;gap:12px}
-.band{padding:10px;border-radius:var(--r-m);background:color-mix(in srgb,var(--b) 24%,var(--surface))}
-[data-band="content"]{--b:var(--b-content);--b-ink:var(--b-content-ink)}
-[data-band="stressed"]{--b:var(--b-stressed);--b-ink:var(--b-stressed-ink)}
-[data-band="low"]{--b:var(--b-low);--b-ink:var(--b-low-ink)}
-.band-name{display:inline-flex;margin:0 0 10px;padding:.15em .9em;border-radius:999px;background:var(--b);color:var(--b-ink);font:600 .88em/1.6 var(--font-display)}
-.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:10px}
-.tile{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:104px;padding:12px 6px 10px;border:0;border-radius:20px;background:var(--surface);color:var(--ink);box-shadow:0 3px 0 var(--line);cursor:pointer;transition:transform .12s,box-shadow .12s}
-.tile .ico{font-size:44px;line-height:1}
-.tile .lbl{font-size:.74em;font-weight:700;line-height:1.25;letter-spacing:0;word-spacing:0;text-align:center;overflow-wrap:break-word}
-.tile .lbl.sm{font-size:.63em}
-.tile[aria-pressed="true"]{box-shadow:0 0 0 3px var(--accent),0 10px 22px var(--shadow);transform:translateY(-3px)}
-.tile[aria-pressed="true"]::after{content:"✔";position:absolute;top:6px;right:6px;width:24px;height:24px;display:grid;place-items:center;border-radius:50%;background:var(--accent);color:var(--on-accent);font-size:13px;line-height:1}
-.tile:active{transform:scale(.96)}
-.band .tile{background:var(--surface)}
-.tile.add{border:2px dashed var(--line);box-shadow:none;background:transparent}
+.card{display:flex;flex-direction:column;gap:14px;padding:16px;border:1px solid var(--hairline);border-radius:var(--r-xl);background:var(--raised);color:var(--ink);box-shadow:var(--elev)}
+.card-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 12px}
+.card-title{margin:0;font:600 1.222em/1.3 var(--font-display)}
+.bands{display:flex;flex-direction:column;gap:14px}
+.band{display:flex;flex-direction:column;gap:10px}
+.band-name{display:inline-flex;align-self:flex-start;align-items:center;gap:8px;margin:0;padding:6px 14px 6px 10px;border-radius:999px;background:var(--b-soft);color:var(--b-ink);font:600 var(--cap)/1.3 var(--font-display)}
+.seg{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,5.5em),1fr));gap:4px;padding:4px;border-radius:var(--r-lg);background:var(--sunken)}
+.seg button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:64px;padding:6px 4px;border:0;border-radius:16px;background:transparent;color:var(--muted);font:500 var(--cap)/1.2 var(--font-display);text-align:center;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--b-soft);color:var(--b-ink);box-shadow:inset 0 0 0 2px var(--b)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,8.5em),1fr));gap:10px}
+.tile{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:88px;padding:10px 8px;border:1px solid var(--hairline);border-radius:var(--r-lg);background:var(--raised);color:var(--ink);box-shadow:var(--elev);font:500 1em/1.25 var(--font-display);text-align:center;cursor:pointer;transition:background-color .15s,border-color .15s}
+.card .tile{background:var(--surface)}
+.app[data-look="night"] .card .tile,.app[data-look="ember"] .card .tile{background:var(--raised)}
+.tile .ico{font-size:2em;line-height:1}
+.tile .lbl{overflow-wrap:normal;hyphens:manual}
+.tile[aria-pressed="true"]{background:var(--accent-tint);border-color:var(--accent-ink);box-shadow:0 0 0 2px var(--accent-ink)}
+.tile[aria-pressed="true"]::before{content:"";position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:50%;background:var(--accent-ink)}
+.tile[aria-pressed="true"]::after{content:"";position:absolute;top:12px;right:12px;width:16px;height:16px;background:var(--on-accent);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center/contain no-repeat}
+.tile:active{background:var(--sunken)}
+.tile.add,.tile.more{border:2px dashed var(--edge);box-shadow:none;background:transparent;color:var(--muted)}
 .tile:disabled{cursor:default}
-.actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-.action{display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 8px 14px;border:0;border-radius:var(--r-m);background:var(--surface);color:var(--ink);box-shadow:0 8px 22px var(--shadow);font-weight:700;font-size:.8em;line-height:1.25;text-align:center;cursor:pointer;transition:transform .12s}
-.action .ico{font-size:44px;line-height:1}
-.action:active{transform:scale(.96)}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:.45em;min-height:52px;padding:.3em 1.3em;border-radius:999px;border:3px solid var(--accent);background:transparent;color:var(--ink);font-weight:700;cursor:pointer;transition:transform .12s}
-.btn .ico{font-size:1.35em;line-height:1}
-.btn.primary{background:var(--accent);color:var(--on-accent)}
-.btn.danger{border-color:var(--danger);background:var(--danger);color:var(--on-danger)}
-.btn:disabled{opacity:.4;cursor:default}
-.btn:active:not(:disabled){transform:scale(.97)}
+.picked{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font:500 var(--cap)/1.2 var(--font-display)}
+.picked .lab{color:var(--muted)}
+.pchip{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:2px 12px 2px 8px;border-radius:999px;background:var(--b-soft,var(--sunken));color:var(--b-ink,var(--ink))}
+.pchip .ico{font-size:1.25em;line-height:1}
+.actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,6.5em),1fr));gap:10px}
+.action{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:88px;padding:14px 8px;border:1px solid var(--hairline);border-radius:var(--r-lg);background:var(--surface);color:var(--ink);box-shadow:var(--elev);font:500 1em/1.25 var(--font-display);text-align:center;cursor:pointer}
+.action .ico{font-size:2em;line-height:1}
+.action[aria-pressed="true"]{background:var(--accent-tint);border-color:var(--accent-ink);box-shadow:0 0 0 2px var(--accent-ink)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5em;min-height:56px;padding:.3em 1.4em;border:1px solid var(--edge);border-radius:999px;background:var(--surface);color:var(--ink);font:500 1em/1.2 var(--font-display);cursor:pointer;transition:background-color .15s}
+.btn .ico{font-size:1.3em;line-height:1}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
+.btn.danger{background:var(--danger);border-color:var(--danger);color:var(--on-danger);font-weight:600}
+.btn:disabled{opacity:.45;cursor:default}
+.btn:active:not(:disabled){filter:brightness(.95)}
 .row-btns{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
-.chip{display:inline-flex;align-items:center;gap:.45em;min-height:46px;padding:.25em 1em;border:2px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);cursor:pointer}
-.chip .ico{font-size:1.45em;line-height:1}
-.chip[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);font-weight:700}
-.adder-form{display:flex;flex-direction:column;gap:10px;padding:12px;border:2px dashed var(--line);border-radius:var(--r-m)}
+.chip{display:inline-flex;align-items:center;gap:.45em;min-height:48px;padding:.25em 1.1em;border:1px solid var(--edge);border-radius:999px;background:var(--surface);color:var(--ink);font:500 1em/1.25 var(--font-display);cursor:pointer}
+.chip .ico{font-size:1.35em;line-height:1}
+.chip[aria-pressed="true"]{background:var(--accent-tint);border:2px solid var(--accent-ink);padding:calc(.25em - 1px) calc(1.1em - 1px);font-weight:600}
+.adder-form{display:flex;flex-direction:column;gap:10px;padding:12px;border:2px dashed var(--edge);border-radius:var(--r-lg)}
 .adder-line{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .adder-line input.emo{flex:0 0 3.4em;text-align:center;font-size:1.5em;padding:.2em}
 .adder-line input.word{flex:1 1 9em;min-width:0}
-.err{margin:0;color:var(--danger);font-weight:700;font-size:.9em}
+.err{margin:0;color:var(--danger);font-weight:700;font-size:max(16px,.9em)}
 .err:empty{display:none}
-textarea,input[type="text"]{width:100%;padding:.5em .8em;border:2px solid var(--line);border-radius:var(--r-s);background:var(--surface-2);color:var(--ink);line-height:var(--lh)}
+textarea,input[type="text"]{width:100%;padding:.55em .85em;border:1px solid var(--edge);border-radius:var(--r-md);background:var(--sunken);color:var(--ink);line-height:var(--lh)}
 textarea{resize:vertical}
 .note-line{display:flex;gap:8px;align-items:flex-start}
 .note-line textarea,.note-line input{flex:1;min-width:0}
 .todo-edit{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
-.todo-edit li{display:flex;align-items:center;gap:8px;padding:.25em .25em .25em .9em;border-radius:var(--r-s);background:var(--surface-2)}
-.todo-edit li span{flex:1;min-width:0;overflow-wrap:anywhere}
-.icon-btn{display:inline-grid;place-items:center;flex:0 0 48px;width:48px;height:48px;border:0;border-radius:50%;background:var(--surface-2);color:var(--ink);font-size:26px;cursor:pointer}
+.todo-edit li{display:flex;align-items:center;gap:8px;padding:.25em .25em .25em .9em;border-radius:var(--r-md);background:var(--sunken)}
+.todo-edit li span{flex:1;min-width:0;overflow-wrap:break-word}
+.icon-btn{display:inline-grid;place-items:center;flex:0 0 48px;width:48px;height:48px;border:1px solid var(--hairline);border-radius:50%;background:var(--surface);color:var(--ink);font-size:24px;cursor:pointer}
 
-/* dock: big nav icons over the white input pill */
-.dock{display:flex;flex-direction:column;gap:10px;padding:8px 14px 12px;background:var(--bar);color:var(--on-bar)}
+/* dock: the composer over three tabs, on a plain surface */
+.dock{display:flex;flex-direction:column;gap:8px;padding:10px 16px calc(8px + env(safe-area-inset-bottom,0px));background:var(--raised);border-top:1px solid var(--hairline);box-shadow:var(--dock-sh);color:var(--ink)}
 .tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.tab{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 4px 5px;border:0;border-radius:18px;background:transparent;color:var(--on-bar);font-size:13px;font-weight:700;line-height:1.3;cursor:pointer;transition:background .15s}
-.tab .ico{font-size:34px;line-height:1.1}
-.tab[aria-current="page"]{background:var(--tab-on);color:var(--tab-on-ink);box-shadow:0 4px 14px var(--shadow)}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:56px;padding:4px;border:0;border-radius:var(--r-md);background:transparent;color:var(--muted);font:500 var(--cap)/1.2 var(--font-display);cursor:pointer}
+.tab .ico{display:grid;place-items:center;width:56px;height:28px;border-radius:999px;transition:background-color .15s}
+.tab[aria-current="page"]{color:var(--accent-ink);font-weight:600}
+.tab[aria-current="page"] .ico{background:var(--accent-tint)}
 .composer{margin:0}
-.pill{display:flex;align-items:flex-end;gap:2px;min-height:56px;padding:5px 5px 5px 18px;border-radius:30px;background:var(--pill);color:var(--pill-ink);box-shadow:0 4px 14px var(--shadow)}
-.pill:focus-within{box-shadow:0 0 0 3px var(--accent),0 4px 14px var(--shadow)}
+.pill{display:flex;align-items:flex-end;gap:2px;min-height:56px;padding:3px 3px 3px 18px;border:1px solid var(--edge);border-radius:28px;background:var(--sunken);color:var(--ink)}
+.pill:focus-within{outline:3px solid var(--accent-ink);outline-offset:2px}
 .pill textarea{flex:1;min-width:0;max-height:7.6em;padding:.6em 0;border:0;border-radius:0;background:transparent;color:inherit;resize:none;outline:none}
-.pill textarea::placeholder{color:var(--ink-soft);opacity:.85}
-.ib{flex:0 0 46px;width:46px;height:46px;display:grid;place-items:center;border:0;border-radius:50%;background:transparent;color:inherit;font-size:30px;line-height:1;cursor:pointer}
-.ib.send{background:var(--accent);color:var(--on-accent);font-size:22px}
+.pill textarea::placeholder{color:var(--muted);opacity:1}
+.ib{flex:0 0 48px;width:48px;height:48px;display:grid;place-items:center;border:0;border-radius:50%;background:transparent;color:var(--ink);line-height:1;cursor:pointer}
+.ib.send{background:var(--ink);color:var(--canvas)}
 .composer:not(.has-text):not(.busy) .ib.send{display:none}
 
 /* emoji picker */
-.emoji-pop{position:fixed;z-index:30;left:50%;transform:translateX(-50%);bottom:170px;width:min(528px,calc(100% - 32px));max-height:min(48vh,400px);display:flex;flex-direction:column;border-radius:var(--r-l);background:var(--surface);color:var(--ink);box-shadow:0 18px 50px var(--shadow),0 0 0 1px var(--line)}
-.emoji-tabs{display:flex;gap:4px;padding:8px;overflow-x:auto;border-bottom:2px solid var(--line)}
-.emoji-tabs button{flex:0 0 auto;min-width:48px;height:46px;border:0;border-radius:var(--r-s);background:transparent;font-size:26px;cursor:pointer}
-.emoji-tabs button[aria-selected="true"]{background:var(--surface-2);box-shadow:inset 0 -3px 0 var(--accent)}
+.emoji-pop{position:fixed;z-index:30;left:50%;transform:translateX(-50%);bottom:170px;width:min(528px,calc(100% - 32px));max-height:min(48vh,400px);display:flex;flex-direction:column;border-radius:var(--r-xl);background:var(--surface);color:var(--ink);box-shadow:var(--elev-over)}
+.emoji-tabs{display:flex;gap:4px;padding:8px;overflow-x:auto;border-bottom:1px solid var(--hairline)}
+.emoji-tabs button{flex:0 0 auto;min-width:48px;height:48px;border:0;border-radius:var(--r-md);background:transparent;font-size:26px;cursor:pointer}
+.emoji-tabs button[aria-selected="true"]{background:var(--accent-tint);box-shadow:inset 0 -3px 0 var(--accent-ink)}
 .emoji-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(50px,1fr));gap:2px;padding:8px;overflow-y:auto}
-.emoji-grid button{height:50px;border:0;border-radius:var(--r-s);background:transparent;font-size:32px;line-height:1;cursor:pointer}
-.emoji-grid button:hover{background:var(--surface-2)}
+.emoji-grid button{height:50px;border:0;border-radius:var(--r-md);background:transparent;font-size:32px;line-height:1;cursor:pointer}
+.emoji-grid button:hover{background:var(--sunken)}
 
-/* free-write sheet */
+/* sheets */
 .sheet{position:fixed;inset:0;z-index:20;display:flex;justify-content:center;background:var(--scrim)}
-.sheet-panel{width:100%;max-width:560px;height:100%;display:flex;flex-direction:column;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:var(--fs);line-height:var(--lh)}
-.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:56px;padding:calc(6px + env(safe-area-inset-top,0px)) 14px 6px 18px;background:var(--bar);color:var(--on-bar)}
-.sheet-head h2{margin:0;font:700 1.12em/1.2 var(--font-display);display:flex;align-items:center;gap:.4em}
-.sheet-head h2 .ico{font-size:30px}
-.sheet-close{display:inline-flex;align-items:center;gap:.3em;min-height:44px;padding:0 14px;border:0;border-radius:999px;background:var(--tab-on);color:var(--tab-on-ink);font-weight:700;cursor:pointer}
-.sheet-body{flex:1;min-height:0;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:16px;border-inline:14px solid var(--rail)}
-.sheet-foot{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));background:var(--bar)}
-.sheet-foot .btn{background:var(--tab-on);color:var(--tab-on-ink);border-color:var(--tab-on)}
-.sheet-foot .btn.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
-details.fw-mood{border-radius:var(--r-l);background:var(--surface);box-shadow:0 8px 24px var(--shadow)}
-details.fw-mood summary{display:flex;align-items:center;gap:.5em;padding:.7em 1em;cursor:pointer;font-weight:700}
-details.fw-mood summary .ico{font-size:30px}
-details.fw-mood .bands{padding:0 10px 10px}
-.paper{display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:var(--r-l);background:var(--surface);box-shadow:0 8px 24px var(--shadow)}
-.paper label{font:600 .95em var(--font-display)}
-#fw-text{min-height:12em;background:var(--surface-2);border-color:transparent}
+.sheet-panel{width:100%;max-width:560px;height:100%;display:flex;flex-direction:column;background:var(--canvas);color:var(--ink);font-family:var(--font);font-size:var(--fs);line-height:var(--lh)}
+.sheet-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 10px;min-height:64px;padding:calc(8px + env(safe-area-inset-top,0px)) 16px 8px 20px;background:var(--canvas);color:var(--ink);border-bottom:1px solid var(--hairline)}
+.sheet-head h2{flex:1 1 10em;margin:0;font:600 1.222em/1.2 var(--font-display);display:flex;align-items:center;gap:.4em}
+.sheet-head h2 .ico{font-size:1.3em}
+.sheet-head > span{margin-left:auto}
+.sheet-close{display:inline-flex;align-items:center;gap:6px;min-height:48px;padding:0 16px 0 12px;border:1px solid var(--edge);border-radius:999px;background:var(--surface);color:var(--ink);font:500 1em/1 var(--font-display);cursor:pointer}
+.sheet-body{flex:1;min-height:0;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px}
+.sheet-foot{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));background:var(--raised);border-top:1px solid var(--hairline)}
+details.fw-mood{border:1px solid var(--hairline);border-radius:var(--r-xl);background:var(--raised);box-shadow:var(--elev)}
+details.fw-mood summary{display:flex;align-items:center;gap:.5em;min-height:56px;padding:.6em 1em;cursor:pointer;font:500 1em/1.3 var(--font-display)}
+details.fw-mood summary .ico{font-size:1.5em}
+details.fw-mood #fw-mood{padding:0 14px 14px}
+.paper{display:flex;flex-direction:column;gap:10px;padding:16px;border:1px solid var(--hairline);border-radius:var(--r-xl);background:var(--raised);box-shadow:var(--elev)}
+.paper label{font:600 1em/1.3 var(--font-display)}
+#fw-text{min-height:12em}
 .tools{display:flex;flex-wrap:wrap;gap:8px}
-.tidy{display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:var(--r-m);background:var(--bot);color:var(--bot-ink);box-shadow:0 6px 18px var(--shadow)}
+.tidy{display:flex;flex-direction:column;gap:10px;padding:16px;border:1px solid var(--lexi-edge);border-radius:var(--r-lg);background:var(--lexi);color:var(--ink)}
 .tidy p{margin:0;white-space:pre-wrap}
-.tidy .btn{color:var(--bot-ink);border-color:var(--bot-ink)}
-.tidy .btn.primary{background:var(--bot-ink);color:var(--bot)}
 
-.toast{position:fixed;z-index:40;left:50%;transform:translateX(-50%);bottom:190px;max-width:calc(100% - 32px);padding:.6em 1.2em;border-radius:999px;background:var(--ink);color:var(--bg);font-size:.9em;font-weight:700;box-shadow:0 10px 30px var(--shadow)}
+.toast{position:fixed;z-index:40;left:50%;transform:translateX(-50%);bottom:190px;max-width:calc(100% - 32px);padding:.7em 1.3em;border-radius:999px;background:var(--ink);color:var(--canvas);font:500 var(--cap)/1.4 var(--font-display);box-shadow:var(--elev-over)}
 
 /* journal */
-.page-head{display:flex;align-items:center;gap:12px}
-.page-head .ico.big{font-size:44px;line-height:1}
-h2.title{margin:0;font:700 1.55em/1.2 var(--font-display);text-wrap:balance}
-.muted{margin:0;color:var(--ink-soft);font-size:.82em}
-.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:18px}
-.stat{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:12px;border-radius:var(--r-m);background:var(--surface);box-shadow:0 6px 18px var(--shadow)}
-.stat .ico{font-size:28px;line-height:1.1}
-.stat b{font:700 1.6em/1.1 var(--font-display);font-variant-numeric:tabular-nums}
-.stat span{font-size:.72em;font-weight:700;color:var(--ink-soft);line-height:1.3}
-.sec-title{margin:24px 0 10px;font:600 1.02em/1.3 var(--font-display)}
-.days{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 12px;scroll-snap-type:x proximity}
-.day{flex:0 0 66px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px 0;border-radius:18px;background:var(--surface);box-shadow:0 4px 12px var(--shadow);overflow:hidden;scroll-snap-align:end;font-variant-numeric:tabular-nums}
-.day .wd{font-size:.62em;font-weight:700;letter-spacing:.06em;color:var(--ink-soft)}
-.day .dn{font:700 1.15em/1.1 var(--font-display)}
-.day .de{font-size:30px;line-height:1.3;min-height:40px;display:grid;place-items:center}
-.day .de.none{color:var(--line);font-size:22px}
-.day .bar{align-self:stretch;height:8px;margin-top:6px;background:var(--surface-2)}
-.day.today{box-shadow:0 0 0 3px var(--accent),0 4px 12px var(--shadow)}
-.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.72em;font-weight:700;color:var(--ink-soft)}
-.legend span{display:inline-flex;align-items:center;gap:.4em}
-.legend i{width:14px;height:14px;border-radius:4px;background:var(--b)}
-.j-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:20px}
-.day-group h3{margin:26px 0 10px;font:600 1em/1.3 var(--font-display);color:var(--ink-soft)}
+.page-head{display:flex;flex-direction:column;gap:4px}
+h2.title{margin:0;font:600 1.556em/1.25 var(--font-display);text-wrap:balance}
+.muted{margin:0;color:var(--muted);font:500 var(--cap)/1.45 var(--font-display)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,7em),1fr));gap:10px;margin-top:16px}
+.stat{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border:1px solid var(--hairline);border-radius:var(--r-lg);background:var(--raised);box-shadow:var(--elev)}
+.stat b{font:600 1.556em/1.2 var(--font-display);font-variant-numeric:tabular-nums}
+.stat span{font:500 var(--cap)/1.4 var(--font-display);color:var(--muted)}
+.sec-title{margin:0;font:600 1em/1.3 var(--font-display)}
+.tw{display:flex;flex-direction:column;gap:10px;margin-top:16px;padding:14px;border:1px solid var(--hairline);border-radius:var(--r-xl);background:var(--raised);box-shadow:var(--elev)}
+.tw-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;text-align:center;font:500 min(var(--cap),19px)/1.2 var(--font-display)}
+.tw-grid .wd{color:var(--muted)}
+.tw-day{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:50px;border-radius:var(--r-md);background:var(--sunken);color:var(--muted);font-variant-numeric:tabular-nums}
+.tw-day[data-band]{background:var(--b-soft);color:var(--b-ink)}
+.tw-day .shape{width:16px;height:16px}
+.tw-day .dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.tw-day.future{background:transparent;border:2px dashed color-mix(in srgb,var(--edge) 55%,transparent)}
+.tw-day.today{box-shadow:0 0 0 3px var(--accent-ink);font-weight:600}
+.most{display:flex;align-items:center;gap:8px;margin:0;font:500 var(--cap)/1.4 var(--font-display)}
+.most .shape{width:18px;height:18px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font:500 var(--cap)/1.3 var(--font-display);color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend .shape{width:16px;height:16px}
+.j-actions{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+.day-group h3{margin:28px 0 10px;font:600 1.222em/1.3 var(--font-display)}
 .entries{display:flex;flex-direction:column;gap:14px}
-.entry{display:flex;flex-direction:column;gap:12px;padding:14px 16px;border-radius:var(--r-l);background:var(--surface);box-shadow:0 8px 24px var(--shadow)}
-.entry-head{display:flex;align-items:center;gap:10px;font-size:.82em;font-weight:700;color:var(--ink-soft)}
-.entry-head .kind{font-size:30px;line-height:1}
-.entry-head .spacer{flex:1}
-.entry-head button{display:grid;place-items:center;min-width:44px;height:44px;border:0;border-radius:50%;background:var(--surface-2);color:var(--ink);font-size:22px;cursor:pointer}
+.entry{display:flex;flex-direction:column;gap:12px;padding:14px 16px;border:1px solid var(--hairline);border-radius:var(--r-xl);background:var(--raised);box-shadow:var(--elev)}
+.entry-head{display:flex;align-items:center;gap:10px}
+.entry-head .kind{font-size:1.6em;line-height:1}
+.entry-head .when{flex:1;min-width:0}
+.entry-head .when b{display:block;font:600 1em/1.3 var(--font-display)}
+.entry-head .when span{display:block;font:500 var(--cap)/1.4 var(--font-display);color:var(--muted)}
+.entry-head button{display:grid;place-items:center;flex:none;width:48px;height:48px;padding:0;border:1px solid var(--hairline);border-radius:50%;background:var(--surface);color:var(--ink);cursor:pointer}
 .mchips{display:flex;flex-wrap:wrap;gap:8px}
-.mchip{display:inline-flex;align-items:center;gap:.35em;padding:.15em .85em .15em .4em;border-radius:999px;background:color-mix(in srgb,var(--b) 28%,var(--surface));font-size:.85em;font-weight:700}
-.mchip .ico{font-size:28px;line-height:1.1}
+.mchip{display:inline-flex;align-items:center;gap:.4em;min-height:40px;padding:.1em .9em .1em .5em;border-radius:999px;background:var(--b-soft,var(--sunken));color:var(--b-ink,var(--ink));font:500 var(--cap)/1.2 var(--font-display)}
+.mchip .ico{font-size:1.4em;line-height:1.1}
 .tlist{display:flex;flex-direction:column;gap:10px;margin:0}
-.tlist dt{display:flex;align-items:center;gap:.4em;font:600 .95em var(--font-display)}
-.tlist dt .ico{font-size:26px;line-height:1}
+.tlist dt{display:flex;align-items:center;gap:.4em;font:600 1em/1.3 var(--font-display)}
+.tlist dt .ico{font-size:1.4em;line-height:1}
 .tlist dd{margin:0 0 0 2px}
 .picks{display:flex;flex-wrap:wrap;gap:6px 14px}
 .picks span{display:inline-flex;align-items:center;gap:.3em}
-.picks .ico{font-size:24px;line-height:1}
+.picks .ico{font-size:1.35em;line-height:1}
 .todos{list-style:none;margin:4px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
 .todos label{display:flex;align-items:center;gap:.7em;cursor:pointer}
 .todos input{width:26px;height:26px;flex:0 0 26px;accent-color:var(--accent)}
-.todos .done span{opacity:.6}
-.entry .text{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
-.reflection{margin:0;padding:.65em .95em;border-radius:var(--r-m);background:var(--bot);color:var(--bot-ink);white-space:pre-wrap}
-.confirm{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px;border-radius:var(--r-m);background:var(--surface-2)}
-.confirm p{margin:0;flex:1 1 12em;font-weight:700}
-.empty{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:22px;padding:26px 18px;border-radius:var(--r-l);background:var(--surface);text-align:center;box-shadow:0 8px 24px var(--shadow)}
-.empty .ico{font-size:64px;line-height:1.1}
+.todos .done span{color:var(--muted);text-decoration:line-through}
+.entry .text{margin:0;white-space:pre-wrap;overflow-wrap:break-word}
+.reflection{display:flex;align-items:flex-start;gap:10px;margin:0;padding:.7em 1em;border:1px solid var(--lexi-edge);border-radius:var(--r-lg);background:var(--lexi);color:var(--ink);white-space:pre-wrap}
+.reflection .mark{width:24px;height:24px;margin-top:.15em}
+.confirm{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px;border-radius:var(--r-lg);background:var(--sunken)}
+.confirm p{margin:0;flex:1 1 12em;font-weight:600}
+.empty{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:22px;padding:26px 18px;border:1px solid var(--hairline);border-radius:var(--r-xl);background:var(--raised);text-align:center;box-shadow:var(--elev)}
+.empty .ico{font-size:3em;line-height:1.1}
 .empty p{margin:0}
 
 /* settings */
-.set{display:flex;flex-direction:column;gap:12px;margin-top:16px;padding:16px;border-radius:var(--r-l);background:var(--surface);box-shadow:0 8px 24px var(--shadow)}
-.set h3{display:flex;align-items:center;gap:.45em;margin:0;font:600 1.02em/1.3 var(--font-display)}
-.set h3 .ico{font-size:32px;line-height:1}
-.set p{margin:0;font-size:.85em;color:var(--ink-soft)}
-.looks{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:10px}
-.look{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 4px;border:0;border-radius:var(--r-m);background:transparent;color:var(--ink);font-size:.78em;font-weight:700;cursor:pointer}
-.look[aria-pressed="true"]{background:var(--surface-2);box-shadow:0 0 0 3px var(--accent)}
-.mini{position:relative;width:62px;height:104px;border-radius:12px;background:var(--m-bg);border:6px solid var(--m-rail);border-top-width:12px;border-bottom-width:18px;border-top-color:var(--m-bar);border-bottom-color:var(--m-bar);box-shadow:0 4px 12px var(--shadow);overflow:hidden}
-.mini i{position:absolute;left:5px;height:12px;border-radius:5px;background:var(--m-bot)}
-.mini i:nth-child(1){top:10px;width:32px}.mini i:nth-child(2){top:28px;width:36px}.mini i:nth-child(3){top:46px;width:26px}
-.mini b{position:absolute;right:5px;bottom:8px;width:20px;height:10px;border-radius:5px;background:var(--m-me)}
-.mini.auto::after{content:"";position:absolute;inset:0;background:linear-gradient(135deg,transparent 50%,#201B17 50%)}
+.set{display:flex;flex-direction:column;gap:12px;margin-top:16px;padding:16px;border:1px solid var(--hairline);border-radius:var(--r-xl);background:var(--raised);box-shadow:var(--elev)}
+.set h3{display:flex;align-items:center;gap:.45em;margin:0;font:600 1.222em/1.3 var(--font-display)}
+.set h3 .ico{font-size:1.3em;line-height:1}
+.set p{margin:0;font-size:var(--cap);color:var(--muted)}
+.set .fine{font:500 var(--cap)/1.45 var(--font-display)}
+.looks{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px}
+.look{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px 8px;border:1px solid transparent;border-radius:var(--r-lg);background:transparent;color:var(--ink);font:500 var(--cap)/1.25 var(--font-display);text-align:center;cursor:pointer}
+.look[aria-pressed="true"]{background:var(--accent-tint);border-color:var(--accent-ink);box-shadow:0 0 0 1px var(--accent-ink)}
+.mini{position:relative;width:64px;height:108px;border:1px solid rgb(0 0 0 / 14%);border-radius:14px;background:var(--m-bg);overflow:hidden}
+.mini i{position:absolute;left:6px;height:12px;border-radius:6px;background:var(--m-bot)}
+.mini i:nth-child(1){top:12px;width:34px}.mini i:nth-child(2){top:30px;width:40px}
+.mini b{position:absolute;right:6px;top:50px;width:24px;height:12px;border-radius:6px;background:var(--m-me);box-shadow:inset 0 0 0 1px rgb(0 0 0 / 10%)}
+.mini::after{content:"";position:absolute;left:0;right:0;bottom:0;height:18px;background:var(--m-dock);border-top:1px solid rgb(0 0 0 / 10%)}
+.mini.auto::before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(135deg,transparent 50%,#201B17 50%)}
 .big-choice{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .voices{display:flex;flex-direction:column;gap:8px}
 .voice{display:flex;align-items:stretch;gap:8px}
-.vpick{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:.5em .9em;border:2px solid var(--line);border-radius:var(--r-m);background:var(--surface-2);color:var(--ink);text-align:left;cursor:pointer}
-.vpick[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
-.vpick b{font-size:.95em}
-.vpick small{font-size:.72em;color:var(--ink-soft);line-height:1.3}
-.tag{display:inline-block;margin-left:.4em;padding:0 .5em;border-radius:999px;background:var(--accent);color:var(--on-accent);font-size:.7em;font-weight:700;vertical-align:.1em}
-.vplay{flex:0 0 52px;border:0;border-radius:var(--r-m);background:var(--surface-2);color:var(--ink);font-size:22px;cursor:pointer}
-.slider{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;font-size:.85em;font-weight:700}
+.vpick{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:.5em .9em;border:1px solid var(--edge);border-radius:var(--r-lg);background:var(--surface);color:var(--ink);text-align:left;cursor:pointer}
+.vpick[aria-pressed="true"]{background:var(--accent-tint);border-color:var(--accent-ink);box-shadow:0 0 0 1px var(--accent-ink)}
+.vpick b{font:600 1em/1.3 var(--font-display)}
+.vpick small{font:500 var(--cap)/1.4 var(--font-display);color:var(--muted)}
+.tag{display:inline-block;margin-left:.4em;padding:0 .55em;border-radius:999px;background:var(--accent);color:var(--on-accent);font:600 16px/1.5 var(--font-display);vertical-align:.1em}
+.vplay{flex:0 0 52px;border:1px solid var(--hairline);border-radius:var(--r-lg);background:var(--surface);color:var(--ink);font-size:22px;cursor:pointer}
+.slider{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;font:500 1em/1.3 var(--font-display)}
 .slider input{width:100%;accent-color:var(--accent);height:32px}
 .slider output{min-width:3.4em;text-align:right;font-variant-numeric:tabular-nums}
-.tips{font-size:.85em}
-.tips summary{cursor:pointer;font-weight:700}
-.tips ul{margin:.5em 0 0;padding-left:1.2em;color:var(--ink-soft)}
+.tips{font-size:var(--cap)}
+.tips summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font:600 1em/1.3 var(--font-display)}
+.tips ul{margin:.5em 0 0;padding-left:1.2em;color:var(--muted)}
 .customs{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
-.customs li{display:inline-flex;align-items:center;gap:.3em;padding:.1em .2em .1em .6em;border-radius:999px;background:color-mix(in srgb,var(--b,var(--line)) 30%,var(--surface))}
-.customs li .ico{font-size:26px;line-height:1}
-.customs button{min-width:40px;min-height:40px;border:0;border-radius:50%;background:transparent;color:var(--ink);cursor:pointer}
+.customs li{display:inline-flex;align-items:center;gap:.3em;padding:.1em .2em .1em .7em;border-radius:999px;background:var(--b-soft,var(--sunken));color:var(--b-ink,var(--ink))}
+.customs li .ico{font-size:1.4em;line-height:1}
+.customs button{min-width:48px;min-height:48px;border:0;border-radius:50%;background:transparent;color:inherit;cursor:pointer}
 
-/* icons off: words replace emoji everywhere except the emoji picker */
+/* icons off: words replace emoji and icons everywhere except the emoji picker */
 .only-text{display:none}
 .app[data-icons="off"] .ico{display:none}
 .app[data-icons="off"] .only-text{display:inline}
 .app[data-icons="off"] .ava{display:none}
-.app[data-icons="off"] .row.emoji-only,.app[data-icons="off"] .row.party{display:none}
+.app[data-icons="off"] .row.emoji-only{display:none}
 .app[data-icons="off"] .answer .emo{display:none}
-.app[data-icons="off"] .answer .cap{padding:.7em 1em;border-radius:var(--r-m);border-bottom-right-radius:6px;background:var(--me);color:var(--me-ink);font-size:1em;font-weight:400;text-align:left;box-shadow:0 6px 18px var(--shadow)}
+.app[data-icons="off"] .answer .cap{padding:.75em 1em;border:1px solid var(--me-edge);border-radius:var(--r-lg);border-bottom-right-radius:var(--r-xs);background:var(--me);color:var(--ink);font:400 1em/var(--lh) var(--font);text-align:left}
 .app[data-icons="off"] .tile{min-height:64px}
-.app[data-icons="off"] .tile .lbl,.app[data-icons="off"] .action{font-size:.9em}
-.app[data-icons="off"] .tab{font-size:15px;padding:14px 4px}
-.app[data-icons="off"] .ib{width:auto;flex-basis:auto;padding:0 14px;border-radius:999px;font-size:15px;font-weight:700}
-.app[data-icons="off"] .speak{display:inline-flex;width:auto;height:auto;margin:0 0 0 .4em;padding:.05em .6em;border-radius:999px;background:rgba(127,127,127,.18);font-size:.75em;font-weight:700}
-.app[data-icons="off"] .entry-head button{width:auto;padding:0 .9em;border-radius:999px;font-size:.85em;font-weight:700}
+.app[data-icons="off"] .tab{min-height:48px}
+.app[data-icons="off"] .tab[aria-current="page"]{background:var(--accent-tint)}
+.app[data-icons="off"] .ib{width:auto;flex-basis:auto;padding:0 14px;border-radius:999px;font:600 var(--cap)/1 var(--font-display)}
+.app[data-icons="off"] .speak,.app[data-icons="off"] .entry-head button{width:auto;padding:0 14px;border-radius:999px;font:600 var(--cap)/1 var(--font-display)}
 
 @media (prefers-reduced-motion: reduce){
-  .dots i,.row.in,.party span{animation:none}
-  .tile,.btn,.action,.yn button{transition:none}
+  .row.in{animation:none}
+  *,*::before,*::after{transition:none!important}
 }
 @media (prefers-contrast: more){
-  .app{--ink-soft:var(--ink);--line:var(--ink)}
+  .app{--muted:var(--ink);--hairline:var(--edge)}
 }
 @media (max-width:380px){
-  .rails,.sheet-body{border-inline-width:10px}
-  .view{padding-inline:10px}
-  .ava{flex-basis:38px;width:38px;font-size:34px}
-  .row.bot .bubble{width:min(78%,21em)}
+  .view{padding-inline:16px}
+  .topbar,.ai-note{padding-left:16px}
 }
 </style>
 
 <div class="app" id="app" data-icons="on">
   <div class="phone">
     <header class="topbar">
-      <div class="brand"><span class="ico" aria-hidden="true">🤖</span><span>Lexi</span></div>
-      <button type="button" class="help-btn" data-help><span class="ico" aria-hidden="true">🆘</span><span>Help</span></button>
+      <div class="brand"><svg class="mark" viewBox="0 0 64 64" aria-hidden="true"><g class="wings"><path class="w1" d="M31 31C25 17 13 8 7 12C2 16 6 28 15 31C20 32.6 26 32.4 31 32Z"/><path class="w1" d="M33 31C39 17 51 8 57 12C62 16 58 28 49 31C44 32.6 38 32.4 33 32Z"/><path class="w2" d="M31 34C24 34 15 37 14 45C13 53 22 54 27 47C29.5 43.5 30.6 39 31 35Z"/><path class="w2" d="M33 34C40 34 49 37 50 45C51 53 42 54 37 47C34.5 43.5 33.4 39 33 35Z"/></g><rect class="bd" x="30.4" y="22" width="3.2" height="25" rx="1.6"/><path class="an" d="M31 23C29.5 17 27 14 24 12.5M33 23C34.5 17 37 14 40 12.5"/></svg><span>Lexi</span></div>
+      <button type="button" class="help-btn" data-help><span class="ico" aria-hidden="true"><svg class="li" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M5.6 5.6l3.9 3.9M14.5 14.5l3.9 3.9M18.4 5.6l-3.9 3.9M9.5 14.5l-3.9 3.9"/></svg></span><span>Help</span></button>
     </header>
-    <div class="ai-note" id="ai-note"><span class="ico" aria-hidden="true">🤖</span><span class="txt">Lexi is an AI, not a person or a therapist.</span></div>
+    <div class="ai-note" id="ai-note"><span class="txt">Lexi is an AI, not a person or a therapist.</span></div>
     <div class="rails">
-      <main class="view chat" id="view-home" role="log" aria-live="polite" aria-label="Chat with Lexi"></main>
+      <main class="view chat" id="view-home" role="log" aria-live="off" aria-label="Chat with Lexi"></main>
       <section class="view" id="view-journal" aria-label="My journal" hidden></section>
       <section class="view" id="view-settings" aria-label="Settings" hidden></section>
     </div>
     <footer class="dock" id="dock">
-      <nav class="tabs" aria-label="Main">
-        <button type="button" class="tab" data-view="settings"><span class="ico" aria-hidden="true">⚙️</span><span>Settings</span></button>
-        <button type="button" class="tab" data-view="home" aria-current="page"><span class="ico" aria-hidden="true">🏡</span><span>Home</span></button>
-        <button type="button" class="tab" data-view="journal"><span class="ico" aria-hidden="true">📖</span><span>Journal</span></button>
-      </nav>
       <form class="composer" id="composer" autocomplete="off">
         <div class="pill">
           <textarea id="msg" rows="1" placeholder="Ask Lexi…" aria-label="Message Lexi"></textarea>
-          <button type="button" class="ib" id="msg-emoji" data-emoji-btn aria-label="Add emoji"><span class="ico" aria-hidden="true">🙂</span><span class="only-text">Emoji</span></button>
-          <button type="submit" class="ib send" id="msg-send" aria-label="Send"><span class="ico" aria-hidden="true">➤</span><span class="only-text">Send</span></button>
+          <button type="button" class="ib" id="msg-emoji" data-emoji-btn aria-label="Add emoji"><span class="ico" aria-hidden="true"><svg class="li" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 14a4.5 4.5 0 0 0 7 0M9 9.5h.01M15 9.5h.01"/></svg></span><span class="only-text">Emoji</span></button>
+          <button type="submit" class="ib send" id="msg-send" aria-label="Send"><span class="ico" aria-hidden="true"><svg class="li" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg></span><span class="only-text">Send</span></button>
         </div>
       </form>
+      <nav class="tabs" aria-label="Main">
+        <button type="button" class="tab" data-view="settings"><span class="ico" aria-hidden="true"><svg class="li" viewBox="0 0 24 24"><path d="M4 7h9M18 7h2M4 17h2M11 17h9"/><circle cx="15.5" cy="7" r="2.5"/><circle cx="8.5" cy="17" r="2.5"/></svg></span><span>Settings</span></button>
+        <button type="button" class="tab" data-view="home" aria-current="page"><span class="ico" aria-hidden="true"><svg class="li" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/></svg></span><span>Home</span></button>
+        <button type="button" class="tab" data-view="journal"><span class="ico" aria-hidden="true"><svg class="li" viewBox="0 0 24 24"><path d="M4 5h5.5A2.5 2.5 0 0 1 12 7.5V20a2 2 0 0 0-2-2H4z"/><path d="M20 5h-5.5A2.5 2.5 0 0 0 12 7.5V20a2 2 0 0 1 2-2h6z"/></svg></span><span>Journal</span></button>
+      </nav>
     </footer>
+    <div class="sr" id="sr-status" role="status" aria-live="polite"></div>
+    <button type="button" class="newmsg" id="newmsg" hidden><span class="ico" aria-hidden="true"><svg class="li" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg></span><span>New message</span></button>
   </div>
 
   <div class="sheet" id="sheet" hidden>
@@ -447,8 +464,8 @@ h2.title{margin:0;font:700 1.55em/1.2 var(--font-display);text-wrap:balance}
       <header class="sheet-head">
         <h2 id="sheet-title"><span class="ico" aria-hidden="true">✏️</span><span>Write on my own</span></h2>
         <span style="display:flex;gap:8px">
-          <button type="button" class="help-btn" data-help><span class="ico" aria-hidden="true">🆘</span><span>Help</span></button>
-          <button type="button" class="sheet-close" id="fw-close"><span class="ico" aria-hidden="true">✖️</span><span>Close</span></button>
+          <button type="button" class="help-btn" data-help><span class="ico" aria-hidden="true"><svg class="li" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M5.6 5.6l3.9 3.9M14.5 14.5l3.9 3.9M18.4 5.6l-3.9 3.9M9.5 14.5l-3.9 3.9"/></svg></span><span>Help</span></button>
+          <button type="button" class="sheet-close" id="fw-close"><span class="ico" aria-hidden="true"><svg class="li" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></span><span>Close</span></button>
         </span>
       </header>
       <div class="sheet-body">
@@ -470,7 +487,7 @@ h2.title{margin:0;font:700 1.55em/1.2 var(--font-display);text-wrap:balance}
       </div>
       <footer class="sheet-foot">
         <button type="button" class="btn" id="fw-cancel">Cancel</button>
-        <button type="button" class="btn primary" id="fw-save"><span class="ico" aria-hidden="true">✔️</span><span>Save to journal</span></button>
+        <button type="button" class="btn primary" id="fw-save"><span class="ico" aria-hidden="true"><svg class="li" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span>Save to journal</span></button>
       </footer>
     </div>
   </div>
@@ -478,8 +495,8 @@ h2.title{margin:0;font:700 1.55em/1.2 var(--font-display);text-wrap:balance}
   <div class="sheet" id="help" hidden style="z-index:25">
     <div class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="help-title">
       <header class="sheet-head">
-        <h2 id="help-title"><span class="ico" aria-hidden="true">🆘</span><span>Help</span></h2>
-        <button type="button" class="sheet-close" id="help-close"><span class="ico" aria-hidden="true">✖️</span><span>Close</span></button>
+        <h2 id="help-title"><span class="ico" aria-hidden="true"><svg class="li" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M5.6 5.6l3.9 3.9M14.5 14.5l3.9 3.9M18.4 5.6l-3.9 3.9M9.5 14.5l-3.9 3.9"/></svg></span><span>Help</span></h2>
+        <button type="button" class="sheet-close" id="help-close"><span class="ico" aria-hidden="true"><svg class="li" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></span><span>Close</span></button>
       </header>
       <div class="sheet-body" id="help-body"></div>
     </div>
@@ -522,6 +539,12 @@ function button(cls, label, icon, wordsOnly) {
   else if (wordsOnly) { b.append(el('span', 'only-text', wordsOnly)); b.setAttribute('aria-label', wordsOnly); }
   return b;
 }
+function lbtn(cls, label, iconName) {
+  const b = el('button', cls); b.type = 'button';
+  if (iconName) b.insertAdjacentHTML('beforeend', ic(iconName));
+  b.append(el('span', 'lbl', label));
+  return b;
+}
 function renderRich(text) { return esc(tone(text)).replace(EMOJI_RE, m => '<span class="ico">' + m + '</span>'); }
 // Words wrapped one by one, so Lexi can light up the word she is saying and you can tap a word to hear it.
 function renderWords(text) {
@@ -535,6 +558,32 @@ function rich(node, text, words) {
 }
 function stripEmoji(t) { return String(t).replace(EMOJI_RE, '').replace(/[\u{1F3FB}-\u{1F3FF}‍️]/gu, '').replace(/\s{2,}/g, ' ').trim(); }
 function firstEmoji(s) { const m = String(s).match(EMOJI_RE); return m ? m[0] : ''; }
+// Line icons for controls, the butterfly mark and the mood-band shapes (docs/DESIGN_WARM_PAPER.md §1, §7, §8)
+const ICONS = {
+  speaker: '<path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/>',
+  send: '<path d="M12 19V5M6 11l6-6 6 6"/>',
+  stop: '<rect x="6.5" y="6.5" width="11" height="11" rx="2"/>',
+  back: '<path d="M19 12H5M11 6l-6 6 6 6"/>',
+  next: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+  trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
+  add: '<path d="M12 5v14M5 12h14"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  close: '<path d="M6 6l12 12M18 6L6 18"/>',
+  emoji: '<circle cx="12" cy="12" r="9"/><path d="M8.5 14a4.5 4.5 0 0 0 7 0M9 9.5h.01M15 9.5h.01"/>',
+  undo: '<path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>'
+};
+const ic = name => '<span class="ico" aria-hidden="true"><svg class="li" viewBox="0 0 24 24">' + ICONS[name] + '</svg></span>';
+const MARK = '<g class="wings"><path class="w1" d="M31 31C25 17 13 8 7 12C2 16 6 28 15 31C20 32.6 26 32.4 31 32Z"/><path class="w1" d="M33 31C39 17 51 8 57 12C62 16 58 28 49 31C44 32.6 38 32.4 33 32Z"/>' +
+  '<path class="w2" d="M31 34C24 34 15 37 14 45C13 53 22 54 27 47C29.5 43.5 30.6 39 31 35Z"/><path class="w2" d="M33 34C40 34 49 37 50 45C51 53 42 54 37 47C34.5 43.5 33.4 39 33 35Z"/></g>' +
+  '<rect class="bd" x="30.4" y="22" width="3.2" height="25" rx="1.6"/><path class="an" d="M31 23C29.5 17 27 14 24 12.5M33 23C34.5 17 37 14 40 12.5"/>';
+const markSvg = (cls = '') => '<svg class="mark' + (cls ? ' ' + cls : '') + '" viewBox="0 0 64 64" aria-hidden="true">' + MARK + '</svg>';
+const SHAPES = {
+  content: '<circle cx="12" cy="12" r="9"/>',
+  stressed: '<polygon points="12,1.5 14.6,7.6 21.1,6.4 17.6,12 21.1,17.6 14.6,16.4 12,22.5 9.4,16.4 2.9,17.6 6.4,12 2.9,6.4 9.4,7.6"/>',
+  low: '<path d="M2.5 19C2.5 12.5 6.8 8.5 12 8.5S21.5 12.5 21.5 19Z"/>'
+};
+const shapeSvg = band => SHAPES[band] ? '<svg class="shape" data-band="' + band + '" viewBox="0 0 24 24" aria-hidden="true">' + SHAPES[band] + '</svg>' : '';
+function html(tag, cls, h) { const e = el(tag, cls); e.innerHTML = h; return e; }
 function dayKey(d = new Date()) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 function parseDay(k) { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); }
 const countWords = s => (String(s || '').match(/[\p{L}\p{N}'’]+/gu) || []).length;
@@ -571,8 +620,9 @@ const EMOJI_SETS = [
 const YES_NO = [{ v: true, e: '👍🏽', label: 'Yes' }, { v: false, e: '👎🏽', label: 'No' }];
 
 /* ---------- settings ---------- */
-const DEFAULTS = { icons: true, font: 'verdana', size: 'm', spacing: 'wide', letters: 'normal', look: 'auto', tone: '\u{1F3FD}', avatar: '👧🏽', autoread: false, lexiVoice: 'natural', voice: '', rate: 1, pitch: 1, country: '', showStreak: false, highlight: 'yellow', tapWord: true, pace: 'auto' };
-const HIGHLIGHTS = { yellow: ['Yellow', '#FFE36E'], mint: ['Mint', '#79EAB9'], off: ['Off', 'transparent'] };
+const DEFAULTS = { icons: true, font: 'verdana', size: 'm', spacing: 'wide', letters: 'normal', look: 'auto', tone: '\u{1F3FD}', avatar: '', autoread: false, lexiVoice: 'natural', voice: '', rate: 1, pitch: 1, country: '', showStreak: false, highlight: 'auto', tapWord: true, pace: 'auto', ui2: true };
+// 'auto' uses the look's own highlight (Mint on Cream's peach turns, Yellow elsewhere)
+const HIGHLIGHTS = { auto: ['Best for my colors', 'var(--hl-look)'], yellow: ['Yellow', '#FFE36E'], mint: ['Mint', '#79EAB9'], off: ['Off', 'transparent'] };
 const PACES = { auto: ['Lexi decides', '💬'], tap: ['I tap for next', '👆'], fast: ['All at once', '⏩'] };
 const FONTS = {
   verdana: ['Verdana', 'Verdana,"Atkinson Hyperlegible","DejaVu Sans",Tahoma,sans-serif'],
@@ -583,24 +633,27 @@ const SIZES = { s: ['Small', '16px'], m: ['Medium', '18px'], l: ['Large', '20px'
 // Letter spacing always grows word spacing with it: letter spacing alone slows reading (Galliussi 2020).
 const LETTERS = { normal: ['Normal', '.012em', '.08em'], roomy: ['Roomy', '.06em', '.16em'], xroomy: ['Extra roomy', '.12em', '.32em'] };
 const SPACING = { normal: ['Normal', '1.5'], wide: ['Wide', '1.7'], xwide: ['Extra wide', '2'] };
-// [name, background, bars + rails, bot bubble, user bubble]: the wireframe screens
+// [name, canvas, dock, Lexi's turn, user's turn] (docs/DESIGN_WARM_PAPER.md §1). "Orange" is shown as Peach.
 const LOOKS = {
-  auto: ['Match my device', '#E6E6E6', '#E38100', '#79EAB9', '#FFFFFF'],
-  orange: ['Orange', '#E6E6E6', '#E38100', '#79EAB9', '#FFFFFF'],
-  purple: ['Purple', '#E6E6E6', '#8100E3', '#79EAB9', '#FFFFFF'],
-  mint: ['Mint', '#E6E6E6', '#79EAB9', '#FFDCC1', '#FFFFFF'],
-  cream: ['Cream', '#F5E4CC', '#E38100', '#79EAB9', '#FFFFFF'],
-  night: ['Night', '#020000', '#020000', '#1A1A1A', '#262626'],
-  ember: ['Ember', '#201B17', '#201B17', '#FFB877', '#51443A']
+  auto: ['Match my device', '#F6EEE2', '#FFFBF5', '#FBE2C4', '#FFFBF5'],
+  cream: ['Cream', '#F6EEE2', '#FFFBF5', '#FBE2C4', '#FFFBF5'],
+  orange: ['Peach', '#F9E3CC', '#FFF9F2', '#FFF9F2', '#FFF9F2'],
+  purple: ['Purple', '#F5F0F8', '#FFFCFF', '#FFFCF8', '#ECE2F8'],
+  mint: ['Mint', '#EEF5EC', '#FBFDF8', '#FCFCF6', '#D8EEE0'],
+  night: ['Night', '#17181D', '#272932', '#2A2B33', '#3A3326'],
+  ember: ['Ember', '#201B17', '#352F2B', '#3A2F27', '#4A3A2C']
 };
 const TONES = [['', 'Yellow'], ['\u{1F3FB}', 'Light'], ['\u{1F3FC}', 'Medium light'], ['\u{1F3FD}', 'Medium'], ['\u{1F3FE}', 'Medium dark'], ['\u{1F3FF}', 'Dark']];
-const AVATARS = ['👧🏽', '🧒🏽', '👦🏽', '👩🏽', '🧑🏽', '👨🏽', '🦊', '🐱', '🌻', '⭐'];
+const AVATARS = ['', '👧🏽', '🧒🏽', '👦🏽', '👩🏽', '🧑🏽', '👨🏽', '🦊', '🐱', '🌻', '⭐'];
 function migrate(s) {
   s = { ...(s || {}) };
   if (!s.look && (s.accent || s.mode)) {
     s.look = s.mode === 'dark' ? 'ember' : (s.accent && s.accent !== 'orange' ? s.accent : (s.mode === 'light' ? 'orange' : 'auto'));
   }
   delete s.accent; delete s.mode;
+  // Warm paper: the old defaults (a girl avatar, yellow highlight) become the new ones once
+  if (Object.keys(s).length && !s.ui2) { if (s.avatar === '👧🏽') s.avatar = ''; if (s.highlight === 'yellow') s.highlight = 'auto'; s.ui2 = true; }
+  if (!HIGHLIGHTS[s.highlight]) delete s.highlight;
   if (!LOOKS[s.look]) s.look = 'auto';
   return { ...DEFAULTS, ...s };
 }
@@ -976,19 +1029,41 @@ function dockGap() { const d = $('#dock'); return d ? Math.max(0, window.innerHe
 
 /* ---------- chat ---------- */
 const chat = $('#view-home');
-function scrollDown() { requestAnimationFrame(() => chat.scrollTo({ top: chat.scrollHeight, behavior: reduceMotion ? 'auto' : 'smooth' })); }
+// Scrolling (docs/DESIGN_WARM_PAPER.md §9): stay put when the reader has scrolled up, and offer "New message" instead.
+let stick = true, userScrollAt = 0;
+const newPill = $('#newmsg');
+const nearBottom = () => chat.scrollHeight - chat.scrollTop - chat.clientHeight < 120;
+['wheel', 'touchmove', 'keydown', 'pointerdown'].forEach(ev => chat.addEventListener(ev, () => { userScrollAt = Date.now(); }, { passive: true }));
+chat.addEventListener('scroll', () => {
+  if (nearBottom()) { stick = true; newPill.hidden = true; }
+  else if (Date.now() - userScrollAt < 1200) stick = false;
+});
+function scrollDown(force) {
+  if (force) stick = true;
+  if (chat.hidden) return;
+  if (!stick) { newPill.style.bottom = (dockGap() + 12) + 'px'; newPill.hidden = false; return; }
+  newPill.hidden = true;
+  requestAnimationFrame(() => chat.scrollTo({ top: chat.scrollHeight, behavior: reduceMotion ? 'auto' : 'smooth' }));
+}
+newPill.onclick = () => { scrollDown(true); };
+// Screen readers hear each finished line once, from a status region that exists from page load.
+const srStatus = $('#sr-status');
+let srTimer = null;
+function announce(text) {
+  const t = stripEmoji(text); if (!t) return;
+  clearTimeout(srTimer); srStatus.textContent = '';
+  srTimer = setTimeout(() => { srStatus.textContent = 'Lexi says: ' + t; }, 60);
+}
 function makeRow(who) {
   const r = el('div', 'row ' + who + (reduceMotion ? '' : ' in'));
-  const ava = el('span', 'ava' + (who === 'me' ? ' me-ava' : ''));
-  ava.setAttribute('aria-hidden', 'true');
-  rich(ava, who === 'bot' ? '🤖' : profile.settings.avatar);
-  r.append(ava);
+  if (who === 'bot') { const ava = html('span', 'ava', markSvg()); ava.setAttribute('aria-hidden', 'true'); r.append(ava); }
+  else if (profile.settings.avatar) { const ava = el('span', 'ava me-ava'); ava.setAttribute('aria-hidden', 'true'); rich(ava, profile.settings.avatar); r.append(ava); }
   return r;
 }
 function speakBtn(text, target) {
   if (!canRead(text)) return null;
   const b = el('button', 'speak'); b.type = 'button'; b.setAttribute('aria-label', 'Read aloud');
-  b.innerHTML = '<span class="ico" aria-hidden="true">🔊</span><span class="only-text">Read</span>';
+  b.innerHTML = ic('speaker') + '<span class="only-text">Read</span>';
   b.onclick = () => speak(text, { el: target });
   return b;
 }
@@ -998,7 +1073,7 @@ function botBubble(text, { info = false } = {}) {
   const body = lead && text.startsWith(lead) ? text.slice(lead.length).trim() : text;
   if (lead && text.startsWith(lead)) { const l = el('span', 'lead'); rich(l, lead); b.append(l); }
   b.append(rich(el('span', 'txt'), body, true));
-  const sb = speakBtn(body, b); if (sb) b.append(sb);
+  b.dataset.say = body;
   return b;
 }
 function botRow(text, opts = {}) {
@@ -1006,11 +1081,12 @@ function botRow(text, opts = {}) {
   if (!stripEmoji(text)) r.classList.add('emoji-only');
   const b = botBubble(text, opts);
   r.append(b);
+  const sb = speakBtn(b.dataset.say, b); if (sb) r.append(sb);
   return { r, b };
 }
 function addBot(text, opts = {}) {
   const { r, b } = botRow(text, opts);
-  chat.append(r); scrollDown();
+  chat.append(r); scrollDown(); announce(text);
   if (profile.settings.autoread) speak(text, { el: b, queue: true });
   return r;
 }
@@ -1019,7 +1095,7 @@ function addMe(text) {
   lastBot = false;
   const r = makeRow('me');
   const b = el('div', 'bubble'); b.append(rich(el('span', 'txt'), text)); r.append(b);
-  chat.append(r); scrollDown();
+  chat.append(r); scrollDown(true);
   return r;
 }
 // Emoji answers show as huge emoji with no bubble (Screen 11's 95px 👍🏽), with a small caption for reading support.
@@ -1033,15 +1109,11 @@ function addAnswer(items) {
   emo.style.setProperty('--es', size + 'px');
   items.forEach(it => emo.append(el('span', '', tone(it.e))));
   a.append(emo, el('div', 'cap', items.map(it => it.label).join(' · ')));
-  r.append(a); chat.append(r); scrollDown();
+  r.append(a); chat.append(r); scrollDown(true);
   return r;
 }
-function celebrate(e, n) {
-  if (reduceMotion) return;
-  const r = el('div', 'row party'); r.setAttribute('aria-hidden', 'true');
-  for (let i = 0; i < n; i++) r.append(el('span', '', tone(e)));
-  chat.append(r); scrollDown();
-}
+// Celebration rows are gone (calm motion); "Saved to your journal." is the one saved moment.
+function celebrate() {}
 function addCard(node) {
   lastBot = false;
   const r = el('div', 'row card-row' + (reduceMotion ? '' : ' in'));
@@ -1049,12 +1121,12 @@ function addCard(node) {
   r.append(node); chat.append(r); scrollDown();
   return r;
 }
+// Lexi's "Thinking…" state replaces the typing dots: the butterfly folds its wings and says so in words.
 function showTyping() {
   const r = makeRow('bot'); r.classList.add('typing');
-  const b = el('div', 'bubble dots'); b.setAttribute('aria-label', 'Lexi is typing');
-  b.innerHTML = '<i></i><i></i><i></i>';
-  r.append(b); chat.append(r);
-  if (reduceMotion) r.hidden = true; else scrollDown();
+  const m = $('.mark', r); if (m) m.classList.add('think');
+  r.append(el('div', 'think', 'Thinking…'));
+  chat.append(r); scrollDown();
   return r;
 }
 const delayFor = t => reduceMotion ? 150 : Math.min(1300, 380 + [...String(t)].length * 14);
@@ -1063,7 +1135,7 @@ let sayQueue = Promise.resolve();
 function waitTap() {
   return new Promise(res => {
     const r = el('div', 'row next-row');
-    const b = button('next-pill', 'Next', '▸');
+    const b = el('button', 'next-pill'); b.type = 'button'; b.innerHTML = '<span>Next</span>' + ic('next');
     b.onclick = () => { r.remove(); res(); };
     r.append(b); chat.append(r); scrollDown();
     b.focus({ preventScroll: true });
@@ -1080,9 +1152,15 @@ function say(text, opts) {
   return sayQueue;
 }
 async function sayMany(lines) { for (const l of lines) await say(l); }
-function lock(node) { node.classList.add('done'); $$('button,input,textarea', node).forEach(x => { x.disabled = true; }); }
+// Answered cards fold away (docs/DESIGN_WARM_PAPER.md §9): only the answer row stays in the chat.
+function lock(node) {
+  $$('button,input,textarea', node).forEach(x => { x.disabled = true; });
+  const row = node.closest('.card-row');
+  (row || node).remove();
+  scrollDown();
+}
 
-// Yes / No sits inside the question bubble, as on Screen 11.
+// Yes / No sits inside the question bubble, as on Screen 11. After a tap the buttons go and the answer shows.
 function ask(text, options = YES_NO) {
   let res; const answer = new Promise(r => { res = r; });
   sayQueue = sayQueue.then(async () => {
@@ -1094,23 +1172,64 @@ function ask(text, options = YES_NO) {
       const btn = el('button', i === 0 ? 'yes' : 'no'); btn.type = 'button';
       btn.append(icoSpan(o.e), el('span', 'lbl', o.label));
       btn.setAttribute('aria-label', o.label);
-      btn.onclick = () => { btn.classList.add('picked'); lock(yn); addAnswer([{ e: o.e, label: o.label }]); res(o.v); };
+      btn.onclick = () => { yn.remove(); addAnswer([{ e: o.e, label: o.label }]); res(o.v); };
       yn.append(btn);
     });
     b.append(yn);
-    chat.append(r); scrollDown();
+    chat.append(r); scrollDown(); announce(text);
     if (profile.settings.autoread) speak(text, { el: b, queue: true });
     $('button', yn).focus({ preventScroll: true });
   });
   return sayQueue.then(() => answer);
 }
-function actionTiles(list) {
-  const w = el('div', 'actions');
-  list.forEach(([i, l, fn]) => { const b = el('button', 'action'); b.type = 'button'; b.append(icoSpan(i), el('span', '', l)); b.onclick = fn; w.append(b); });
+// The welcome block at the top of Home: the butterfly and a greeting by time of day.
+function addHero() {
+  const h = new Date().getHours();
+  const r = el('div', 'row hero-row');
+  const w = html('div', 'hero', '<span class="halo">' + markSvg() + '</span>');
+  w.append(el('h2', '', h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening'));
+  r.append(w); chat.append(r); scrollDown();
+}
+function bigBtn(icon, label, fn, primary) {
+  const b = el('button', 'btn wide' + (primary ? ' primary hero-btn' : '')); b.type = 'button';
+  b.append(icoSpan(icon), el('span', 'grow', label));
+  if (primary) b.insertAdjacentHTML('beforeend', ic('next'));
+  b.onclick = fn;
+  return b;
+}
+// "This week": Monday to Sunday with each day's main mood shape
+function weekCard() {
+  const byDay = new Map();
+  Store.all().forEach(e => { const k = e.day || dayKey(new Date(e.createdAt)); if (!byDay.has(k)) byDay.set(k, []); byDay.get(k).push(e); });
+  const now = new Date(); const mon = new Date(now); mon.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+  let count = 0, cells = '';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(mon); d.setDate(mon.getDate() + i);
+    const k = dayKey(d), es = byDay.get(k) || [];
+    count += es.length;
+    const band = topBand(es.flatMap(e => e.moods || []));
+    const today = k === dayKey();
+    const mk = band ? shapeSvg(band) : es.length ? '<span class="dot"></span>' : '<span class="ring"></span>';
+    const label = d.toLocaleDateString(undefined, { weekday: 'long' }) + ': ' + (band ? BAND_BY[band].name : es.length ? es.length + (es.length === 1 ? ' entry' : ' entries') : 'no entry');
+    cells += '<div class="wk' + (today ? ' today' : '') + '" role="listitem" aria-label="' + esc(label) + '"><span aria-hidden="true">' + esc(d.toLocaleDateString(undefined, { weekday: 'short' })) + '</span><span class="mk" aria-hidden="true">' + mk + '</span></div>';
+  }
+  const w = el('section', 'week'); w.setAttribute('aria-label', 'This week');
+  w.innerHTML = '<div class="week-head"><h3>This week</h3><span>' + count + (count === 1 ? ' check-in' : ' check-ins') + '</span></div><div class="week-grid" role="list">' + cells + '</div>';
   return w;
 }
+function clearActions() { $$('.home-row', chat).forEach(r => r.remove()); }
 function offerActions() {
-  addCard(actionTiles([['🧭', 'Guided check-in', () => startGuided()], ['✏️', 'Write on my own', () => openSheet()], ['📖', 'Open journal', () => showView('journal')]]));
+  clearActions();
+  const w = el('div', 'home-actions');
+  w.append(bigBtn('🧭', 'Guided check-in', () => startGuided(), true), bigBtn('✏️', 'Write on my own', () => openSheet()), weekCard());
+  const r = el('div', 'row home-row' + (reduceMotion ? '' : ' in'));
+  r.append(w); chat.append(r); scrollDown();
+}
+// Three plain buttons in a row (the intro's Settings / Home / Journal)
+function buttonRow(list) {
+  const w = el('div', 'three');
+  list.forEach(([i, l, fn]) => { const b = el('button', 'btn'); b.type = 'button'; b.append(icoSpan(i), el('span', '', l)); b.onclick = fn; w.append(b); });
+  return w;
 }
 
 /* emoji tile pickers */
@@ -1120,9 +1239,7 @@ function tileBtn(item, selected, onChange) {
   const k = itemKey(item);
   b.setAttribute('aria-pressed', selected.has(k) ? 'true' : 'false');
   b.setAttribute('aria-label', item.label);
-  const lbl = el('span', 'lbl', item.label);
-  if (Math.max(...item.label.split(/\s+/).map(w => w.length)) > 8) lbl.classList.add('sm');
-  b.append(icoSpan(item.e), lbl);
+  b.append(icoSpan(item.e), el('span', 'lbl', item.label));
   b.onclick = () => {
     if (selected.has(k)) selected.delete(k); else selected.set(k, { e: item.e, label: item.label, ...(item.band ? { band: item.band } : {}) });
     b.setAttribute('aria-pressed', selected.has(k) ? 'true' : 'false');
@@ -1133,7 +1250,7 @@ function tileBtn(item, selected, onChange) {
 function customAdder(withBand, onAdd) {
   const wrap = el('div', 'adder');
   const open = el('button', 'tile add'); open.type = 'button';
-  open.append(icoSpan('➕'), el('span', 'lbl', 'My own'));
+  open.insertAdjacentHTML('beforeend', ic('add')); open.append(el('span', 'lbl', 'My own'));
   const form = el('div', 'adder-form'); form.hidden = true;
   const line = el('div', 'adder-line');
   const emo = el('input', 'emo'); emo.type = 'text'; emo.id = nextId('emo'); emo.maxLength = 16; emo.placeholder = '🙂'; emo.setAttribute('aria-label', 'Emoji');
@@ -1143,7 +1260,8 @@ function customAdder(withBand, onAdd) {
   line.append(emo, pick, word);
   form.append(line);
   let band = 'content';
-  if (withBand) {
+  const bandOf = typeof withBand === 'function' ? withBand : null;
+  if (withBand && !bandOf) {
     const bands = el('div', 'chips'); bands.setAttribute('aria-label', 'Which group?');
     BANDS.forEach(bd => {
       const c = el('button', 'chip'); c.type = 'button'; c.dataset.band = bd.key;
@@ -1156,38 +1274,63 @@ function customAdder(withBand, onAdd) {
     form.append(bands);
   }
   const err = el('p', 'err');
-  const add = button('btn primary', 'Add', '✔️');
+  const add = lbtn('btn primary', 'Add', 'check');
   const foot = el('div', 'row-btns'); foot.append(add);
   form.append(err, foot);
   open.onclick = () => { form.hidden = !form.hidden; if (!form.hidden) word.focus(); };
   const submit = () => {
     const e = firstEmoji(emo.value), w = word.value.trim();
     if (!e && !w) { err.textContent = 'Add a word or an emoji.'; return; }
-    onAdd({ e: e || '🏷️', label: w || e, ...(withBand ? { band } : {}) });
+    onAdd({ e: e || '🏷️', label: w || e, ...(withBand ? { band: bandOf ? bandOf() : band } : {}) });
   };
   add.onclick = submit;
   word.onkeydown = ev => { if (ev.key === 'Enter') { ev.preventDefault(); submit(); } };
   return { open, form };
 }
+// Feelings (docs/DESIGN_WARM_PAPER.md §10): one group at a time, its first 7 tiles and More, then My own.
+// Picks stay when you switch groups, and "You picked" lists them all.
 function moodPicker(selected, onChange) {
-  const holder = el('div');
-  const mount = () => {
-    const wrap = el('div', 'bands');
-    const adder = customAdder(true, m => {
+  const holder = el('div', 'bands');
+  const pickedEl = el('div', 'picked');
+  const more = new Set();
+  let band = 'content';
+  const drawPicked = () => {
+    const list = [...selected.values()];
+    pickedEl.hidden = !list.length;
+    pickedEl.innerHTML = '<span class="lab">You picked:</span>' + list.map(m => '<span class="pchip"' + (m.band ? ' data-band="' + esc(m.band) + '"' : '') + '>' + renderRich(m.e) + '<span>' + esc(m.label) + '</span></span>').join('');
+  };
+  const mount = focusKey => {
+    const seg = el('div', 'seg'); seg.setAttribute('role', 'group'); seg.setAttribute('aria-label', 'Feeling groups');
+    BANDS.forEach(b => {
+      const g = el('button'); g.type = 'button'; g.dataset.band = b.key; g.dataset.group = b.key;
+      g.setAttribute('aria-pressed', b.key === band ? 'true' : 'false');
+      g.innerHTML = shapeSvg(b.key) + '<span>' + esc(b.name) + '</span>';
+      g.onclick = () => { band = b.key; mount('g:' + b.key); };
+      seg.append(g);
+    });
+    const B = BAND_BY[band];
+    const items = [...B.items.map(([e, label]) => ({ e, label })), ...((profile.custom.mood || []).filter(m => m.band === band))];
+    const open = more.has(band) || items.length <= 8;
+    const grid = el('div', 'tiles');
+    (open ? items : items.slice(0, 7)).forEach(m => grid.append(tileBtn({ ...m, band }, selected, (it, on) => { drawPicked(); onChange && onChange(it, on); })));
+    const adder = customAdder(() => band, m => {
       profile.custom.mood = [...(profile.custom.mood || []), m];
-      saveProfile(); selected.set(itemKey(m), m); mount(); onChange && onChange(); renderSettings();
+      saveProfile(); selected.set(itemKey(m), m); more.add(band); mount(); drawPicked(); onChange && onChange(); renderSettings();
     });
-    BANDS.forEach((b, bi) => {
-      const sec = el('section', 'band'); sec.dataset.band = b.key;
-      sec.append(el('h3', 'band-name', b.name));
-      const grid = el('div', 'tiles');
-      const items = [...b.items.map(([e, label]) => ({ e, label })), ...((profile.custom.mood || []).filter(m => m.band === b.key))];
-      items.forEach(m => grid.append(tileBtn({ ...m, band: b.key }, selected, onChange)));
-      if (bi === BANDS.length - 1) grid.append(adder.open);
-      sec.append(grid); wrap.append(sec);
-    });
-    wrap.append(adder.form);
-    holder.replaceChildren(wrap);
+    if (open) grid.append(adder.open);
+    else {
+      const mb = el('button', 'tile more'); mb.type = 'button';
+      mb.insertAdjacentHTML('beforeend', ic('add')); mb.append(el('span', 'lbl', 'More'));
+      mb.setAttribute('aria-label', 'More ' + B.name + ' feelings');
+      mb.onclick = () => { more.add(band); mount('t:7'); };
+      grid.append(mb);
+    }
+    holder.replaceChildren(seg, grid, adder.form, pickedEl);
+    drawPicked();
+    if (focusKey) {
+      const f = focusKey.startsWith('g:') ? $('[data-group="' + focusKey.slice(2) + '"]', holder) : $$('.tile', grid)[+focusKey.slice(2)];
+      if (f) f.focus({ preventScroll: true });
+    }
   };
   mount();
   return holder;
@@ -1218,6 +1361,8 @@ const NUANCE = {
 // Check-in steps (docs/FEATURES_SOON.md §6): "Step X of N", dots, Back, recap with Change
 function stepCard(head, title) {
   const card = el('div', 'card');
+  const top = el('div', 'card-head');
+  if (title) top.append(rich(el('h3', 'card-title'), title));
   const w = el('div', 'steps');
   w.append(el('span', '', head.total ? 'Step ' + head.no + ' of ' + head.total : 'Step ' + head.no));
   if (head.total) {
@@ -1225,13 +1370,12 @@ function stepCard(head, title) {
     for (let i = 1; i <= head.total; i++) d.append(el('i', i < head.no ? 'done' : i === head.no ? 'now' : ''));
     w.append(d);
   }
-  card.append(w);
-  if (title) card.append(rich(el('h3', 'card-title'), title));
+  top.append(w); card.append(top);
   return card;
 }
 function stepButtons(card, { back, skip, nextBtn }) {
   const btns = el('div', 'row-btns');
-  if (back) { const b = button('btn', 'Back', '⬅️'); b.style.marginRight = 'auto'; b.onclick = back; btns.append(b); }
+  if (back) { const b = lbtn('btn', 'Back', 'back'); b.style.marginRight = 'auto'; b.onclick = back; btns.append(b); }
   if (skip) btns.append(skip);
   btns.append(nextBtn);
   card.append(btns);
@@ -1240,11 +1384,13 @@ const mapOf = list => new Map((list || []).map(m => [itemKey(m), m]));
 function moodCard({ prefill = [], head }) {
   return new Promise(res => {
     const selected = mapOf(prefill);
-    const card = stepCard(head, 'How do you feel? Pick as many as you like.');
-    const done = button('btn primary', 'Done', '✔️'); done.disabled = selected.size === 0;
-    const skip = button('btn', 'Skip', '⏭️');
-    card.append(moodPicker(selected, () => { done.disabled = selected.size === 0; }));
+    const card = stepCard(head, 'Feelings');
+    const done = lbtn('btn primary', 'Done', 'check');
+    const skip = lbtn('btn', 'Skip');
+    const upd = () => { done.disabled = selected.size === 0; $('.lbl', done).textContent = selected.size ? 'Done (' + selected.size + ' picked)' : 'Done'; };
+    card.append(moodPicker(selected, upd));
     stepButtons(card, { skip, nextBtn: done });
+    upd();
     done.onclick = () => { lock(card); res({ value: [...selected.values()] }); };
     skip.onclick = () => { lock(card); res({ value: [] }); };
     addCard(card);
@@ -1253,18 +1399,18 @@ function moodCard({ prefill = [], head }) {
 function nuanceCard({ bands, prefill = [], head }) {
   return new Promise(res => {
     const selected = mapOf(prefill);
-    const card = stepCard(head, 'Want to name it more exactly? You can skip this.');
+    const card = stepCard(head, 'Name it more');
     const wrap = el('div', 'bands');
     BANDS.filter(b => bands.includes(b.key)).forEach(b => {
       const sec = el('section', 'band'); sec.dataset.band = b.key;
-      sec.append(el('h3', 'band-name', b.name));
+      sec.append(html('h3', 'band-name', shapeSvg(b.key) + '<span>' + esc(b.name) + '</span>'));
       const grid = el('div', 'tiles');
       NUANCE[b.key].forEach(([e, label]) => grid.append(tileBtn({ e, label, band: b.key }, selected, (it, on) => { if (on) speak(it.label); })));
       sec.append(grid); wrap.append(sec);
     });
     card.append(wrap);
-    const done = button('btn primary', 'Done', '✔️');
-    const skip = button('btn', 'Skip', '⏭️');
+    const done = lbtn('btn primary', 'Done', 'check');
+    const skip = lbtn('btn', 'Skip');
     stepButtons(card, { back: () => { lock(card); res({ back: true }); }, skip, nextBtn: done });
     done.onclick = () => { lock(card); res({ value: [...selected.values()] }); };
     skip.onclick = () => { lock(card); res({ value: [] }); };
@@ -1274,8 +1420,8 @@ function nuanceCard({ bands, prefill = [], head }) {
 function topicCard({ prefill = [], head }) {
   return new Promise(res => {
     const selected = mapOf(TOPICS.filter(t => prefill.includes(t.key)).map(t => ({ e: t.icon, label: t.name })));
-    const card = stepCard(head, 'What do you want to talk about today?');
-    const go = button('btn primary', "Let's go", '➜'); go.disabled = selected.size === 0;
+    const card = stepCard(head, 'Topics');
+    const go = lbtn('btn primary', "Let's go", 'next'); go.disabled = selected.size === 0;
     const none = button('btn', 'Just my mood today');
     const grid = el('div', 'tiles');
     TOPICS.forEach(t => grid.append(tileBtn({ e: t.icon, label: t.name }, selected, () => { go.disabled = selected.size === 0; })));
@@ -1293,27 +1439,27 @@ function topicCard({ prefill = [], head }) {
 function noteField(placeholder) {
   const line = el('div', 'note-line');
   const ta = el('textarea'); ta.id = nextId('note'); ta.rows = 2; ta.placeholder = placeholder; ta.setAttribute('aria-label', placeholder);
-  const eb = button('icon-btn', '', '🙂', 'Emoji'); eb.dataset.emojiBtn = '';
+  const eb = el('button', 'icon-btn'); eb.type = 'button'; eb.innerHTML = ic('emoji') + '<span class="only-text">Emoji</span>'; eb.setAttribute('aria-label', 'Add emoji'); eb.dataset.emojiBtn = '';
   eb.onclick = () => openEmoji(ta);
   line.append(ta, eb);
   return { line, ta };
 }
 function topicAnswerCard(T, { prefill = null, head }) {
   return new Promise(res => {
-    const card = stepCard(head, T.icon + ' ' + T.q);
+    const card = stepCard(head, T.icon + ' ' + T.name);
     const ans = { key: T.key, picks: [], note: '', todos: prefill && prefill.todos ? prefill.todos.map(t => ({ ...t })) : [] };
-    const next = button('btn primary', 'Next', '➜');
-    const skip = button('btn', 'Skip', '⏭️');
+    const next = lbtn('btn primary', 'Next', 'next');
+    const skip = lbtn('btn', 'Skip');
     const back = () => { lock(card); res({ back: true }); };
     if (T.todo) {
       const list = el('ul', 'todo-edit');
       const line = el('div', 'note-line');
       const inp = el('input'); inp.type = 'text'; inp.id = nextId('todo'); inp.placeholder = 'Add a to do'; inp.setAttribute('aria-label', 'Add a to do'); inp.maxLength = 120;
-      const add = button('icon-btn', '', '➕', 'Add'); add.setAttribute('aria-label', 'Add to do');
+      const add = el('button', 'icon-btn'); add.type = 'button'; add.innerHTML = ic('add') + '<span class="only-text">Add</span>'; add.setAttribute('aria-label', 'Add to do');
       const draw = () => {
         list.replaceChildren(...ans.todos.map((t, i) => {
           const li = el('li'); li.append(rich(el('span'), t.t));
-          const x = button('icon-btn', '', '✖️', 'Remove'); x.setAttribute('aria-label', 'Remove ' + t.t);
+          const x = el('button', 'icon-btn'); x.type = 'button'; x.innerHTML = ic('close') + '<span class="only-text">Remove</span>'; x.setAttribute('aria-label', 'Remove ' + t.t);
           x.onclick = () => { ans.todos.splice(i, 1); draw(); };
           li.append(x); return li;
         }));
@@ -1346,12 +1492,12 @@ function answerWords(a) {
 }
 function recapCard(st, head) {
   return new Promise(res => {
-    const card = stepCard(head, 'Here is your check-in. Tap Change to fix anything.');
+    const card = stepCard(head, 'Your check-in');
     const list = el('div', 'recap');
     const item = (icon, title, words, step) => {
       const row = el('div', 'item');
       const what = el('div', 'what'); what.append(rich(el('b'), icon + ' ' + title), rich(el('span'), words));
-      const ch = button('btn', 'Change', '✏️'); ch.onclick = () => { lock(card); res({ change: step }); };
+      const ch = lbtn('btn', 'Change'); ch.onclick = () => { lock(card); res({ change: step }); };
       row.append(what, ch); list.append(row);
     };
     item('🌡️', 'Feelings', st.moods.length ? st.moods.map(m => m.e + ' ' + m.label).join(' · ') : 'Skipped', 'mood');
@@ -1359,7 +1505,7 @@ function recapCard(st, head) {
     item('🗂️', 'Topics', st.keys.length ? st.keys.map(k => TOPIC_BY[k].icon + ' ' + TOPIC_BY[k].name).join(' · ') : 'Just my mood today', 'topics');
     st.keys.forEach(k => item(TOPIC_BY[k].icon, TOPIC_BY[k].name, answerWords(st.answers[k]), 't:' + k));
     card.append(list);
-    const save = button('btn primary', 'Save to journal', '✔️');
+    const save = lbtn('btn primary', 'Save to journal', 'check');
     stepButtons(card, { back: () => { lock(card); res({ back: true }); }, nextBtn: save });
     save.onclick = () => { lock(card); res({ save: true }); };
     addCard(card);
@@ -1375,6 +1521,11 @@ function moodShares(moods) {
   const c = { content: 0, stressed: 0, low: 0 };
   (moods || []).forEach(m => { if (c[m.band] != null) c[m.band]++; });
   return c;
+}
+// The band with the most picks ('' when none). On a tie the first band in Content, Stressed, Low order wins.
+function topBand(moods) {
+  const top = Object.entries(moodShares(moods)).sort((a, b) => b[1] - a[1]);
+  return top[0][1] ? top[0][0] : '';
 }
 function reactionFor(moods) {
   if (!moods.length) return "That's okay. We can keep going. 🙂";
@@ -1393,6 +1544,7 @@ async function startGuided(fromIntro, resume) {
   showView('home');
   if (guidedActive) { toast('Your check-in is already open below. 👇'); scrollDown(); return; }
   guidedActive = true;
+  clearActions();
   try {
     const st = resume || { moods: [], nuance: [], keys: [], answers: {}, at: 'mood', asked: {}, chosen: false };
     if (resume) st.asked = { react: 1 };
@@ -1456,7 +1608,7 @@ async function startGuided(fromIntro, resume) {
     const level = notes ? maxLevel(riskCheck(notes), await aiRisk(notes)) : 'none';
     await say('Saved to your journal. 📖 ✔️');
     if (level !== 'none') { await safetyFlow(level); await sayQueue; offerActions(); return; }
-    await sayQueue; celebrate('🎉', 3);
+    await sayQueue;
     if (sampleFn && sampleOk) {
       const want = await ask('Want a short reflection on today?');
       if (want) await reflect(entry, ref);
@@ -1547,7 +1699,7 @@ function setSending(on) {
   form.classList.toggle('busy', on);
   const b = $('#msg-send');
   b.setAttribute('aria-label', on ? 'Stop' : 'Send');
-  b.innerHTML = on ? '<span class="ico" aria-hidden="true">⏹️</span><span class="only-text">Stop</span>' : '<span class="ico" aria-hidden="true">➤</span><span class="only-text">Send</span>';
+  b.innerHTML = on ? ic('stop') + '<span class="only-text">Stop</span>' : ic('send') + '<span class="only-text">Send</span>';
 }
 /* ---------- safety: help lines + the safety flow (docs/FEATURES_DO_NEXT.md §6–8) ---------- */
 function crisisCard({ change = true } = {}) {
@@ -1623,35 +1775,30 @@ async function sendChat(text) {
   while (turns.length && turns[0].role !== 'user') turns.shift();
   await sayQueue;
   const ctl = new AbortController(); chatCtl = ctl; setSending(true);
+  // Lexi thinks until the whole reply is checked, then shows it line by line (docs/DESIGN_WARM_PAPER.md §9):
+  // text never changes under the reader.
   const typing = showTyping();
-  let started = false, rows = [];
-  const drawLines = lines => {
-    lines.forEach((l, i) => {
-      if (rows[i] && rows[i].dataset.line === l) return;
-      const nr = botRow(l).r; nr.dataset.line = l;
-      if (rows[i]) { nr.classList.remove('in'); rows[i].replaceWith(nr); } else typing.before(nr);
-      rows[i] = nr;
-    });
-    rows.splice(lines.length).forEach(x => x.remove());
-  };
-  // while streaming: raw lines with the safety tag hidden; when done: the style-checked lines
-  const draw = txt => drawLines(cleanLines(txt).map(l => l.replace(/^\[(ok|check|risk)\]\s*/i, '')).filter(l => l && !/^\[[a-z]*\]?$/i.test(l)));
+  const started = Date.now();
   let level = 'none';
   try {
-    const res = await sampleFn([{ role: 'user', content: lexiRules() }, ...turns], {
-      cache: false, modelTier: 'quick', signal: ctl.signal,
-      onText: ({ text: t }) => { if (!started) { started = true; typing.hidden = true; } draw(t); scrollDown(); }
-    });
+    const res = await sampleFn([{ role: 'user', content: lexiRules() }, ...turns], { cache: false, modelTier: 'quick', signal: ctl.signal });
+    if (ctl.signal.aborted) throw { code: 'cancelled' };
     const checked = styleCheck(res.text, { icons: profile.settings.icons });
     level = LEVEL[checked.tag] != null ? checked.tag : 'none';
-    drawLines(checked.lines);
-    typing.remove();
     turns.push({ role: 'assistant', content: '[' + checked.tag + ']\n' + checked.lines.join('\n') });
-    if (profile.settings.autoread) rows.forEach(r => { const b = $('.bubble', r); speak($('.txt', r).dataset.raw, { el: b, queue: true }); });
-    if (res.truncated) addBot('That got cut short. Ask me for less at a time. ✂️', { info: true });
+    const wait = 600 - (Date.now() - started); if (wait > 0) await sleep(wait);
+    typing.remove();
+    if (chatCtl === ctl) { chatCtl = null; setSending(false); }
+    sayQueue = sayQueue.then(async () => {
+      for (let i = 0; i < checked.lines.length; i++) {
+        if (i > 0) await beforeLine(checked.lines[i]);
+        addBot(checked.lines[i]); lastBot = true;
+      }
+      if (res.truncated) addBot('That got cut short. Ask me for less at a time. ✂️', { info: true });
+    });
+    await sayQueue;
   } catch (e) {
     typing.remove();
-    if (e && e.code === 'refused') rows.forEach(x => x.remove());
     const m = sampleErr(e); if (m) addBot(m, { info: true });
   } finally {
     if (chatCtl === ctl) { chatCtl = null; setSending(false); }
@@ -1667,7 +1814,7 @@ function quickStartCard() {
     card.append(rich(el('h3', 'card-title'), '⚡ Quick start'));
     const prev = el('div', 'row bot qs-preview');
     const pb = botBubble('This is how my messages will look.');
-    pb.style.width = 'auto'; prev.append(pb); card.append(prev);
+    pb.style.width = 'auto'; prev.append(html('span', 'ava', markSvg()), pb); card.append(prev);
     const rowOf = (title, key, opts) => {
       const r = el('div', 'qs-row'); r.append(el('h4', '', title));
       const chips = el('div', 'chips');
@@ -1689,7 +1836,7 @@ function quickStartCard() {
       rowOf('Read messages out loud', 'autoread', [[true, 'On'], [false, 'Off']]),
       rowOf('Message pace', 'pace', [['auto', 'Lexi decides'], ['tap', 'I tap for next']])
     );
-    const done = button('btn primary', 'Done', '✔️');
+    const done = lbtn('btn primary', 'Done', 'check');
     const btns = el('div', 'row-btns'); btns.append(done); card.append(btns);
     done.onclick = () => { lock(card); renderSettings(); res(); };
     addCard(card);
@@ -1704,7 +1851,8 @@ async function runQuickStart() {
 
 /* ---------- onboarding (Chat Bot Plan) ---------- */
 async function intro() {
-  await say("Hi! I'm Lexi, the journaling chatbot. 🤖 I'm here to make journaling easy and fun.");
+  addHero();
+  await say("Hi! I'm Lexi, the journaling chatbot. 🦋 I'm here to make journaling easy and fun.");
   await say("I speak English, but I'm better at emoji. 😉");
   await runQuickStart();
   await say('ℹ️ This means information.', { info: true });
@@ -1712,24 +1860,23 @@ async function intro() {
   await say("ℹ️ Text blocks will never be too large, and I'll rely a lot on icons and emojis.", { info: true });
   await say("🧠 If icons don't work for your brain, you can turn them off in settings.", { info: true });
   await sayQueue;
-  addCard(actionTiles([['⚙️', 'Settings', () => showView('settings')], ['🏡', 'Home', () => showView('home')], ['📖', 'Journal', () => showView('journal')]]));
+  addCard(buttonRow([['⚙️', 'Settings', () => showView('settings')], ['🏡', 'Home', () => showView('home')], ['📖', 'Journal', () => showView('journal')]]));
   await say('📖 This is your journal. Everything you save goes there.');
   const go = await ask('Would you like to start?');
   profile.onboarded = true; saveProfile();
   if (!go) { await say("No problem. I'll be right here. 🏡"); await sayQueue; offerActions(); return; }
-  celebrate('👏🏽', 4);
   const help = await ask('Would you like help?');
   if (help) {
     await say('You can choose to journal with me by selecting the guided experience. 🧭');
     startGuided(true);
   } else {
     await say("If you're feeling frisky and want to tackle it on your own, I'll be waiting to answer any questions you may have.");
-    await sayQueue;
-    addCard(actionTiles([['✏️', 'Start writing', () => openSheet()], ['🧭', 'Guided check-in', () => startGuided()], ['📖', 'Open journal', () => showView('journal')]]));
+    await sayQueue; offerActions();
   }
 }
 async function welcomeBack() {
   const today = Store.all().filter(e => e.day === dayKey()).length;
+  addHero();
   await say('Welcome back! 🏡');
   const draft = LS.get(DRAFT_KEY, null);
   if (draft && draft.at) {
@@ -1831,7 +1978,7 @@ $('#fw-save').onclick = async () => {
     clearTimeout(draftTimer); LS.del('lexi.draft'); fwText.value = ''; fwOriginal = null;
     closeSheet(); toast('Saved to your journal. 📖');
     if (level !== 'none') { await safetyFlow(level); return; }
-    if (!$('#view-home').hidden) { await say("Saved. 📖 I'm here if you have questions."); await sayQueue; celebrate('🎉', 3); }
+    if (!$('#view-home').hidden) { await say("Saved. 📖 I'm here if you have questions."); await sayQueue; }
   } finally { $('#fw-save').disabled = false; }
 };
 // Tidy word by word (docs/FEATURES_DO_NEXT.md §12): each fix is the writer's choice, and the original is always kept.
@@ -1868,17 +2015,17 @@ function renderTidy(state) {
       words.append(el('span', 'from', f.from), document.createTextNode(' → '), el('span', 'to', f.to));
       say1 = speakBtn(f.to, row);
     }
-    const use = button('btn', f.on ? 'Used' : 'Use', f.on ? '✔️' : '');
+    const use = lbtn('btn', f.on ? 'Used' : 'Use', f.on ? 'check' : '');
     use.setAttribute('aria-pressed', String(!!f.on));
     use.onclick = () => { f.on = !f.on; sync(); renderTidy(state); };
     row.append(words); if (say1) row.append(say1); row.append(use);
     list.append(row);
   });
-  const all = button('btn', 'Use all', '✔️');
+  const all = lbtn('btn', 'Use all', 'check');
   all.onclick = () => { state.fixes.forEach(f => { f.on = true; }); sync(); renderTidy(state); };
-  const undo = button('btn', 'Undo all', '↩️');
+  const undo = lbtn('btn', 'Undo all', 'undo');
   undo.onclick = () => { state.fixes.forEach(f => { f.on = false; }); sync(); renderTidy(state); };
-  const done = button('btn primary', 'Done', '👍🏽');
+  const done = lbtn('btn primary', 'Done', 'check');
   done.onclick = () => { fwText.readOnly = false; fwOut.hidden = true; const n = state.fixes.filter(f => f.on).length; if (n) toast(n + (n === 1 ? ' fix used. ✨' : ' fixes used. ✨')); };
   const btns = el('div', 'row-btns'); btns.append(undo, all, done);
   fwOut.replaceChildren(rich(el('strong'), "✨ Lexi's spelling help · your words stay yours"), list, btns);
@@ -1943,21 +2090,6 @@ function fmtDay(k) {
   if (k === dayKey(y)) return 'Yesterday';
   return parseDay(k).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
 }
-function bandBar(c) {
-  const total = c.content + c.stressed + c.low;
-  if (!total) return '';
-  let at = 0; const stops = [];
-  [['content', 'var(--b-content)'], ['stressed', 'var(--b-stressed)'], ['low', 'var(--b-low)']].forEach(([k, col]) => {
-    if (!c[k]) return; const end = at + c[k] / total * 100;
-    stops.push(col + ' ' + at.toFixed(1) + '% ' + end.toFixed(1) + '%'); at = end;
-  });
-  return 'linear-gradient(90deg,' + stops.join(',') + ')';
-}
-function topEmoji(moods) {
-  const n = new Map(); moods.forEach(m => n.set(m.e, (n.get(m.e) || 0) + 1));
-  let best = '', c = 0; n.forEach((v, k) => { if (v > c) { best = k; c = v; } });
-  return best;
-}
 // Days journaled and feelings named, not streaks: broken streaks push people away, more so when they blame themselves.
 // The optional streak forgives one rest day in a row.
 function stats(all, byDay) {
@@ -1980,9 +2112,9 @@ function entryHtml(en) {
   const kind = en.kind === 'free' ? ['✏️', 'Free writing'] : ['🧭', 'Check-in'];
   const key = esc(en.id) + '|' + esc(en._src);
   let h = '<article class="entry">';
-  h += '<div class="entry-head"><span class="ico kind" aria-hidden="true">' + kind[0] + '</span><span>' + kind[1] + ' · ' + esc(time) + '</span><span class="spacer"></span>';
-  if (canSpeak) h += '<button type="button" data-act="read" data-key="' + key + '" aria-label="Read this entry aloud"><span class="ico" aria-hidden="true">🔊</span><span class="only-text">Read</span></button>';
-  h += '<button type="button" data-act="del" data-key="' + key + '" aria-label="Delete this entry"><span class="ico" aria-hidden="true">🗑️</span><span class="only-text">Delete</span></button></div>';
+  h += '<div class="entry-head"><span class="ico kind" aria-hidden="true">' + kind[0] + '</span><span class="when"><b>' + esc(time) + '</b><span>' + kind[1] + '</span></span>';
+  if (canSpeak) h += '<button type="button" data-act="read" data-key="' + key + '" aria-label="Read this entry aloud">' + ic('speaker') + '<span class="only-text">Read</span></button>';
+  h += '<button type="button" data-act="del" data-key="' + key + '" aria-label="Delete this entry">' + ic('trash') + '<span class="only-text">Delete</span></button></div>';
   if (confirmId === en.id) h += '<div class="confirm"><p>Delete this entry? This can\'t be undone.</p><button type="button" class="btn" data-act="del-no">Keep it</button><button type="button" class="btn danger" data-act="del-yes" data-key="' + key + '">Delete</button></div>';
   const feel = [...(en.moods || []), ...(en.nuance || [])];
   if (feel.length) h += '<div class="mchips">' + feel.map(m => '<span class="mchip" data-band="' + esc(m.band || '') + '">' + renderRich(m.e) + '<span>' + esc(m.label) + '</span></span>').join('') + '</div>';
@@ -2004,43 +2136,48 @@ function entryHtml(en) {
     h += '<div><button type="button" class="chip" data-act="orig" data-key="' + key + '" aria-expanded="' + open + '">' + renderRich('📝') + ' ' + (open ? 'Hide my original words' : 'See my original words') + '</button></div>';
     if (open) h += '<p class="orig">' + renderRich(en.original) + '</p>';
   }
-  if (en.reflection) h += '<p class="reflection">' + renderRich('🤖 ' + en.reflection) + '</p>';
+  if (en.reflection) h += '<p class="reflection">' + markSvg() + '<span>' + renderRich(en.reflection) + '</span></p>';
   return h + '</article>';
 }
 function renderJournal() {
-  const head = '<div class="page-head"><span class="ico big" aria-hidden="true">📖</span><div><h2 class="title">My journal</h2>';
-  if (!Store.loaded) { jv.innerHTML = head + '<p class="muted">Opening your journal…</p></div></div>'; return; }
+  const head = '<div class="page-head"><h2 class="title">Journal</h2>';
+  if (!Store.loaded) { jv.innerHTML = head + '<p class="muted">Opening your journal…</p></div>'; return; }
   const all = Store.all();
   const byDay = new Map();
   all.forEach(e => { const k = e.day || dayKey(new Date(e.createdAt)); if (!byDay.has(k)) byDay.set(k, []); byDay.get(k).push(e); });
-  const where = Store.mode === 'cloud' ? '🔒 Private to you, saved to your account.' : '💾 Saved on this device only.';
+  const where = Store.mode === 'cloud' ? 'Private to you, saved to your account.' : 'Saved on this device only.';
   const st = stats(all, byDay);
-  let h = head + '<p class="muted">' + renderRich(where) + '</p></div></div>';
-  const stat = (i, n, label) => '<div class="stat">' + renderRich(i) + '<b>' + n + '</b><span>' + label + '</span></div>';
+  let h = head + '<p class="muted">' + esc(where) + '</p></div>';
+  const stat = (n, label) => '<div class="stat"><b>' + n + '</b><span>' + label + '</span></div>';
   h += '<div class="stats">' +
-    stat('📅', st.days, st.days === 1 ? 'Day journaled' : 'Days journaled') +
-    stat('💬', st.feelings, st.feelings === 1 ? 'Feeling named' : 'Feelings named') +
-    stat('📝', st.entries, st.entries === 1 ? 'Entry' : 'Entries') +
-    (profile.settings.showStreak ? stat('🔥', st.streak, 'Days in a row (rest days OK)') + stat('✍️', st.words, 'Words written') : '') +
+    stat(st.days, st.days === 1 ? 'day journaled' : 'days journaled') +
+    stat(st.feelings, st.feelings === 1 ? 'feeling named' : 'feelings named') +
+    (profile.settings.showStreak ? stat(st.streak, 'days in a row (rest days OK)') + stat(st.words, 'words written') : '') +
     '</div>';
-  h += '<h3 class="sec-title">Last 14 days</h3><div class="days" id="days" role="list" aria-label="Mood over the last 14 days">';
-  for (let i = 13; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate() - i);
+  // Last two weeks (docs/DESIGN_WARM_PAPER.md §10): last week and this week, Monday to Sunday, with mood shapes
+  const today = new Date(); const mon = new Date(today); mon.setDate(today.getDate() - ((today.getDay() + 6) % 7) - 7);
+  let grid = '', fortnight = [];
+  for (let i = 0; i < 7; i++) { const d = new Date(mon); d.setDate(mon.getDate() + i); grid += '<span class="wd" aria-hidden="true">' + esc(d.toLocaleDateString(undefined, { weekday: 'short' })) + '</span>'; }
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(mon); d.setDate(mon.getDate() + i);
     const k = dayKey(d), es = byDay.get(k) || [];
+    const isToday = k === dayKey(), future = d > today && !isToday;
     const moods = es.flatMap(e => e.moods || []);
-    const em = topEmoji(moods);
-    const bar = bandBar(moodShares(moods));
-    const label = d.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }) + ': ' + (es.length ? (moods.length ? moods.map(m => m.label).join(', ') : es.length + ' entry') : 'no entry');
-    h += '<div class="day' + (i === 0 ? ' today' : '') + '" role="listitem" aria-label="' + esc(label) + '"><span class="wd">' + esc(d.toLocaleDateString(undefined, { weekday: 'short' })) + '</span><span class="dn">' + d.getDate() + '</span>' +
-      (em ? '<span class="de">' + renderRich(em) + '</span>' : '<span class="de none">' + (es.length ? renderRich('✏️') : '·') + '</span>') +
-      '<i class="bar"' + (bar ? ' style="background:' + bar + '"' : '') + '></i></div>';
+    if (!future) fortnight.push(...moods);
+    const band = topBand(moods);
+    const label = d.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }) + ': ' + (future ? 'not yet' : es.length ? (moods.length ? moods.map(m => m.label).join(', ') : es.length + (es.length === 1 ? ' entry' : ' entries')) : 'no entry');
+    grid += '<div class="tw-day' + (future ? ' future' : '') + (isToday ? ' today' : '') + '"' + (band ? ' data-band="' + band + '"' : '') + ' role="listitem" aria-label="' + esc(label) + '"><span aria-hidden="true">' + d.getDate() + '</span>' +
+      (band ? shapeSvg(band) : es.length ? '<span class="dot" aria-hidden="true"></span>' : '') + '</div>';
   }
-  h += '</div><div class="legend"><span data-band="content"><i></i>Content</span><span data-band="stressed"><i></i>Stressed</span><span data-band="low"><i></i>Low self-esteem</span></div>';
-  h += '<div class="j-actions"><button type="button" class="action" data-act="checkin">' + renderRich('🧭') + '<span>Guided check-in</span></button><button type="button" class="action" data-act="write">' + renderRich('✏️') + '<span>Write on my own</span></button></div>';
+  const c = moodShares(fortnight), order = Object.entries(c).sort((a, b) => b[1] - a[1]);
+  let most = '';
+  if (order[0][1]) most = order[0][1] === order[1][1] ? '<p class="most">Most days: mixed</p>' : '<p class="most">' + shapeSvg(order[0][0]) + 'Most days: ' + esc(BAND_BY[order[0][0]].name) + '</p>';
+  h += '<section class="tw" aria-label="Last two weeks"><h3 class="sec-title">Last two weeks</h3><div class="tw-grid" role="list">' + grid + '</div>' + most +
+    '<div class="legend">' + BANDS.map(b => '<span>' + shapeSvg(b.key) + esc(b.name) + '</span>').join('') + '</div></section>';
+  h += '<div class="j-actions"><button type="button" class="btn wide primary hero-btn" data-act="checkin">' + renderRich('🧭') + '<span class="grow">Guided check-in</span>' + ic('next') + '</button><button type="button" class="btn wide" data-act="write">' + renderRich('✏️') + '<span class="grow">Write on my own</span></button></div>';
   if (!all.length) h += '<div class="empty">' + renderRich('📖') + '<p><strong>Your journal is empty.</strong></p><p class="muted">Do a check-in or write on your own. Your entries show up here, newest first.</p></div>';
   else byDay.forEach((es, k) => { h += '<section class="day-group"><h3>' + esc(fmtDay(k)) + '</h3><div class="entries">' + es.map(entryHtml).join('') + '</div></section>'; });
   jv.innerHTML = h;
-  const days = $('#days', jv); if (days) days.scrollLeft = days.scrollWidth;
 }
 function findEntry(key) { const [id, src] = key.split('|'); return { en: Store.all().find(e => e.id === id && e._src === src), id, src }; }
 jv.addEventListener('click', e => {
@@ -2077,10 +2214,10 @@ function seg(setting, val, inner, extra = '') {
   return '<button type="button" class="chip" data-set="' + setting + '" data-val="' + esc(val) + '" aria-pressed="' + on + '"' + extra + '>' + inner + '</button>';
 }
 function lookCard(k) {
-  const [name, bg, bar, bot, me] = LOOKS[k];
+  const [name, bg, dock, bot, me] = LOOKS[k];
   const on = profile.settings.look === k;
   return '<button type="button" class="look" data-set="look" data-val="' + k + '" aria-pressed="' + on + '">' +
-    '<span class="mini' + (k === 'auto' ? ' auto' : '') + '" style="--m-bg:' + bg + ';--m-bar:' + bar + ';--m-rail:' + bar + ';--m-bot:' + bot + ';--m-me:' + me + '"><i></i><i></i><i></i><b></b></span>' +
+    '<span class="mini' + (k === 'auto' ? ' auto' : '') + '" aria-hidden="true" style="--m-bg:' + bg + ';--m-dock:' + dock + ';--m-bot:' + bot + ';--m-me:' + me + '"><i></i><i></i><b></b></span>' +
     '<span>' + esc(name) + '</span></button>';
 }
 function voiceSection() {
@@ -2088,7 +2225,7 @@ function voiceSection() {
   const natural = S.lexiVoice !== 'device';
   const ranked = canSpeak ? rankedVoices() : [];
   const cur = canSpeak ? currentVoice() : null;
-  const ring = on => on ? ' style="box-shadow:0 0 0 3px var(--accent),0 8px 22px var(--shadow)"' : '';
+  const ring = () => '';
   let h = '<section class="set"><h3>' + renderRich('🔊') + ' Lexi\'s voice</h3>';
   h += '<div class="big-choice">' +
     '<button type="button" class="action" data-set="lexiVoice" data-val="natural" aria-pressed="' + natural + '"' + ring(natural) + '>' + renderRich('🎙️') + '<span>Lexi\'s own voice</span><span class="tag">Natural</span></button>' +
@@ -2125,16 +2262,16 @@ function voiceSection() {
     '<li>On iPhone or iPad: Settings › Accessibility › Spoken Content › Voices, then download an Enhanced or Premium English voice.</li>' +
     '<li>On a Mac: System Settings › Accessibility › Spoken Content › System voice › Manage voices.</li>' +
     '<li>On Android: install or update "Speech Recognition and Synthesis from Google".</li></ul></details>';
-  h += '<p style="font-size:.72em">Lexi\'s own voice was made with Piper TTS and the public-domain LJ Speech voice.</p>';
+  h += '<p class="fine">Lexi\'s own voice was made with Piper TTS and the public-domain LJ Speech voice.</p>';
   return h + '</section>';
 }
 function renderSettings() {
   const S = profile.settings;
-  let h = '<div class="page-head"><span class="ico big" aria-hidden="true">⚙️</span><div><h2 class="title">Settings</h2><p class="muted">Make Lexi easy on your eyes and your brain.</p></div></div>';
-  h += '<section class="set"><h3>' + renderRich('🎨') + ' Look</h3><p>The themes from the Lexi wireframes.</p><div class="looks">' + Object.keys(LOOKS).map(lookCard).join('') + '</div></section>';
+  let h = '<div class="page-head"><h2 class="title">Settings</h2><p class="muted">Make Lexi easy on your eyes and your brain.</p></div>';
+  h += '<section class="set"><h3>' + renderRich('🎨') + ' Look</h3><p>Pick the colors that feel easiest to read. Match my device uses Cream by day and Ember at night.</p><div class="looks">' + Object.keys(LOOKS).map(lookCard).join('') + '</div></section>';
   h += '<section class="set"><h3>' + renderRich('🧠') + ' Icons and emoji</h3><p>If icons don\'t work for your brain, turn them off. Words show instead.</p><div class="big-choice">' +
-    '<button type="button" class="action" data-set="icons" data-val="true" aria-pressed="' + (S.icons === true) + '" style="' + (S.icons ? 'box-shadow:0 0 0 3px var(--accent)' : '') + '">' + renderRich('😀') + '<span>Icons on</span></button>' +
-    '<button type="button" class="action" data-set="icons" data-val="false" aria-pressed="' + (S.icons === false) + '" style="' + (!S.icons ? 'box-shadow:0 0 0 3px var(--accent)' : '') + '"><span style="font:700 1.6em/1.2 var(--font-display)">Aa</span><span>Words only</span></button></div></section>';
+    '<button type="button" class="action" data-set="icons" data-val="true" aria-pressed="' + (S.icons === true) + '">' + renderRich('😀') + '<span>Icons on</span></button>' +
+    '<button type="button" class="action" data-set="icons" data-val="false" aria-pressed="' + (S.icons === false) + '"><span style="font:600 1.6em/1.2 var(--font-display)">Aa</span><span>Words only</span></button></div></section>';
   h += voiceSection();
   h += '<section class="set"><h3>' + renderRich('🔤') + ' Font</h3><div class="chips">' + Object.entries(FONTS).map(([k, [n, stack]]) => seg('font', k, esc(n), ' style="font-family:' + esc(stack) + '"')).join('') + '</div></section>';
   h += '<section class="set"><h3>' + renderRich('🔠') + ' Text size</h3><div class="chips">' + Object.entries(SIZES).map(([k, [n, px]]) => seg('size', k, '<span style="font-size:' + px + '">Aa</span> ' + esc(n))).join('') + '</div></section>';
@@ -2142,12 +2279,12 @@ function renderSettings() {
     Object.entries(LETTERS).map(([k, [n, ls, ws]]) => seg('letters', k, '<span style="letter-spacing:' + ls + ';word-spacing:' + ws + '">' + esc(n) + '</span>')).join('') + '</div></section>';
   h += '<section class="set"><h3>' + renderRich('📖') + ' Reading help</h3>' +
     '<p>When Lexi reads to you, the word she is saying lights up.</p><div class="chips">' +
-    Object.entries(HIGHLIGHTS).map(([k, [n, c]]) => seg('highlight', k, (k === 'off' ? '' : '<span style="display:inline-block;width:1em;height:1em;border-radius:4px;background:' + c + '"></span> ') + esc(n))).join('') + '</div>' +
+    Object.entries(HIGHLIGHTS).map(([k, [n, c]]) => seg('highlight', k, (k === 'off' ? '' : '<span aria-hidden="true" style="display:inline-block;width:1em;height:1em;border-radius:4px;box-shadow:inset 0 0 0 1px rgb(0 0 0 / 15%);background:' + c + '"></span> ') + esc(n))).join('') + '</div>' +
     '<p>Tap any word in Lexi\'s messages or your journal to hear just that word.</p><div class="chips">' + seg('tapWord', true, '👆 Tap a word to hear it') + seg('tapWord', false, 'Off') + '</div>' +
     '<p>How Lexi\'s messages show up.</p><div class="chips">' + Object.entries(PACES).map(([k, [n, i]]) => seg('pace', k, renderRich(i) + ' ' + esc(n))).join('') + '</div></section>';
   h += '<section class="set"><h3>' + renderRich('↕️') + ' Line spacing</h3><p>Wider gaps between lines can make reading easier.</p><div class="chips">' + Object.entries(SPACING).map(([k, [n]]) => seg('spacing', k, esc(n))).join('') + '</div></section>';
   h += '<section class="set"><h3>' + renderRich('✋🏽') + ' Skin tone</h3><div class="chips">' + TONES.map(([t, n]) => seg('tone', t, '<span style="font-size:1.6em;line-height:1" aria-hidden="true">✋' + t + '</span> ' + esc(n))).join('') + '</div></section>';
-  h += '<section class="set"><h3>' + renderRich(S.avatar) + ' My avatar</h3><div class="chips">' + AVATARS.map(a => seg('avatar', a, '<span style="font-size:1.9em;line-height:1">' + esc(tone(a)) + '</span>', ' aria-label="Avatar ' + esc(a) + '"')).join('') + '</div></section>';
+  h += '<section class="set"><h3>' + (S.avatar ? renderRich(S.avatar) : '') + ' My avatar</h3><p>Shown next to your messages. None keeps it simple.</p><div class="chips">' + AVATARS.map(a => a ? seg('avatar', a, '<span style="font-size:1.9em;line-height:1">' + esc(tone(a)) + '</span>', ' aria-label="Avatar ' + esc(a) + '"') : seg('avatar', '', 'None')).join('') + '</div></section>';
   const customs = [];
   (profile.custom.mood || []).forEach((m, i) => customs.push(['mood', i, m]));
   TOPICS.forEach(t => (profile.custom[t.key] || []).forEach((m, i) => customs.push([t.key, i, m])));
@@ -2267,7 +2404,7 @@ sv.addEventListener('change', e => {
 });
 function retone() {
   $$('[data-raw]').forEach(n => { n.innerHTML = n.dataset.words ? renderWords(n.dataset.raw) : renderRich(n.dataset.raw); });
-  $$('.me-ava').forEach(n => rich(n, profile.settings.avatar));
+  $$('.me-ava').forEach(n => { if (profile.settings.avatar) rich(n, profile.settings.avatar); else n.remove(); });
 }
 
 /* ---------- help sheet: help lines, how to, how Lexi keeps you safe, privacy (docs/FEATURES_DO_NEXT.md §6, §13) ---------- */
@@ -2288,7 +2425,7 @@ let helpFocus = null;
 function helpSection(title, kids, texts) {
   const s = el('section', 'set');
   const h = el('h3'); rich(h, title); s.append(h, ...kids);
-  if (texts && texts.some(canRead)) { const b = button('chip', 'Read this', '🔊'); b.onclick = () => texts.forEach((t, i) => speak(t, { queue: i > 0 })); s.append(b); }
+  if (texts && texts.some(canRead)) { const b = lbtn('chip', 'Read this', 'speaker'); b.onclick = () => texts.forEach((t, i) => speak(t, { queue: i > 0 })); s.append(b); }
   return s;
 }
 function listOf(lines) { const ul = el('ul', 'help-list'); lines.forEach(l => { const li = el('li'); rich(li, l); ul.append(li); }); return ul; }
@@ -2344,7 +2481,7 @@ document.addEventListener('keydown', e => {
 });
 
 /* ---------- boot ---------- */
-{ const an = $('#ai-note'); const sb = speakBtn('🤖 Lexi is an AI, not a person or a therapist.', an); if (sb) an.append(sb); }
+{ const an = $('#ai-note'); const sb = speakBtn('Lexi is an AI, not a person or a therapist.', an); if (sb) an.append(sb); }
 applySettings(); updateAIUi(); renderSettings(); renderJournal(); autosize();
 Store.subs.add(() => { if (!sv.hidden) renderSettings(); });
 initStore(); initSample();

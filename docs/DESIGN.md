@@ -2,6 +2,8 @@
 
 This spec comes from the Lexi Miro board. Measurements are taken from the board's 375 × 812 phone frames (Screens 11, 12, 13 and 15), the Chat Bot Plan flow, the Theme frame and the Inspo Board. The web app (`web/lexi.html`) and the native app (`lexi-native/`) both follow it.
 
+> **Superseded in part.** The Warm paper redesign ([`DESIGN_WARM_PAPER.md`](DESIGN_WARM_PAPER.md)) replaces this spec's frame (accent top bar, side rails, accent dock), themes, colours, sizes, avatar and motion rules. The board's structure still applies: the top bar, the chat column, the dock with the composer and three tabs, emoji-first answers, and Yes/No under Lexi's question.
+
 ## Layout (Screens 11 and 13)
 
 | Part | Wireframe | Build rule |

@@ -64,7 +64,7 @@ function loadSettings(): Settings {
   if (!THEME_KEYS.includes(s.theme)) s.theme = 'auto';
   if (!(s.size in SIZES)) s.size = 'm';
   if (!(s.letters in LETTERS)) s.letters = 'normal';
-  if (!(s.highlight in HIGHLIGHTS)) s.highlight = 'yellow';
+  if (!(s.highlight in HIGHLIGHTS)) s.highlight = 'auto';
   if (!(s.pace in PACES)) s.pace = 'auto';
   s.reminders = { ...DEFAULTS.reminders, ...(rest.reminders || {}) };
   // The country for crisis lines starts from the phone's region (en-GB → GB) the first time.

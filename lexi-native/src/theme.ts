@@ -1,143 +1,110 @@
-// Colors, type, sizes and depth from docs/DESIGN.md (Lexi Miro board, Screens 11-15, Theme frame, Inspo Board).
+// Warm paper (docs/DESIGN_WARM_PAPER.md): the colour tokens from tokens.ts plus type (§2), spacing and targets (§3),
+// shape (§4) and elevation (§5). Keep the big type, lose the bright frame: colour belongs to the emoji, Lexi's turn
+// and one primary button.
 import { createContext, useContext } from 'react';
 import { Platform, type TextStyle, type ViewStyle } from 'react-native';
-import type { BandKey, Settings, ThemeKey } from './content';
-import { stripEmoji, tone } from './text';
+import type { BandKey, FontKey, Settings } from './content';
 import { HIGHLIGHTS, LETTERS, SIZES, SPACING } from './content';
-
-export type Palette = {
-  bg: string;            // canvas behind everything
-  bar: string;           // top bar, side rails and bottom dock ("none" themes use the background)
-  onBar: string;
-  surface: string;       // tiles, cards, the input pill, the active nav tile
-  surface2: string;      // quieter fills (confirm boxes, empty day cards)
-  field: string;         // text boxes inside cards
-  ink: string; inkSoft: string; line: string;
-  ring: string;          // selected tiles, chips and day cards
-  yes: string; onYes: string;            // primary pills (the board's 👍🏽 pill)
-  bot: string; botInk: string; botLine: string | null;
-  me: string; meInk: string;
-  bContent: string; bContentInk: string; bStressed: string; bStressedInk: string; bLow: string; bLowInk: string;
-  sel: string; scrim: string; danger: string;
-  shadowOpacity: number;
-};
-
-const BANDS_LIGHT = { bContent: '#E38100', bContentInk: '#1E1000', bStressed: '#79EAB9', bStressedInk: '#06281A', bLow: '#8100E3', bLowInk: '#FFFFFF' };
-const BANDS_DARK = { bContent: '#E38100', bContentInk: '#1E1000', bStressed: '#79EAB9', bStressedInk: '#06281A', bLow: '#A866FF', bLowInk: '#1D0038' };
-const LIGHT_BASE = {
-  bg: '#E6E6E6', surface: '#FFFFFF', surface2: '#F1F1F1', field: '#F6F6F6',
-  ink: '#020000', inkSoft: '#474747', line: '#CDCDCD',
-  yes: '#8100E3', onYes: '#FFFFFF', botLine: null, me: '#FFFFFF', meInk: '#020000',
-  sel: '#FFFFFF', scrim: 'rgba(0,0,0,0.45)', danger: '#C0352B', shadowOpacity: 0.08,
-  ...BANDS_LIGHT,
-};
-
-export const PALETTES: Record<Exclude<ThemeKey, 'auto'>, Palette> = {
-  // Screen 11
-  orange: { ...LIGHT_BASE, bar: '#E38100', onBar: '#020000', ring: '#E38100', bot: '#79EAB9', botInk: '#020000' },
-  // Screen 13
-  purple: { ...LIGHT_BASE, bar: '#8100E3', onBar: '#FFFFFF', ring: '#8100E3', bot: '#79EAB9', botInk: '#020000' },
-  // Theme frame. The ring is a deeper mint so a selected white tile still reads as selected.
-  mint: { ...LIGHT_BASE, bar: '#79EAB9', onBar: '#06281A', ring: '#1F8F62', bot: '#FFDCC1', botInk: '#2E1500' },
-  // FEATURES_SOON §5: a warm background (Rello & Bigham 2017). Everything not listed is the same as Orange.
-  cream: {
-    ...LIGHT_BASE, bar: '#E38100', onBar: '#1E1000', ring: '#E38100', bot: '#79EAB9', botInk: '#020000',
-    bg: '#F5E4CC', surface: '#FFFAF2', surface2: '#F3E1C8', ink: '#020000', inkSoft: '#4A3F35', line: '#E0CAAE', me: '#FFFFFF',
-  },
-  // Screen 12: black, bars blend into the background, outlined dark bubbles with orange words, mint Yes.
-  night: {
-    bg: '#020000', bar: '#020000', onBar: '#E38100', surface: '#1A1A1A', surface2: '#262626', field: '#0D0D0D',
-    ink: '#F4F4F4', inkSoft: '#BDBDBD', line: '#3A3A3A', ring: '#E38100',
-    yes: '#79EAB9', onYes: '#020000', bot: '#1A1A1A', botInk: '#E38100', botLine: '#FFFFFF', me: '#262626', meInk: '#F4F4F4',
-    sel: '#262626', scrim: 'rgba(0,0,0,0.6)', danger: '#E5534B', shadowOpacity: 0.35, ...BANDS_DARK,
-  },
-  // Screen 15: the board's Material 3 dark theme seeded at #E38100, with the butterfly engraving.
-  ember: {
-    bg: '#201B17', bar: '#201B17', onBar: '#FFB877', surface: '#2B241F', surface2: '#3A302A', field: '#201B17',
-    ink: '#ECE0DA', inkSoft: '#D6C3B6', line: '#51443A', ring: '#FFB877',
-    yes: '#FFB877', onYes: '#4C2700', bot: '#FFB877', botInk: '#4C2700', botLine: null, me: '#51443A', meInk: '#FFDCC1',
-    sel: '#3A302A', scrim: 'rgba(0,0,0,0.6)', danger: '#E5534B', shadowOpacity: 0.35, ...BANDS_DARK,
-  },
-};
-export const OUTLINE_EMBER = '#9E8E82';
-export const resolveTheme = (k: ThemeKey, systemDark: boolean): Exclude<ThemeKey, 'auto'> => (k === 'auto' ? (systemDark ? 'ember' : 'orange') : k);
+import { stripEmoji, tone } from './text';
+import { BAND_TONES, BRAND, DANGER, HIGHLIGHT_INK, LOOKS, ON_DANGER, alpha, resolveLook, withContrast, type BandTone } from './tokens';
 
 /* ---------- fonts ----------
-   Lexend and Atkinson Hyperlegible ship with the app (Google Fonts, OFL). Verdana is a Microsoft font that
-   iOS includes and Android does not, so on Android "Verdana" falls back to Atkinson Hyperlegible, the next
-   font in lexi.html's stack. Custom fonts pick the bold face by family name, not fontWeight. */
+   Lexend (the interface font, 400 / 500 / 600) and Atkinson Hyperlegible ship with the app (Google Fonts, OFL).
+   Verdana is a Microsoft font that iOS includes and Android does not, so on Android "Verdana" falls back to
+   Atkinson Hyperlegible. The reading font is the person's choice; a font they pick other than the default
+   Verdana applies to all text. Custom fonts pick their weight by family name, not fontWeight. */
 const FACE = {
-  lexend: ['Lexend_400Regular', 'Lexend_600SemiBold'],
-  atkinson: ['AtkinsonHyperlegible_400Regular', 'AtkinsonHyperlegible_700Bold'],
+  lexend: { 400: 'Lexend_400Regular', 500: 'Lexend_500Medium', 600: 'Lexend_600SemiBold' },
+  atkinson: { 400: 'AtkinsonHyperlegible_400Regular', 700: 'AtkinsonHyperlegible_700Bold' },
 };
 export const verdanaIsNative = Platform.OS === 'ios';
-function face(font: Settings['font'], bold: boolean): TextStyle {
-  if (font === 'verdana' && verdanaIsNative) return { fontFamily: 'Verdana', fontWeight: bold ? '700' : '400' };
-  const f = font === 'lexend' ? FACE.lexend : FACE.atkinson;
-  return { fontFamily: f[bold ? 1 : 0] };
+export type Weight = 400 | 500 | 600 | 700;
+function face(font: FontKey, w: Weight): TextStyle {
+  if (font === 'verdana' && verdanaIsNative) return { fontFamily: 'Verdana', fontWeight: w >= 600 ? '700' : '400' };
+  if (font === 'lexend') return { fontFamily: w >= 600 ? FACE.lexend[600] : w === 500 ? FACE.lexend[500] : FACE.lexend[400] };
+  return { fontFamily: w >= 600 ? FACE.atkinson[700] : FACE.atkinson[400] };
 }
 
-/** `color-mix(in srgb, a pct%, b)` from the CSS. */
-export function mix(a: string, b: string, pct: number): string {
-  const p = (h: string) => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
-  const A = p(a), B = p(b);
-  return '#' + A.map((v, i) => Math.round(v * pct + B[i] * (1 - pct)).toString(16).padStart(2, '0')).join('');
-}
+/** Type roles (§2). Sizes scale with the person's text size (18 px at Medium); nothing is under 16 px. */
+export type Role = 'caption' | 'label' | 'body' | 'title' | 'headline' | 'display';
+const ROLES: Record<Role, { em: number; w: Weight; lh: number | null; ui: boolean }> = {
+  caption: { em: 0.889, w: 500, lh: 1.45, ui: true },
+  label: { em: 1, w: 500, lh: 1.3, ui: true },
+  body: { em: 1, w: 400, lh: null, ui: false },
+  title: { em: 1.222, w: 600, lh: 1.3, ui: true },
+  headline: { em: 1.556, w: 600, lh: 1.25, ui: true },
+  display: { em: 2, w: 600, lh: 1.2, ui: true },
+};
 
-/** Radii 14 / 22 / 28 (DESIGN.md "Polish rules"). Tiles use 20. */
-export const R = { s: 14, tile: 20, m: 22, l: 28, pill: 999 } as const;
-
-export type Theme = ReturnType<typeof makeTheme>;
+/** Shape (§4). */
+export const R = { xs: 6, sm: 8, md: 12, lg: 20, xl: 28, full: 999 } as const;
 
 // RN has no word-spacing style, so Roomy / Extra roomy add a thin (≈0.2 em) or thin + hair (≈0.3 em) space after
 // each space in displayed text. That's close to the spec's +0.16 / +0.32 em; typed text in inputs is left alone.
-const WORD_GAP: Record<Settings['letters'], string> = { normal: '', roomy: ' ', xroomy: '  ' };
+const WORD_GAP: Record<Settings['letters'], string> = { normal: '', roomy: ' ', xroomy: '  ' };
+
+export type Theme = ReturnType<typeof makeTheme>;
 
 /** `fontScale` is the phone's text size setting. Text scales by itself (allowFontScaling stays on everywhere),
- *  so layout that holds text or emoji (avatars, tiles, bubble caps) is multiplied by it too. */
-export function makeTheme(S: Settings, systemDark: boolean, windowWidth: number, fontScale = 1) {
-  const key = resolveTheme(S.theme, systemDark);
-  const c = PALETTES[key];
-  const dark = key === 'night' || key === 'ember';
+ *  so layout that holds text or emoji (tiles, bubbles) is multiplied by it too. */
+export function makeTheme(S: Settings, systemDark: boolean, windowWidth: number, fontScale = 1, moreContrast = false) {
+  const key = resolveLook(S.theme, systemDark);
+  const c = withContrast(LOOKS[key], moreContrast);
+  const dark = c.dark;
   const fs = (SIZES[S.size] || SIZES.m)[1];
   const lh = (SPACING[S.spacing] || SPACING.wide)[1];
   const [, ls] = LETTERS[S.letters] || LETTERS.normal;
   const gap = WORD_GAP[S.letters] || '';
   const k = Math.max(1, Math.min(fontScale || 1, 3));
   const icons = S.icons;
-  // 14 px rails (10 px under 380 px), 10 px of breathing room inside them.
-  const rail = windowWidth < 380 ? 10 : 14;
-  const pad = 10;
-  const contentW = windowWidth - rail * 2 - pad * 2;
+  const uiFont: FontKey = S.font === 'verdana' ? 'lexend' : S.font;
+  const narrow = windowWidth < 380;
+  // §3: a 20 px gutter (16 px under 380 px), with no painted rails.
+  const gutter = narrow ? 16 : 20;
+  const contentW = windowWidth - gutter * 2;
   const em = fs * k;
-  // Bot bubbles are a fixed column, about 64 % of the content width (board: 222 of 347 px). Roomy spacing or
-  // 24 px+ text widens them to min(86 %, 26 em) (FEATURES_DO_NEXT §1).
+  // Lexi's column is min(70 %, 21 em), or min(86 %, 26 em) for roomy spacing or large text (§9).
   const wide = S.letters !== 'normal' || fs >= 24 || em >= 24;
-  const shadow: ViewStyle = { shadowColor: '#000000', shadowOpacity: c.shadowOpacity, shadowRadius: 18, shadowOffset: { width: 0, height: 6 }, elevation: dark ? 3 : 2 };
+  const presence = 36;
+  const lexiCol = icons ? presence + 8 : 0;
+  const ios = Platform.OS === 'ios';
+
+  /* §5 elevation. Light looks: surface, a hairline and a soft ink shadow. Dark looks: surface tone, no shadow. */
+  const raised: ViewStyle = dark
+    ? { backgroundColor: c.raised, borderWidth: 1, borderColor: c.hairline }
+    : { backgroundColor: c.surface, borderWidth: 1, borderColor: c.hairline,
+        ...(ios ? { boxShadow: '0 1px 2px ' + alpha(c.ink, 0.06) + ', 0 4px 12px ' + alpha(c.ink, 0.06) } : { elevation: 1, shadowColor: c.ink }) };
+  const overlay: ViewStyle = dark
+    ? { backgroundColor: c.raised, borderWidth: 1, borderColor: c.borderStrong, ...(ios ? { boxShadow: '0 12px 32px rgba(0,0,0,0.35)' } : { elevation: 4, shadowColor: '#000000' }) }
+    : { backgroundColor: c.surface, ...(ios ? { boxShadow: '0 2px 6px ' + alpha(c.ink, 0.08) + ', 0 12px 32px ' + alpha(c.ink, 0.12) } : { elevation: 4, shadowColor: c.ink }) };
+
   const t = {
-    c, key, dark, fs, lh, icons, rail, pad, contentW, k, em,
-    narrow: windowWidth < 380,
-    // ...never wider than what's left beside the 🤖 avatar.
-    bubbleW: Math.round(Math.min(contentW * (wide ? 0.86 : 0.64), em * 26, contentW - (icons ? Math.round(46 * k) + 8 : 0))),
-    avatarBot: Math.round(46 * k), avatarMe: Math.round(52 * k),
-    /** Ember draws the butterfly engraving behind the chat. */
-    butterfly: key === 'ember',
+    c, key, dark, fs, lh, icons, k, em, narrow, gutter, contentW, presence, lexiCol,
+    /** Lexi's bubbles are a fixed column; the 48 px speaker button sits beside them. */
+    bubbleW: Math.round(Math.min(contentW * (wide ? 0.86 : 0.7), em * (wide ? 26 : 21), contentW - lexiCol - 56)),
+    /** The surface tiles, cards and the dock sit on: `raised` on dark looks. */
+    card: dark ? c.raised : c.surface,
+    raised, overlay,
+    scrim: dark ? 'rgba(0,0,0,0.6)' : alpha(c.ink, 0.45),
+    danger: { bg: DANGER, ink: ON_DANGER },
+    brand: dark ? BRAND.dark : BRAND.light,
     /** The spoken word's highlight (FEATURES_SOON §1); null when Highlight is Off. */
-    hl: HIGHLIGHTS[S.highlight]?.[1] ? { bg: HIGHLIGHTS[S.highlight][1] as string, ink: HIGHLIGHTS[S.highlight][2] as string } : null,
-    barsBlend: c.bar === c.bg,
-    shadow,
-    /** Text style at `em` times the base size, in the body font (or Lexend for headings). */
-    text(em = 1, o: { bold?: boolean; display?: boolean; color?: string } = {}): TextStyle {
-      const size = Math.round(fs * em * 10) / 10;
+    hl: S.highlight === 'off' ? null : { bg: (S.highlight === 'auto' ? c.highlight : HIGHLIGHTS[S.highlight]?.[1]) || c.highlight, ink: HIGHLIGHT_INK },
+    /** A text style in one of the type roles (§2). Every role keeps the person's letter spacing; body keeps
+     *  their line spacing too. `w` changes the weight (600 for active labels, 700 only for emphasis in body). */
+    txt(role: Role = 'body', o: { color?: string; w?: Weight; em?: number } = {}): TextStyle {
+      const r = ROLES[role];
+      const raw = role === 'caption' ? Math.max(16, fs * r.em) : fs * r.em * (o.em ?? 1);
+      const size = Math.round(raw * 10) / 10;
       return {
-        ...(o.display ? { fontFamily: FACE.lexend[o.bold ? 1 : 0] } : face(S.font, !!o.bold)),
-        fontSize: size, lineHeight: Math.round(size * lh), letterSpacing: size * ls,
+        ...face(r.ui ? uiFont : S.font, o.w ?? r.w),
+        fontSize: size, lineHeight: Math.round(size * (r.lh ?? lh)), letterSpacing: size * ls,
         color: o.color ?? c.ink,
       };
     },
     /** Emoji at a fixed pixel size (they don't shrink with the text size: emoji are how Lexi talks). */
     emoji(px: number): TextStyle { return { fontSize: px, lineHeight: Math.round(px * 1.22), color: c.ink, textAlign: 'center' }; },
-    fontPreview(font: Settings['font']): TextStyle { return face(font, false); },
+    fontPreview(font: FontKey): TextStyle { return face(font, 400); },
     /** Apply the skin tone, hide emoji when icons are off (lexi.html's `.ico` spans), and widen word gaps. */
     rich(s: string): string {
       const toned = tone(s, S.tone);
@@ -145,11 +112,12 @@ export function makeTheme(S: Settings, systemDark: boolean, windowWidth: number,
       return gap ? out.replace(/ /g, ' ' + gap) : out;
     },
     toned(s: string): string { return tone(s, S.tone); },
-    band(k: BandKey | string | undefined): { b: string; ink: string } {
-      if (k === 'content') return { b: c.bContent, ink: c.bContentInk };
-      if (k === 'stressed') return { b: c.bStressed, ink: c.bStressedInk };
-      if (k === 'low') return { b: c.bLow, ink: c.bLowInk };
-      return { b: c.line, ink: c.ink };
+    /** Only the wider word gaps, for words the person typed (their emoji stay as they are). */
+    spaced(s: string): string { return gap ? s.replace(/ /g, ' ' + gap) : s; },
+    /** A band's soft / ink / solid colours (§1). Anything without a band gets neutral ones. */
+    band(b: BandKey | string | undefined): BandTone {
+      const set = BAND_TONES[dark ? 'dark' : 'light'];
+      return b && b in set ? set[b as BandKey] : { soft: c.sunken, ink: c.ink, solid: c.inkMuted };
     },
   };
   return t;
